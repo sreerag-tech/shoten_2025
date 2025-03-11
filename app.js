@@ -22,7 +22,7 @@ app.use(session({
 }));
 app.use("/", userRouter); 
 app.use((req, res, next) => {
-    res.set(`cache-control`, `no store`);
+    res.set(`cache-control`, `no-store`);
     next();
 });
 

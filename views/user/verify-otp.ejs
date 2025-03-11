@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify OTP - Shoten</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             background: black;
@@ -30,15 +30,16 @@
             display: none;
             margin: 0 !important;
         }
+        .expired {
+            color: red;
+        }
     </style>
 </head>
 <body class="flex justify-center items-center h-screen text-white relative">
-    <!-- Animated Background Text -->
     <div class="absolute inset-0 flex justify-center items-center">
         <h1 class="animate-glitch">ショップ</h1>
     </div>
 
-    <!-- Verify OTP Form -->
     <div class="bg-gray-900 bg-opacity-70 p-8 rounded-2xl shadow-lg w-96 text-center relative">
         <h2 class="text-3xl font-bold text-[#00ffff] mb-6">Verify Your Email</h2>
         <p class="text-gray-400 text-sm mb-4">Enter the OTP sent to your email</p>
@@ -47,7 +48,7 @@
             <p class="text-red-500 text-sm mb-4"><%= message %></p>
         <% } %>
 
-        <form id="otpForm" action="/verify-otp" method="POST" class="space-y-4" onsubmit="return validateOTPForm()">
+        <form id="otpForm" class="space-y-4">
             <input 
                 type="text" 
                 id="otp" 
@@ -62,18 +63,18 @@
 
             <button 
                 type="submit" 
+                id="submitBtn" 
                 class="w-full p-3 bg-[#00ffff] rounded-xl font-bold text-black hover:bg-[#0088ff] transition"
             >
                 Verify OTP
             </button>
         </form>
 
-        <!-- Timer and Resend OTP -->
         <div class="mt-4 text-gray-400 text-sm">
             <p>Time remaining: <span id="timer">02:00</span></p>
             <p id="resendText" class="mt-2">
                 Didn’t receive the OTP? 
-                <a href="#" id="resendLink" class="text-[#00ffff] hover:underline" onclick="resendOTP()" style="display: none;">Resend OTP</a>
+                <a href="#" id="resendLink" class="text-[#00ffff] hover:underline" onclick="resendOtp()" style="display: none;">Resend OTP</a>
                 <span id="waitText">Wait <span id="waitTimer">30</span> seconds</span>
             </p>
         </div>
@@ -85,12 +86,14 @@
     </div>
 
     <script>
-        let timeLeft = 120; // 2 minutes (120 seconds) countdown
-        let resendTimeLeft = 30; // 30 seconds until resend is available
+        let timeLeft = 120;
+        let resendTimeLeft = 30;
         const timerElement = document.getElementById('timer');
         const waitTimerElement = document.getElementById('waitTimer');
         const resendLink = document.getElementById('resendLink');
         const waitText = document.getElementById('waitText');
+        const otpInput = document.getElementById('otp');
+        const submitBtn = document.getElementById('submitBtn');
 
         function updateTimer() {
             const minutes = Math.floor(timeLeft / 60);
@@ -108,6 +111,10 @@
             if (timeLeft > 0) {
                 timeLeft--;
                 setTimeout(updateTimer, 1000);
+            } else {
+                timerElement.classList.add('expired');
+                otpInput.disabled = true;
+                submitBtn.disabled = true;
             }
         }
 
@@ -130,8 +137,8 @@
                                     confirmButtonColor: '#00ffff',
                                     confirmButtonText: 'OK'
                                 });
-                                timeLeft = 120; // Reset to 2 minutes
-                                resendTimeLeft = 30; // Reset resend timer to 30 seconds
+                                timeLeft = 120;
+                                resendTimeLeft = 30;
                                 resendLink.style.display = 'none';
                                 waitText.style.display = 'inline';
                                 updateTimer();
@@ -159,16 +166,14 @@
             });
         }
 
-        // Start the timer and handle form submission
         document.addEventListener('DOMContentLoaded', () => {
             updateTimer();
 
-            const otpInput = document.getElementById('otp');
             const otpError = document.getElementById('otpError');
             const otpForm = document.getElementById('otpForm');
 
             otpForm.addEventListener('submit', (e) => {
-                e.preventDefault(); // Prevent default form submission
+                e.preventDefault();
                 const otpValue = otpInput.value.trim();
 
                 if (otpValue.length !== 6) {
@@ -177,15 +182,20 @@
                     return;
                 }
 
+                if (timeLeft <= 0) {
+                    otpError.style.display = 'block';
+                    otpError.innerHTML = 'OTP has expired. Please request a new one.';
+                    return;
+                }
+
                 otpError.style.display = 'none';
 
-                // Submit OTP via fetch
                 fetch('/verify-otp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({ otp: otpValue })
                 })
-                .then(response => response.json()) // Expect JSON response from server
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         Swal.fire({
@@ -195,13 +205,13 @@
                             confirmButtonColor: '#00ffff',
                             confirmButtonText: 'OK'
                         }).then(() => {
-                            window.location.href = '/login'; // Redirect to homepage after confirmation
+                            window.location.href = data.redirectUrl;
                         });
                     } else {
                         Swal.fire({
-                            title: 'Invalid OTP!',
+                            title: 'Error!',
                             text: data.message || 'The OTP you entered is incorrect.',
-                            icon:"error",
+                            icon: 'error',
                             confirmButtonColor: '#00ffff',
                             confirmButtonText: 'Try Again'
                         });
@@ -220,47 +230,16 @@
             });
         });
 
-        function validateOTPForm(){
-        const otpInput = document.getElementById("otp").value;
-
-        $.ajax({
-            type:"POST",
-            url:"verify-otp",
-            data:{otp:otpInput},
-            success: function(response){
-                if(response.success){
-                    Swal.fire({
-                        icon:"success",
-                        title:"OTP verified successfully",
-                        showConfirmButton:false,
-                        timer:1500,
-                    }).then(()=>{
-                        window.location.href=response.redirectUrl;
-                    })
-                }else{
-                    Swal.fire({
-                    icon:"error",
-                    title:Error,
-                    text:response.message,
-                    error: function(){
-                        Swal.fire({
-                            icon:"error",
-                            title:"invalid OTP",
-                            text:"Please try again"
-                        })
-                    }
-                    })
-                    return false;
-                }
-            }
-
-        })
+        function resendOTP() {
+            timeLeft = 120;
+            resendTimeLeft = 30;
+            resendLink.style.display = 'none';
+            waitText.style.display = 'inline';
+            otpInput.disabled = false;
+            submitBtn.disabled = false;
+            timerElement.classList.remove('expired');
+            updateTimer();
         }
-
-        function resendOTP(){}
-
-
-
     </script>
 </body>
 </html>
