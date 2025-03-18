@@ -13,6 +13,10 @@ const userSchema = new mongoose.Schema({
   Wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],
   orderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   createdOn: { type: Date, default: Date.now },
+  googleId:{
+    type:String,
+    unique:true
+  },
   referralCode: {
     type: String,
     unique: true,
