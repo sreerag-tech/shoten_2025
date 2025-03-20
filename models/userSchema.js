@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
-const {Schema} = mongoose;
+const { Schema } = mongoose;
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  googleId: { type: String, unique: false },
+  googleId: { type: String, index: { unique: true, sparse: true } }, // Sparse index
   password: { type: String, required: false },
   isBlocked: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
@@ -13,19 +13,15 @@ const userSchema = new mongoose.Schema({
   Wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],
   orderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   createdOn: { type: Date, default: Date.now },
-  googleId:{
-    type:String,
-    unique:true
-  },
   referralCode: {
     type: String,
     unique: true,
-    sparse: true
+    sparse: true,
   },
   referredBy: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      default: null
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
   },
   searchHistory: [
     {
@@ -34,8 +30,8 @@ const userSchema = new mongoose.Schema({
       searchOne: { type: Date, default: Date.now },
     },
   ],
-  forgotPasswordOtp: { type: String, default: null }, // Add this field
-  otpExpires: { type: Date, default: null }, // Optional: Store OTP expiration time
+  forgotPasswordOtp: { type: String, default: null },
+  otpExpires: { type: Date, default: null },
 });
 
 const User = mongoose.model("User", userSchema);
