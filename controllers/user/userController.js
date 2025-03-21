@@ -1,5 +1,6 @@
 const User = require("../../models/userSchema");
 const nodemailer = require("nodemailer");
+const Product = require('../../models/productSchema');
 const env = require("dotenv").config();
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
@@ -65,14 +66,38 @@ const loadLoginpage = async (req, res) => {
   }
 };
 
+// File: userController.js
+
+// File: userController.js
+// File: userController.js
+// Replace the existing loadHome function with this
 const loadHome = async (req, res) => {
   try {
     const userId = req.session.user;
     if (!userId) {
-      return res.redirect("/login"); // Redirect to login if not authenticated
+      return res.redirect("/login");
     }
+    
     const userData = await User.findById(userId);
-    res.render("home", { user: userData });
+
+    // Fetch products
+    const products = await Product.find({ 
+      isBlocked: false,
+      status: "Available" 
+    })
+    .sort({ createdAt: -1 })
+    .limit(8);
+
+    // Debug log to check the products
+    console.log("Products from DB:", products.map(p => ({
+      name: p.productName,
+      images: p.productImage
+    })));
+
+    res.render("home", { 
+      user: userData,
+      products: products
+    });
   } catch (error) {
     console.log("Home not found", error);
     res.status(500).send("server error");
@@ -407,16 +432,151 @@ const newPassword = async (req, res) => {
 
 
 
+
+const Category = require('../../models/categorySchema'); // Only import Category here if not already imported
+
 const loadShop = async (req, res) => {
   try {
-      res.render("shop"); // Assumes you have a shop.ejs file in your views folder
+    // Get query parameters from the request
+    const {
+      search = '',
+      sort = 'default',
+      category = 'all',
+      min_price = 0,
+      max_price = 200,
+      page = 1
+    } = req.query;
+
+    // Build the product query
+    let query = {
+      isBlocked: false, // Exclude blocked products
+      status: "Available" // Only show available products
+    };
+
+    // Search filter
+    if (search) {
+      query.productName = { $regex: search, $options: 'i' };
+    }
+
+    // Category filter
+    if (category !== 'all') {
+      let categoryArray;
+      if (Array.isArray(category)) {
+        categoryArray = category;
+      } else if (typeof category === 'string') {
+        categoryArray = category.split(',');
+      } else {
+        categoryArray = [category];
+      }
+
+      const categories = await Category.find({ 
+        name: { $in: categoryArray.map(cat => new RegExp(`^${cat}$`, 'i')) },
+        isListed: true
+      });
+
+      console.log("Requested categories:", categoryArray);
+      console.log("Found categories:", categories);
+
+      if (categories.length > 0) {
+        query.category = { $in: categories.map(cat => cat._id) };
+      }
+    }
+
+    // Price range filter
+    if (min_price || max_price) {
+      query.salePrice = { $gte: parseFloat(min_price), $lte: parseFloat(max_price) };
+    }
+
+    // Sorting logic
+    let sortOption = {};
+    switch (sort) {
+      case 'price_asc':
+        sortOption = { salePrice: 1 };
+        break;
+      case 'price_desc':
+        sortOption = { salePrice: -1 };
+        break;
+      case 'name_asc':
+        sortOption = { productName: 1 };
+        break;
+      case 'name_desc':
+        sortOption = { productName: -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+    // Pagination
+    const perPage = 9;
+    const skip = (page - 1) * perPage;
+
+    // Fetch products
+    const products = await Product.find(query)
+      .populate('category')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(perPage);
+
+    // Fetch recommended products (e.g., 4 random available products)
+    const recommendedProducts = await Product.find({
+      isBlocked: false,
+      status: "Available"
+    })
+      .populate('category')
+      .sort({ createdAt: -1 }) // Newest first
+      .limit(4);
+
+    // Fetch listed categories for filter
+    const listedCategories = await Category.find({ isListed: true });
+
+    // Get total count for pagination
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / perPage);
+
+    // Transform product data
+    const productData = products.map(product => ({
+      name: product.productName,
+      image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
+      category: product.category?.name || 'Uncategorized',
+      price: product.salePrice,
+      originalPrice: product.regularPrice,
+      discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
+      isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+    }));
+
+    // Transform recommended product data
+    const recommendedProductData = recommendedProducts.map(product => ({
+      name: product.productName,
+      image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
+      category: product.category?.name || 'Uncategorized',
+      price: product.salePrice,
+      originalPrice: product.regularPrice,
+      discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
+      isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+    }));
+
+    // Debug logs
+    console.log("Query:", query);
+    console.log("Fetched Products:", products.length);
+    console.log("Product Data:", productData);
+    console.log("Recommended Products:", recommendedProductData);
+    console.log("Listed Categories:", listedCategories);
+
+    // Render shop page with data
+    res.render("shop", {
+      products: productData,
+      recommendedProducts: recommendedProductData, // Add recommended products
+      categories: listedCategories, // Add listed categories
+      query: req.query,
+      currentPage: parseInt(page),
+      totalPages,
+      totalProducts
+    });
   } catch (error) {
-      console.log(error.message);
-      res.redirect("/pageNotFound");
+    console.log("Error loading shop:", error.message);
+    res.redirect("/pageNotFound");
   }
 };
-
-// ... (keep your existing exports)
 module.exports = {
   loadHome,
   loadLandingpage,
@@ -434,3 +594,4 @@ module.exports = {
   newPassword  ,
   loadShop       
 };
+

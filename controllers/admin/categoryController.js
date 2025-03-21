@@ -106,16 +106,18 @@ const editCategory = async (req, res) => {
 
 const deleteCategory = async (req, res) => {
   try {
-    const id = req.params.id;
-    const deletedCategory = await Category.findByIdAndDelete(id);
-    if (deletedCategory) {
-      return res.json({ message: "Category deleted successfully" });
-    } else {
-      return res.status(404).json({ error: "Category not found" });
-    }
+    const categoryId = req.params.id;
+
+    // Delete all products associated with this category
+    await Product.deleteMany({ category: categoryId });
+
+    // Delete the category
+    await Category.findByIdAndDelete(categoryId);
+
+    res.redirect("/admin/category");
   } catch (error) {
-    console.error("Error in deleteCategory:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Error deleting category:", error);
+    res.redirect("/admin/pageerror");
   }
 };
 

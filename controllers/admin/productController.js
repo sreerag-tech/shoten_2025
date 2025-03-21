@@ -66,8 +66,7 @@ const addProducts = async (req, res) => {
       });
 
       await newProduct.save();
-      return res.redirect("/admin/add-products"); // Or redirect to a product list page
-
+      return res.redirect("/admin/add-products");
     } else {
       return res.redirect("/admin/add-products?error=Product+already+exists");
     }
@@ -76,10 +75,10 @@ const addProducts = async (req, res) => {
     return res.redirect("/admin/pageerror");
   }
 };
-// Get Product List Page
+
 const getProductList = async (req, res) => {
   try {
-    const products = await Product.find().populate("category"); // Populate category details
+    const products = await Product.find().populate("category");
     const error = req.query.error || null;
     res.render("products", { products, error });
   } catch (error) {
@@ -88,7 +87,6 @@ const getProductList = async (req, res) => {
   }
 };
 
-// Delete Product
 const deleteProduct = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -98,7 +96,6 @@ const deleteProduct = async (req, res) => {
       return res.redirect("/admin/products?error=Product+not+found");
     }
 
-    // Delete associated images
     if (product.productImage && product.productImage.length > 0) {
       for (const image of product.productImage) {
         const imagePath = path.join("public", "uploads", "product-images", image);
@@ -118,7 +115,6 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-// Toggle Block/Unblock Product
 const toggleBlockProduct = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -128,7 +124,7 @@ const toggleBlockProduct = async (req, res) => {
       return res.redirect("/admin/products?error=Product+not+found");
     }
 
-    product.isBlocked = !product.isBlocked; // Toggle the isBlocked status
+    product.isBlocked = !product.isBlocked;
     await product.save();
 
     return res.redirect("/admin/products");
@@ -138,9 +134,6 @@ const toggleBlockProduct = async (req, res) => {
   }
 };
 
-
-
-// Get Edit Product Page
 const getEditProductPage = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -159,7 +152,6 @@ const getEditProductPage = async (req, res) => {
   }
 };
 
-// Edit Product
 const editProduct = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -173,13 +165,12 @@ const editProduct = async (req, res) => {
     const existingImages = product.productImage || [];
     const validTypes = ['image/jpeg', 'image/png'];
 
-    // Handle individual image updates
     const newImages = [];
     const imageFields = ['image1', 'image2', 'image3', 'image4'];
     for (let i = 0; i < imageFields.length; i++) {
       const fieldName = imageFields[i];
-      const files = req.files && req.files[fieldName]; // Access field directly from object
-      const file = files && files[0]; // Get the first (and only) file if it exists
+      const files = req.files && req.files[fieldName];
+      const file = files && files[0];
 
       if (file) {
         if (!validTypes.includes(file.mimetype)) {
@@ -206,7 +197,6 @@ const editProduct = async (req, res) => {
           console.warn(`Failed to delete original image ${originalImagePath}: ${unlinkError.message}`);
         }
 
-        // Remove the old image at this index if it exists
         if (existingImages[i]) {
           const oldImagePath = path.join("public", "uploads", "product-images", existingImages[i]);
           try {
@@ -218,10 +208,8 @@ const editProduct = async (req, res) => {
       }
     }
 
-    // Update product images array: replace only the updated indices
     product.productImage = existingImages.map((img, index) => newImages[index] || img).filter(Boolean);
 
-    // Validate total image count
     if (product.productImage.length < 3) {
       return res.redirect(`/admin/edit-product/${productId}?error=Product+must+have+at+least+3+images`);
     }
@@ -231,7 +219,6 @@ const editProduct = async (req, res) => {
       return res.redirect(`/admin/edit-product/${productId}?error=Invalid+category+name`);
     }
 
-    // Update product fields
     product.productName = products.productName;
     product.description = products.description;
     product.category = categoryId._id;

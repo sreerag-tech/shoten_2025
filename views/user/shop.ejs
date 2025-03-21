@@ -73,54 +73,21 @@
                                 >
                                 <label for="category_all">All Categories</label>
                             </div>
-                            
-                            <div class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    id="category_figurines" 
-                                    name="category" 
-                                    value="figurines" 
-                                    class="mr-2 accent-[#00ffff]"
-                                    <%= locals.query && query.category && query.category.includes('figurines') ? 'checked' : '' %>
-                                >
-                                <label for="category_figurines">Figurines</label>
-                            </div>
-                            
-                            <div class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    id="category_necklaces" 
-                                    name="category" 
-                                    value="necklaces" 
-                                    class="mr-2 accent-[#00ffff]"
-                                    <%= locals.query && query.category && query.category.includes('necklaces') ? 'checked' : '' %>
-                                >
-                                <label for="category_necklaces">Necklaces</label>
-                            </div>
-                            
-                            <div class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    id="category_keychains" 
-                                    name="category" 
-                                    value="keychains" 
-                                    class="mr-2 accent-[#00ffff]"
-                                    <%= locals.query && query.category && query.category.includes('keychains') ? 'checked' : '' %>
-                                >
-                                <label for="category_keychains">Keychains</label>
-                            </div>
-                            
-                            <div class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    id="category_mugs" 
-                                    name="category" 
-                                    value="mugs" 
-                                    class="mr-2 accent-[#00ffff]"
-                                    <%= locals.query && query.category && query.category.includes('mugs') ? 'checked' : '' %>
-                                >
-                                <label for="category_mugs">Mugs</label>
-                            </div>
+                            <% if (locals.categories && categories.length > 0) { %>
+                                <% categories.forEach(cat => { %>
+                                    <div class="flex items-center">
+                                        <input 
+                                            type="checkbox" 
+                                            id="category_<%= cat.name.toLowerCase() %>" 
+                                            name="category" 
+                                            value="<%= cat.name.toLowerCase() %>" 
+                                            class="mr-2 accent-[#00ffff]"
+                                            <%= locals.query && query.category && query.category.includes(cat.name.toLowerCase()) ? 'checked' : '' %>
+                                        >
+                                        <label for="category_<%= cat.name.toLowerCase() %>"><%= cat.name %></label>
+                                    </div>
+                                <% }); %>
+                            <% } %>
                         </div>
                     </div>
                     
@@ -291,21 +258,27 @@
                     
                     <!-- Pagination -->
                     <div class="mt-12 flex justify-center items-center space-x-2">
-                        <a href="#" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </a>
-                        <a href="#" class="w-10 h-10 flex items-center justify-center bg-[#00ffff] rounded-lg text-black font-bold">1</a>
-                        <a href="#" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition">2</a>
-                        <a href="#" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition">3</a>
-                        <span class="text-gray-500">...</span>
-                        <a href="#" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition">10</a>
-                        <a href="#" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </a>
+                        <% if (currentPage > 1) { %>
+                            <a href="/shop?page=<%= currentPage - 1 %>&<%= new URLSearchParams(query).toString() %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </a>
+                        <% } %>
+
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <a href="/shop?page=<%= i %>&<%= new URLSearchParams(query).toString() %>" class="w-10 h-10 flex items-center justify-center <%= currentPage === i ? 'bg-[#00ffff] text-black' : 'bg-gray-800 text-white hover:bg-gray-700' %> rounded-lg font-bold transition">
+                                <%= i %>
+                            </a>
+                        <% } %>
+
+                        <% if (currentPage < totalPages) { %>
+                            <a href="/shop?page=<%= currentPage + 1 %>&<%= new URLSearchParams(query).toString() %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        <% } %>
                     </div>
                 <% } %>
             </div>
@@ -319,24 +292,39 @@
         <h2 class="text-3xl font-bold mb-8 text-[#00ffff]">You May Also Like</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <% for (let i = 0; i < 4; i++) { %>
-                <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-[#00ffff] transition">
-                    <div class="relative">
-                        <img src="/images/<%= ['figurine', 'necklace', 'keychain', 'mug'][i % 4] %>1.webp" alt="Recommended Product" class="w-full h-64 object-cover">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="text-lg font-bold mb-1">Popular <%= ['Figurine', 'Necklace', 'Keychain', 'Mug'][i % 4] %> <%= i + 1 %></h3>
-                        <p class="text-gray-400 text-sm mb-2">Fan favorite</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-[#00ffff] font-bold">$<%= (Math.floor(Math.random() * 40) + 20).toFixed(2) %></span>
-                            <button class="p-2 bg-[#00ffff] text-black rounded hover:bg-[#0088ff] transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                            </button>
+            <% if (locals.recommendedProducts && recommendedProducts.length > 0) { %>
+                <% recommendedProducts.forEach(product => { %>
+                    <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-[#00ffff] transition">
+                        <div class="relative">
+                            <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-64 object-cover">
+                            <% if (product.isNew) { %>
+                                <div class="absolute top-2 right-2 bg-[#00ffff] text-black text-xs font-bold px-2 py-1 rounded">NEW</div>
+                            <% } %>
+                            <% if (product.discount > 0) { %>
+                                <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">-<%= product.discount %>%</div>
+                            <% } %>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-bold mb-1"><%= product.name %></h3>
+                            <p class="text-gray-400 text-sm mb-2"><%= product.category %></p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                        <span class="text-gray-400 line-through text-sm mr-2">$<%= product.originalPrice.toFixed(2) %></span>
+                                    <% } %>
+                                    <span class="text-[#00ffff] font-bold">$<%= product.price.toFixed(2) %></span>
+                                </div>
+                                <button class="p-2 bg-[#00ffff] text-black rounded hover:bg-[#0088ff] transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                <% }); %>
+            <% } else { %>
+                <p class="text-gray-400">No recommended products available.</p>
             <% } %>
         </div>
     </div>
@@ -354,7 +342,7 @@
         function updatePriceRangeIndicator() {
             const min = parseInt(minPrice.value || 0);
             const max = parseInt(maxPrice.value || 200);
-            const totalRange = 200; // Max possible price for calculation
+            const totalRange = 200;
             
             const leftPos = (min / totalRange) * 100;
             const rightPos = 100 - ((max / totalRange) * 100);
@@ -363,10 +351,8 @@
             priceIndicator.style.right = rightPos + '%';
         }
         
-        // Initialize price indicator
         updatePriceRangeIndicator();
         
-        // Update when price inputs change
         minPrice.addEventListener('input', updatePriceRangeIndicator);
         maxPrice.addEventListener('input', updatePriceRangeIndicator);
         
@@ -382,9 +368,6 @@
             clearSearchBtn.addEventListener('click', function() {
                 searchInput.value = '';
                 this.style.display = 'none';
-                
-                // If you want to immediately update results after clearing
-                // document.getElementById('filterForm').submit();
             });
         }
         
@@ -402,7 +385,6 @@
         const categoryCheckboxes = document.querySelectorAll('input[name="category"]:not([value="all"])');
         
         if (allCategoriesCheckbox) {
-            // When "All Categories" is checked, uncheck others
             allCategoriesCheckbox.addEventListener('change', function() {
                 if (this.checked) {
                     categoryCheckboxes.forEach(checkbox => {
@@ -411,14 +393,12 @@
                 }
             });
             
-            // When any other category is checked, uncheck "All Categories"
             categoryCheckboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
                     if (this.checked) {
                         allCategoriesCheckbox.checked = false;
                     }
                     
-                    // If no categories are selected, select "All Categories"
                     const anyChecked = Array.from(categoryCheckboxes).some(cb => cb.checked);
                     if (!anyChecked) {
                         allCategoriesCheckbox.checked = true;
@@ -426,5 +406,21 @@
                 });
             });
         }
+
+        // Handle multiple category selections on form submit
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
+            const selectedCategories = Array.from(categoryCheckboxes)
+                .map(cb => cb.value)
+                .filter(val => val !== 'all');
+            
+            if (selectedCategories.length > 0) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'category';
+                hiddenInput.value = selectedCategories.join(',');
+                this.appendChild(hiddenInput);
+            }
+        });
     });
 </script>
