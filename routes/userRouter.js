@@ -14,6 +14,13 @@ router.post("/login", userController.login);
 router.post("/logout", userController.logout);
 router.get("/pageNotFound", userController.pageNotFound);
 
+// forgot password routes
+router.get("/forgot-password", userController.loadForgotPassword);
+router.post("/resetPassword", userController.resetPassword);
+router.get("/newPassword", userController.loadNewPassword);
+router.post("/newPassword", userController.newPassword);
+router.get("/shop", userController.loadShop);
+
 router.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -26,5 +33,6 @@ router.get(
     res.redirect("/home"); // Redirect to home after Google login
   }
 );
+
 
 module.exports = router;

@@ -2,6 +2,7 @@ const User = require("../../models/userSchema");
 const nodemailer = require("nodemailer");
 const env = require("dotenv").config();
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const pageNotFound = async (req, res) => {
   try {
@@ -42,7 +43,7 @@ async function sendVerificationEmail(email, otp) {
       to: email,
       subject: "verify your account",
       text: `Your OTP is ${otp}`,
-      html: `<b>Your OTP:${otp}</b>`,
+      html: `<b> Your OTP:${otp}</b>`,
     });
 
     return info.accepted.length > 0;
@@ -268,6 +269,154 @@ const logout = async (req, res) => {
   }
 };
 
+const loadForgotPassword = async (req, res) => {
+  try {
+    res.render("forgot-password", { message: "" });
+  } catch (error) {
+    console.log("Forgot password page not found", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error loading forgot password page" 
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No account found with this email" 
+      });
+    }
+
+    // Generate reset token and OTP
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
+    const otp = generateOtp(); // Using your existing generateOtp function
+
+    // Log the OTP to console
+    console.log(`Reset Password OTP for ${email}: ${otp}`);
+
+    // Save token and OTP to user
+    user.forgotPasswordOtp = resetToken;
+    user.otpExpires = resetTokenExpiry;
+    user.resetPasswordOtp = otp; // Store OTP in the user document
+    await user.save();
+
+    // Send OTP via email
+    const emailSent = await sendVerificationEmail(email, otp);
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send OTP. Please try again."
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "OTP has been sent to your email",
+      token: resetToken,
+      redirectUrl: `/newPassword?token=${resetToken}`
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "An error occurred. Please try again."
+    });
+  }
+};
+
+const loadNewPassword = async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    const user = await User.findOne({
+      forgotPasswordOtp: token,
+      otpExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.render("forgot-password", { 
+        message: "Invalid or expired reset token" 
+      });
+    }
+
+    res.render("new-password", { 
+      token: token,
+      message: ""
+    });
+  } catch (error) {
+    console.error("Load new password error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error loading new password page" 
+    });
+  }
+};
+
+const newPassword = async (req, res) => {
+  try {
+    const { token, otp, password } = req.body;
+    
+    const user = await User.findOne({
+      forgotPasswordOtp: token,
+      otpExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset token"
+      });
+    }
+
+    if (user.resetPasswordOtp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP"
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await securePassword(password);
+    
+    // Update user password and clear reset fields
+    user.password = hashedPassword;
+    user.forgotPasswordOtp = null;
+    user.otpExpires = null;
+    user.resetPasswordOtp = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successfully"
+    });
+  } catch (error) {
+    console.error("New password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while resetting password"
+    });
+  }
+};
+
+
+
+const loadShop = async (req, res) => {
+  try {
+      res.render("shop"); // Assumes you have a shop.ejs file in your views folder
+  } catch (error) {
+      console.log(error.message);
+      res.redirect("/pageNotFound");
+  }
+};
+
+// ... (keep your existing exports)
 module.exports = {
   loadHome,
   loadLandingpage,
@@ -279,4 +428,9 @@ module.exports = {
   pageNotFound,
   login,
   logout,
+  loadForgotPassword, 
+  resetPassword,      
+  loadNewPassword,    
+  newPassword  ,
+  loadShop       
 };
