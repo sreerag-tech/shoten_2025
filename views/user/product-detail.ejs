@@ -1,29 +1,31 @@
 <%- include("../../views/user/partials/header") %>
 
-<!-- Breadcrumbs -->
-<nav class="bg-gray-900 py-4 px-8">
-  <div class="max-w-7xl mx-auto">
-      <ol class="flex items-center text-sm">
-          <li>
-              <a href="/" class="text-gray-400 hover:text-[#00ffff]">Home</a>
-          </li>
-          <li class="mx-2 text-gray-600">/</li>
-          <li>
-              <a href="/shop" class="text-gray-400 hover:text-[#00ffff]">Shop</a>
-          </li>
-          <% if (product && product.category) { %>
-              <li class="mx-2 text-gray-600">/</li>
-              <li>
-                  <a href="/products?category=<%= product.category.toLowerCase() %>" class="text-gray-400 hover:text-[#00ffff]"><%= product.category %></a>
-              </li>
-              <li class="mx-2 text-gray-600">/</li>
-              <li class="text-[#00ffff] truncate max-w-[200px]"><%= product.name %></li>
-          <% } %>
-      </ol>
-  </div>
-</nav>
+
 <section class="bg-black py-12 px-8">
+    
   <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumbs -->
+     <div class="py-4 ">
+<nav class="bg-gray-900 py-5 px-8">
+    <div class="max-w-7xl mx-auto">
+        <ol class="flex items-center text-sm">
+            <li>
+                <a href="/" class="text-gray-400 hover:text-[#00ffff]">Home</a>
+            </li>
+            <li class="mx-2 text-gray-600">/</li>
+            <li>
+                <a  href="/shop" class="text-gray-400 hover:text-[#00ffff]">Shop</a>
+            </li>
+            
+                
+                <li class="mx-2 text-gray-600">/</li>
+                <li class="text-[#00ffff] truncate max-w-[200px]"><%= product.name %></li>
+           
+        </ol>
+    </div>
+  </nav>
+</div>
+<!-- end of breadcrumps -->
       <% if (!product || product.isBlocked || product.status !== "Available") { %>
           <!-- Product Unavailable Message -->
           <div class="bg-gray-800 rounded-xl p-8 text-center mb-8">

@@ -78,7 +78,7 @@ const addProducts = async (req, res) => {
 
 const getProductList = async (req, res) => {
   try {
-    const products = await Product.find().populate("category");
+    const products = await Product.find().populate("category").sort({ createdAt: -1});
     const error = req.query.error || null;
     res.render("products", { products, error });
   } catch (error) {

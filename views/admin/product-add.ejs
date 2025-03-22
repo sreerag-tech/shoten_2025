@@ -1,7 +1,6 @@
 <%- include("../../views/admin/partials/header", { activePage: 'product-add' }) %>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css" 
-      onerror="this.onerror=null; this.href='/css/cropper.min.css'" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 <style>
     .error-message {
         color: red;
@@ -122,41 +121,41 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 1</label>
-                                        <input class="form-control" type="file" name="images" id="input1" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 1)">
+                                        <input class="form-control" type="file" name="images[]" id="input1" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 1)">
                                         <img src="" class="image-preview" id="imgView1" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer1" style="display:none;">
                                             <img src="" id="croppedImg1" alt="Cropper">
-                                            <button type="button" id="saveButton1" class="btn btn-sm btn-primary mt-2">Save Crop</button>
+                                            <button type="button" id="saveButton1" class="btn btn-sm btn-primary mt-2" onclick="saveCroppedImage(1)">Save Crop</button>
                                         </div>
                                         <div id="image-error-1" class="error-message"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 2</label>
-                                        <input class="form-control" type="file" name="images" id="input2" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 2)">
+                                        <input class="form-control" type="file" name="images[]" id="input2" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 2)">
                                         <img src="" class="image-preview" id="imgView2" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer2" style="display:none;">
                                             <img src="" id="croppedImg2" alt="Cropper">
-                                            <button type="button" id="saveButton2" class="btn btn-sm btn-primary mt-2">Save Crop</button>
+                                            <button type="button" id="saveButton2" class="btn btn-sm btn-primary mt-2" onclick="saveCroppedImage(2)">Save Crop</button>
                                         </div>
                                         <div id="image-error-2" class="error-message"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 3</label>
-                                        <input class="form-control" type="file" name="images" id="input3" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 3)">
+                                        <input class="form-control" type="file" name="images[]" id="input3" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 3)">
                                         <img src="" class="image-preview" id="imgView3" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer3" style="display:none;">
                                             <img src="" id="croppedImg3" alt="Cropper">
-                                            <button type="button" id="saveButton3" class="btn btn-sm btn-primary mt-2">Save Crop</button>
+                                            <button type="button" id="saveButton3" class="btn btn-sm btn-primary mt-2" onclick="saveCroppedImage(3)">Save Crop</button>
                                         </div>
                                         <div id="image-error-3" class="error-message"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 4</label>
-                                        <input class="form-control" type="file" name="images" id="input4" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 4)">
+                                        <input class="form-control" type="file" name="images[]" id="input4" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 4)">
                                         <img src="" class="image-preview" id="imgView4" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer4" style="display:none;">
                                             <img src="" id="croppedImg4" alt="Cropper">
-                                            <button type="button" id="saveButton4" class="btn btn-sm btn-primary mt-2">Save Crop</button>
+                                            <button type="button" id="saveButton4" class="btn btn-sm btn-primary mt-2" onclick="saveCroppedImage(4)">Save Crop</button>
                                         </div>
                                         <div id="image-error-4" class="error-message"></div>
                                     </div>
@@ -173,11 +172,11 @@
         </div>
     </div>
 </section>
-<script defer src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js" 
-        onerror="this.onerror=null; this.src='/js/cropper.min.js'"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <script>
-    let currentCropper = null;
-    
+    let croppers = {}; // Store cropper instances for each image index
+
     function viewImage(event, index) {
         const input = event.target;
         const previewImage = document.getElementById(`imgView${index}`);
@@ -195,99 +194,76 @@
             }
 
             const reader = new FileReader();
-            
+
             reader.onload = function(e) {
                 previewImage.src = e.target.result;
                 previewImage.style.display = 'block';
-    
-                console.log(`Preview image ${index} loaded with src: ${previewImage.src}`);
-    
-                if (currentCropper) {
-                    currentCropper.destroy();
-                    currentCropper = null;
-                }
-    
-                if (typeof Cropper === 'undefined') {
-                    console.error('CropperJS is not loaded. Please check the CDN link or local fallback.');
-                    alert('CropperJS failed to load. You can still upload the image without cropping.');
-                    cropperContainer.style.display = 'none';
-                    return;
-                }
-    
+
                 cropperImage.src = e.target.result;
                 cropperContainer.style.display = 'block';
-    
+
                 cropperImage.onload = function() {
-                    try {
-                        currentCropper = new Cropper(cropperImage, {
-                            aspectRatio: 1,
-                            viewMode: 1,
-                            guides: true,
-                            background: false,
-                            autoCropArea: 0.8,
-                            zoomable: true,
-                            scalable: true,
-                            movable: true
-                        });
-                        console.log(`Cropper initialized successfully for image ${index}`);
-                    } catch (error) {
-                        console.error('Error initializing Cropper:', error);
-                        alert('Failed to initialize image cropper.');
-                        cropperContainer.style.display = 'none';
-                        return;
+                    if (croppers[index]) {
+                        croppers[index].destroy(); // Destroy existing cropper for this index
                     }
-    
-                    saveButton.onclick = function() {
-                        if (!currentCropper) {
-                            console.error('Cropper not initialized for saving.');
-                            return;
-                        }
-    
-                        const croppedCanvas = currentCropper.getCroppedCanvas({
-                            width: 200,
-                            height: 200
-                        });
-    
-                        if (!croppedCanvas) {
-                            console.error('Failed to get cropped canvas.');
-                            return;
-                        }
-    
-                        previewImage.src = croppedCanvas.toDataURL('image/jpeg');
-                        
-                        croppedCanvas.toBlob(function(blob) {
-                            const fileName = `cropped-img-${Date.now()}-${index}.jpeg`;
-                            const imgFile = new File([blob], fileName, { type: 'image/jpeg' });
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(imgFile);
-                            input.files = dataTransfer.files;
-    
-                            const thumbnail = document.createElement('img');
-                            thumbnail.src = previewImage.src;
-                            thumbnail.className = 'thumbnail';
-                            document.getElementById('addedImagesContainer').appendChild(thumbnail);
-    
-                            cropperContainer.style.display = 'none';
-                            currentCropper.destroy();
-                            currentCropper = null;
-                            console.log(`Cropped image ${index} saved and cropper destroyed.`);
-                        }, 'image/jpeg', 0.9);
-                    };
+
+                    croppers[index] = new Cropper(cropperImage, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        guides: true,
+                        background: false,
+                        autoCropArea: 0.8,
+                        zoomable: true,
+                        scalable: true,
+                        movable: true
+                    });
                 };
-    
+
                 cropperImage.onerror = function() {
-                    console.error(`Failed to load image for cropping at index ${index}`);
                     alert('Failed to load the image for cropping.');
                     cropperContainer.style.display = 'none';
                 };
             };
-    
-            reader.readAsDataURL(input.files[0]);
-        } else {
-            console.warn(`No file selected for input ${index}`);
+
+            reader.readAsDataURL(file);
         }
     }
-    
+
+    function saveCroppedImage(index) {
+        const cropperContainer = document.getElementById(`cropperContainer${index}`);
+        const previewImage = document.getElementById(`imgView${index}`);
+        const input = document.getElementById(`input${index}`);
+
+        if (!croppers[index]) {
+            alert('Cropper is not initialized.');
+            return;
+        }
+
+        const croppedCanvas = croppers[index].getCroppedCanvas({
+            width: 200,
+            height: 200
+        });
+
+        if (!croppedCanvas) {
+            alert('Failed to crop the image.');
+            return;
+        }
+
+        previewImage.src = croppedCanvas.toDataURL('image/jpeg');
+
+        croppedCanvas.toBlob(function(blob) {
+            const fileName = `cropped-img-${Date.now()}-${index}.jpeg`;
+            const imgFile = new File([blob], fileName, { type: 'image/jpeg' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(imgFile);
+            input.files = dataTransfer.files;
+
+            cropperContainer.style.display = 'none';
+            croppers[index].destroy();
+            delete croppers[index]; // Remove cropper instance for this index
+        }, 'image/jpeg', 0.9);
+    }
+
     function validateForm() {
         let isValid = true;
         const productName = document.getElementById('product_name').value;
@@ -345,7 +321,7 @@
 
         return isValid;
     }
-    
+
     function displayErrorMessage(elementId, message) {
         const errorElement = document.getElementById(elementId);
         if (errorElement) {

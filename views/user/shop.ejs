@@ -114,17 +114,17 @@
                                     id="max_price" 
                                     name="max_price" 
                                     min="0" 
-                                    value="<%= locals.query && query.max_price ? query.max_price : '200' %>"
+                                    value="<%= locals.query && query.max_price ? query.max_price : '2000' %>"
                                     class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
                                 >
                             </div>
                             
                             <div class="relative pt-5">
                                 <div class="h-1 bg-gray-600 rounded-full">
-                                    <div 
+                                    <!-- <div 
                                         id="priceRangeIndicator" 
                                         class="absolute h-1 bg-[#00ffff] rounded-full"
-                                    ></div>
+                                    ></div> -->
                                 </div>
                             </div>
                         </div>
@@ -260,31 +260,34 @@
                     <!-- Pagination -->
                     <div class="mt-12 flex justify-center items-center space-x-2">
                         <% if (currentPage > 1) { %>
-                            <a href="/shop?page=<%= currentPage - 1 %>&<%= new URLSearchParams(query).toString() %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                            <a href="/shop?page=<%= currentPage - 1 %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                 </svg>
                             </a>
                         <% } %>
-
+                    
                         <% for (let i = 1; i <= totalPages; i++) { %>
-                            <a href="/shop?page=<%= i %>&<%= new URLSearchParams(query).toString() %>" class="w-10 h-10 flex items-center justify-center <%= currentPage === i ? 'bg-[#00ffff] text-black' : 'bg-gray-800 text-white hover:bg-gray-700' %> rounded-lg font-bold transition">
+                            <a href="/shop?page=<%= i %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center <%= currentPage === i ? 'bg-[#00ffff] text-black' : 'bg-gray-800 text-white hover:bg-gray-700' %> rounded-lg font-bold transition">
                                 <%= i %>
                             </a>
                         <% } %>
-
+                    
                         <% if (currentPage < totalPages) { %>
-                            <a href="/shop?page=<%= currentPage + 1 %>&<%= new URLSearchParams(query).toString() %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                            <a href="/shop?page=<%= currentPage + 1 %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
                             </a>
                         <% } %>
+                        
                     </div>
                 <% } %>
+                
             </div>
         </div>
     </div>
+    
 </section>
 
 <!-- Recommended Products -->
@@ -426,4 +429,37 @@
             }
         });
     });
+    // Enhanced Reset filters button
+    const resetBtn = document.getElementById('resetFilters');
+        const filterForm = document.getElementById('filterForm');
+        
+        if (resetBtn && filterForm) {
+            resetBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                filterForm.reset(); // Reset all form fields
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                minPrice.value = '0';
+                maxPrice.value = '2000';
+                updatePriceRangeIndicator();
+                window.location.href = '/shop'; // Redirect to base shop URL
+            });
+        }
+    // Back to top button
+    const backToTopButton = document.querySelector('button.fixed');
+          backToTopButton.addEventListener('click', function() {
+            window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            
+            // Show/hide back to top button based on scroll position
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopButton.style.opacity = '1';
+                } else {
+                    backToTopButton.style.opacity = '0';
+                }
+            });
 </script>

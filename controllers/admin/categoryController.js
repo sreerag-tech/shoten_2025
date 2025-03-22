@@ -104,6 +104,7 @@ const editCategory = async (req, res) => {
   }
 };
 
+
 const deleteCategory = async (req, res) => {
   try {
     const categoryId = req.params.id;
@@ -114,10 +115,13 @@ const deleteCategory = async (req, res) => {
     // Delete the category
     await Category.findByIdAndDelete(categoryId);
 
-    res.redirect("/admin/category");
+    // Send a JSON response
+    res.status(200).json({ message: "Category deleted successfully" });
   } catch (error) {
     console.error("Error deleting category:", error);
-    res.redirect("/admin/pageerror");
+
+    // Send a JSON error response
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

@@ -195,8 +195,12 @@
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({ otp: otpValue })
                 })
-                .then(response => response.json())
+                .then(response => {
+    console.log('Sending OTP to server:', otpValue); // Log the OTP being sent
+    return response.json();
+})
                 .then(data => {
+                    console.log('Server response:', data);
                     if (data.success) {
                         Swal.fire({
                             title: 'Verified!',
@@ -240,6 +244,7 @@
             timerElement.classList.remove('expired');
             updateTimer();
         }
+        
     </script>
 </body>
 </html>

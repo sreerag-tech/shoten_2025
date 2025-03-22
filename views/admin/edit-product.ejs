@@ -1,7 +1,7 @@
 <%- include("./partials/header", { activePage: 'products' }) %>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css" 
-      onerror="this.onerror=null; this.href='/css/cropper.min.css'" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+
 <style>
     .error-message {
         color: red;
@@ -73,9 +73,9 @@
                             <div id="description-error" class="error-message"></div>
                         </div>
                         <div class="mb-4">
-                            <label for="brand" class="form-label">Brand</label>
+                            <!-- <label for="brand" class="form-label">Brand</label>
                             <input type="text" placeholder="Type here" name="brand" class="form-control border" id="brand" value="<%= product.brand %>">
-                            <div id="brand-error" class="error-message"></div>
+                            <div id="brand-error" class="error-message"></div> -->
                         </div>
                         <div class="row">
                             <div class="col-lg-4">
@@ -186,8 +186,8 @@
     </div>
 </section>
 
-<script defer src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js" 
-        onerror="this.onerror=null; this.src='/js/cropper.min.js'"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
 <script>
     let currentCropper = null;
 

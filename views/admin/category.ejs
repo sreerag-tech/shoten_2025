@@ -66,9 +66,9 @@
                                     </td>
                                     <td class="text-start">
                                       <%if(category.isListed){%>
-                                        <span class="badge rounded-pill alert-success" style="width: 60px">Listed</span>
+                                        <span class="badge rounded-pill " style="width: 60px; color: green;">Listed</span>
                                         <%}else{%>
-                                        <span class="badge rounded-pill alert-danger" style="width: 60px">Unlisted</span>
+                                        <span class="badge rounded-pill alert-danger" style="width: 60px;color: red;">Unlisted</span>
                                         <%}%>
                                     </td>
                                     <td class="text-start">
@@ -110,8 +110,9 @@
         <% } %>
     </div>
 </section>
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
 <script>

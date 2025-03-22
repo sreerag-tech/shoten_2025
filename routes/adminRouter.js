@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const uploads = require("../helpers/multer");
+const { uploadsArray, uploadsFields } = require("../helpers/multer");
 
 const adminController = require("../controllers/admin/adminController");
 const customerController = require("../controllers/admin/customerController");
@@ -27,7 +27,7 @@ router.post("/editCategory/:id", adminAuth, categoryController.editCategory);
 router.post("/delete-category/:id", adminAuth, categoryController.deleteCategory);
 
 router.get("/add-products", adminAuth, productController.getProductAddPage);
-router.post("/add-products", adminAuth, uploads.array("images", 4), productController.addProducts);
+router.post("/add-products", adminAuth, uploadsArray, productController.addProducts);
 router.get("/products", adminAuth, productController.getProductList);
 router.post("/delete-product/:id", adminAuth, productController.deleteProduct);
 router.post("/toggle-block-product/:id", adminAuth, productController.toggleBlockProduct);
@@ -36,12 +36,7 @@ router.get("/edit-product/:id", adminAuth, productController.getEditProductPage)
 router.post(
   "/edit-product/:id",
   adminAuth,
-  uploads.fields([
-    { name: "image1", maxCount: 1 },
-    { name: "image2", maxCount: 1 },
-    { name: "image3", maxCount: 1 },
-    { name: "image4", maxCount: 1 },
-  ]),
+  uploadsFields,
   productController.editProduct
 );
 

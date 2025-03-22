@@ -130,7 +130,8 @@ const signup = async (req, res) => {
         message: "Failed to send OTP. Check email settings.",
       });
     }
-
+    console.log('Otp in signup controller',otp);
+    
     req.session.userOtp = otp;
     req.session.otpTimestamp = Date.now();
     req.session.userData = { name, email, password };
@@ -201,11 +202,15 @@ const resendOtp = async (req, res) => {
 
     const emailSent = await sendVerificationEmail(email, otp);
     if (emailSent) {
+      console.log(' resend Otp in signup controller',otp);
       return res.status(200).json({ success: true, message: "OTP resent successfully" });
     } else {
       return res.status(500).json({ success: false, message: "Failed to resend OTP" });
+      
     }
-  } catch (error) {
+    
+  }
+   catch (error) {
     console.error("Error resending OTP:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
@@ -343,39 +348,54 @@ const newPassword = async (req, res) => {
 
 const loadShop = async (req, res) => {
   try {
+    const userId = req.session.user;
+    
+    const userData = await User.findById(userId);
     const {
       search = '',
       sort = 'default',
       category = 'all',
       min_price = 0,
-      max_price = 200,
+      max_price = 2000,
       page = 1
     } = req.query;
 
+    // Base query to filter available and unblocked products
     let query = {
       isBlocked: false,
       status: "Available"
     };
 
+    // Add search filter if provided
     if (search) {
       query.productName = { $regex: search, $options: 'i' };
     }
 
+    // Filter by category and ensure only listed categories are included
     if (category !== 'all') {
       let categoryArray = Array.isArray(category) ? category : category.split(',');
       const categories = await Category.find({ 
         name: { $in: categoryArray.map(cat => new RegExp(`^${cat}$`, 'i')) },
-        isListed: true
+        isListed: true // Only listed categories
       });
       if (categories.length > 0) {
         query.category = { $in: categories.map(cat => cat._id) };
+      } else {
+        // If no listed categories match, return no products
+        query.category = { $in: [] };
       }
+    } else {
+      // When category is 'all', only show products from listed categories
+      const listedCategories = await Category.find({ isListed: true });
+      query.category = { $in: listedCategories.map(cat => cat._id) };
     }
 
+    // Add price range filter
     if (min_price || max_price) {
       query.salePrice = { $gte: parseFloat(min_price), $lte: parseFloat(max_price) };
     }
 
+    // Define sort options
     let sortOption = {};
     switch (sort) {
       case 'price_asc': sortOption = { salePrice: 1 }; break;
@@ -388,25 +408,26 @@ const loadShop = async (req, res) => {
     const perPage = 9;
     const skip = (page - 1) * perPage;
 
+    // Fetch products with the updated query
     const products = await Product.find(query)
       .populate('category')
       .sort(sortOption)
       .skip(skip)
       .limit(perPage);
 
+    // Fetch recommended products (also respecting listed categories)
+    const listedCategories = await Category.find({ isListed: true });
     const recommendedProducts = await Product.find({
       isBlocked: false,
-      status: "Available"
+      status: "Available",
+      category: { $in: listedCategories.map(cat => cat._id) } // Only from listed categories
     })
       .populate('category')
       .sort({ createdAt: -1 })
       .limit(4);
 
-    const listedCategories = await Category.find({ isListed: true });
     const totalProducts = await Product.countDocuments(query);
-    const totalPages = Math.ceil(totalProducts / perPage);
-
-    const productData = products.map(product => ({
+    const totalPages = Math.ceil(totalProducts / perPage);    const productData = products.map(product => ({
       _id: product._id,  // Added _id for product details link
       name: product.productName,
       image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
@@ -429,6 +450,7 @@ const loadShop = async (req, res) => {
     }));
 
     res.render("shop", {
+      user: userData,
       products: productData,
       recommendedProducts: recommendedProductData,
       categories: listedCategories,
@@ -445,163 +467,168 @@ const loadShop = async (req, res) => {
 
 
 
-const loadProductDetails = async (req, res) => {
-  try {
-    const productId = req.params.id;
-    console.log(`Attempting to load product with ID: ${productId}`);
-
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      console.log(`Invalid ObjectId: ${productId}`);
-      return res.redirect('/pageNotFound');
-    }
-
-    const product = await Product.findById(productId).populate('category');
+// const loadProductDetails = async (req, res) => {
+  
+//   try {
     
-    if (!product) {
-      console.log(`Product not found for ID: ${productId}`);
-      return res.redirect('/pageNotFound');
-    }
+//     const productId = req.params.id;
+//     console.log(`Attempting to load product with ID: ${productId}`);
+
+//     // Validate ObjectId
+//     if (!mongoose.Types.ObjectId.isValid(productId)) {
+//       console.log(`Invalid ObjectId: ${productId}`);
+//       return res.redirect('/pageNotFound');
+//     }
+
+//     const product = await Product.findById(productId).populate('category');
     
-    if (product.isBlocked) {
-      console.log(`Product is blocked: ${productId}`);
-      return res.redirect('/pageNotFound');
-    }
+//     if (!product) {
+//       console.log(`Product not found for ID: ${productId}`);
+//       return res.redirect('/pageNotFound');
+//     }
     
-    if (product.status !== "Available") {
-      console.log(`Product status is ${product.status}, not Available: ${productId}`);
-      return res.redirect('/pageNotFound');
-    }
+//     if (product.isBlocked) {
+//       console.log(`Product is blocked: ${productId}`);
+//       return res.redirect('/pageNotFound');
+//     }
+    
+//     if (product.status !== "Available") {
+//       console.log(`Product status is ${product.status}, not Available: ${productId}`);
+//       return res.redirect('/pageNotFound');
+//     }
 
-    const productData = {
-      _id: product._id,
-      name: product.productName,
-      images: product.productImage.map(img => `/uploads/product-images/${img}`),
-      category: product.category?.name || 'Uncategorized',
-      price: product.salePrice,
-      originalPrice: product.regularPrice,
-      discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
-      description: product.description || 'No description available',
-      stock: product.quantity,
-      isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
-    };
+//     const productData = {
+//       _id: product._id,
+//       name: product.productName,
+//       images: product.productImage.map(img => `/uploads/product-images/${img}`),
+//       category: product.category?.name || 'Uncategorized',
+//       price: product.salePrice,
+//       originalPrice: product.regularPrice,
+//       discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
+//       description: product.description || 'No description available',
+//       stock: product.quantity,
+//       isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+//     };
 
-    const relatedProducts = await Product.find({
-      _id: { $ne: productId },
-      category: product.category?._id,
-      isBlocked: false,
-      status: "Available"
-    })
-      .limit(4)
-      .select('productName productImage salePrice regularPrice offerPercentage category createdAt')
-      .populate('category');
+//     const relatedProducts = await Product.find({
+//       _id: { $ne: productId },
+//       category: product.category?._id,
+//       isBlocked: false,
+//       status: "Available"
+//     })
+//       .limit(4)
+//       .select('productName productImage salePrice regularPrice offerPercentage category createdAt')
+//       .populate('category');
 
-    const relatedProductData = relatedProducts.map(product => ({
-      _id: product._id,
-      name: product.productName,
-      image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
-      category: product.category?.name || 'Uncategorized',
-      price: product.salePrice,
-      originalPrice: product.regularPrice,
-      discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
-      isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
-    }));
+//     const relatedProductData = relatedProducts.map(product => ({
+//       _id: product._id,
+//       name: product.productName,
+//       image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
+//       category: product.category?.name || 'Uncategorized',
+//       price: product.salePrice,
+//       originalPrice: product.regularPrice,
+//       discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
+//       isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+//     }));
 
-    res.render('user/product-details', { 
-      product: productData,
-      relatedProducts: relatedProductData,
-      user: req.session.user ? await User.findById(req.session.user) : null
-    });
-  } catch (error) {
-    console.error(`Error loading product details for ID ${req.params.id}:`, error.message);
-    res.redirect('/pageNotFound');
-  }
-};
+//     res.render('user/product-details', { 
+//       user:userData,
+//       product: productData,
+//       relatedProducts: relatedProductData,
+//       user: req.session.user ? await User.findById(req.session.user) : null
+//     });
+//   } catch (error) {
+//     console.error(`Error loading product details for ID ${req.params.id}:`, error.message);
+//     res.redirect('/pageNotFound');
+//   }
+// };
 
-const loadProductsView = async (req, res) => {
-  try {
-    const {
-      search = '',
-      sort = 'default',
-      category = 'all',
-      min_price = 0,
-      max_price = 200,
-      page = 1
-    } = req.query;
+// const loadProductsView = async (req, res) => {
+//   try {
+//     const {
+//       search = '',
+//       sort = 'default',
+//       category = 'all',
+//       min_price = 0,
+//       max_price = 200,
+//       page = 1
+//     } = req.query;
 
-    let query = {
-      isBlocked: false,
-      status: "Available"
-    };
+//     let query = {
+//       isBlocked: false,
+//       status: "Available"
+//     };
 
-    if (search) {
-      query.productName = { $regex: search, $options: 'i' };
-    }
+//     if (search) {
+//       query.productName = { $regex: search, $options: 'i' };
+//     }
 
-    if (category !== 'all') {
-      let categoryArray = Array.isArray(category) ? category : category.split(',');
-      const categories = await Category.find({ 
-        name: { $in: categoryArray.map(cat => new RegExp(`^${cat}$`, 'i')) },
-        isListed: true
-      });
-      if (categories.length > 0) {
-        query.category = { $in: categories.map(cat => cat._id) };
-      }
-    }
+//     if (category !== 'all') {
+//       let categoryArray = Array.isArray(category) ? category : category.split(',');
+//       const categories = await Category.find({ 
+//         name: { $in: categoryArray.map(cat => new RegExp(`^${cat}$`, 'i')) },
+//         isListed: true
+//       });
+//       if (categories.length > 0) {
+//         query.category = { $in: categories.map(cat => cat._id) };
+//       }
+//     }
 
-    if (min_price || max_price) {
-      query.salePrice = { $gte: parseFloat(min_price), $lte: parseFloat(max_price) };
-    }
+//     if (min_price || max_price) {
+//       query.salePrice = { $gte: parseFloat(min_price), $lte: parseFloat(max_price) };
+//     }
 
-    let sortOption = {};
-    switch (sort) {
-      case 'price_asc': sortOption = { salePrice: 1 }; break;
-      case 'price_desc': sortOption = { salePrice: -1 }; break;
-      case 'name_asc': sortOption = { productName: 1 }; break;
-      case 'name_desc': sortOption = { productName: -1 }; break;
-      default: sortOption = { createdAt: -1 };
-    }
+//     let sortOption = {};
+//     switch (sort) {
+//       case 'price_asc': sortOption = { salePrice: 1 }; break;
+//       case 'price_desc': sortOption = { salePrice: -1 }; break;
+//       case 'name_asc': sortOption = { productName: 1 }; break;
+//       case 'name_desc': sortOption = { productName: -1 }; break;
+//       default: sortOption = { createdAt: -1 };
+//     }
 
-    const perPage = 9;
-    const skip = (page - 1) * perPage;
+//     const perPage = 9;
+//     const skip = (page - 1) * perPage;
 
-    const products = await Product.find(query)
-      .populate('category')
-      .sort(sortOption)
-      .skip(skip)
-      .limit(perPage);
+//     const products = await Product.find(query)
+//       .populate('category')
+//       .sort(sortOption)
+//       .skip(skip)
+//       .limit(perPage);
 
-    const listedCategories = await Category.find({ isListed: true });
-    const totalProducts = await Product.countDocuments(query);
-    const totalPages = Math.ceil(totalProducts / perPage);
+//     const listedCategories = await Category.find({ isListed: true });
+//     const totalProducts = await Product.countDocuments(query);
+//     const totalPages = Math.ceil(totalProducts / perPage);
 
-    const productData = products.map(product => ({
-      _id: product._id,
-      name: product.productName,
-      image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
-      category: product.category?.name || 'Uncategorized',
-      price: product.salePrice,
-      originalPrice: product.regularPrice,
-      discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
-      isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
-    }));
+//     const productData = products.map(product => ({
+//       _id: product._id,
+//       name: product.productName,
+//       image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
+//       category: product.category?.name || 'Uncategorized',
+//       price: product.salePrice,
+//       originalPrice: product.regularPrice,
+//       discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
+//       isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+//     }));
 
-    res.render("products-view", {
-      products: productData,
-      categories: listedCategories,
-      query: req.query,
-      currentPage: parseInt(page),
-      totalPages,
-      totalProducts
-    });
-  } catch (error) {
-    console.log("Error loading products view:", error.message);
-    res.redirect("/pageNotFound");
-  }
-};
+//     res.render("products-view", {
+//       products: productData,
+//       categories: listedCategories,
+//       query: req.query,
+//       currentPage: parseInt(page),
+//       totalPages,
+//       totalProducts
+//     });
+//   } catch (error) {
+//     console.log("Error loading products view:", error.message);
+//     res.redirect("/pageNotFound");
+//   }
+// };
 
 const loadProductDetail = async (req, res) => {
   try {
+    const userId=req.session.user;
+    const userData = await User.findById(userId);
     const productId = req.params.id;
 
     // Validate the product ID
@@ -665,6 +692,7 @@ const loadProductDetail = async (req, res) => {
     }));
 
     res.render("product-detail", {
+      user:userData,
       product: productData,
       relatedProducts: relatedProductsData
     });
@@ -690,7 +718,7 @@ module.exports = {
   loadNewPassword,
   newPassword,
   loadShop,
-  loadProductDetails,
-  loadProductsView,
+  // loadProductDetails,
+  // loadProductsView,
   loadProductDetail
 };
