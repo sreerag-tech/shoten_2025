@@ -72,6 +72,11 @@
                             <textarea placeholder="Type here" id="descriptionid" name="description" class="form-control border" rows="4"><%= product.description %></textarea>
                             <div id="description-error" class="error-message"></div>
                         </div>
+                        <div class="mb-4">
+                            <label for="brand" class="form-label">Brand</label>
+                            <input type="text" placeholder="Type here" name="brand" class="form-control border" id="brand" value="<%= product.brand %>">
+                            <div id="brand-error" class="error-message"></div>
+                        </div>
                         <div class="row">
                             <div class="col-lg-4">
                                 <div class="mb-4">
@@ -133,43 +138,39 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 1</label>
-                                        <input class="form-control" type="file" name="image1" id="input1" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 1)">
+                                        <input class="form-control" type="file" name="images" id="input1" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 1)">
                                         <img src="" class="image-preview" id="imgView1" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer1" style="display:none;">
                                             <img src="" id="croppedImg1" alt="Cropper">
                                             <button type="button" id="saveButton1" class="btn btn-sm btn-primary mt-2">Save Crop</button>
                                         </div>
-                                        <div id="image-error-1" class="error-message"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 2</label>
-                                        <input class="form-control" type="file" name="image2" id="input2" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 2)">
+                                        <input class="form-control" type="file" name="images" id="input2" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 2)">
                                         <img src="" class="image-preview" id="imgView2" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer2" style="display:none;">
                                             <img src="" id="croppedImg2" alt="Cropper">
                                             <button type="button" id="saveButton2" class="btn btn-sm btn-primary mt-2">Save Crop</button>
                                         </div>
-                                        <div id="image-error-2" class="error-message"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 3</label>
-                                        <input class="form-control" type="file" name="image3" id="input3" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 3)">
+                                        <input class="form-control" type="file" name="images" id="input3" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 3)">
                                         <img src="" class="image-preview" id="imgView3" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer3" style="display:none;">
                                             <img src="" id="croppedImg3" alt="Cropper">
                                             <button type="button" id="saveButton3" class="btn btn-sm btn-primary mt-2">Save Crop</button>
                                         </div>
-                                        <div id="image-error-3" class="error-message"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Image 4</label>
-                                        <input class="form-control" type="file" name="image4" id="input4" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 4)">
+                                        <input class="form-control" type="file" name="images" id="input4" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, 4)">
                                         <img src="" class="image-preview" id="imgView4" alt="Preview">
                                         <div class="image-cropper" id="cropperContainer4" style="display:none;">
                                             <img src="" id="croppedImg4" alt="Cropper">
                                             <button type="button" id="saveButton4" class="btn btn-sm btn-primary mt-2">Save Crop</button>
                                         </div>
-                                        <div id="image-error-4" class="error-message"></div>
                                     </div>
                                 </div>
                             </div>
@@ -198,14 +199,6 @@
         const saveButton = document.getElementById(`saveButton${index}`);
 
         if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const validTypes = ['image/jpeg', 'image/png'];
-            if (!validTypes.includes(file.type)) {
-                alert('Only JPG and PNG files are allowed.');
-                input.value = ''; // Clear invalid file
-                return;
-            }
-
             const reader = new FileReader();
 
             reader.onload = function(e) {
@@ -286,16 +279,10 @@
         let isValid = true;
         const productName = document.getElementById('product_name').value;
         const description = document.getElementById('descriptionid').value;
+        const brand = document.getElementById('brand').value;
         const regularPrice = document.querySelector('input[name="regularPrice"]').value;
         const quantity = document.querySelector('input[name="quantity"]').value;
-        const imageInputs = [
-            document.getElementById('input1'),
-            document.getElementById('input2'),
-            document.getElementById('input3'),
-            document.getElementById('input4')
-        ];
 
-        // Existing textbox validations
         if (!productName.trim()) {
             displayErrorMessage('productName-error', 'Product name is required');
             isValid = false;
@@ -304,36 +291,16 @@
             displayErrorMessage('description-error', 'Description is required');
             isValid = false;
         }
+        if (!brand.trim()) {
+            displayErrorMessage('brand-error', 'Brand is required');
+            isValid = false;
+        }
         if (!regularPrice || parseFloat(regularPrice) <= 0) {
             displayErrorMessage('regularPrice-error', 'Please enter a valid price');
             isValid = false;
         }
         if (!quantity || parseInt(quantity) < 0) {
             displayErrorMessage('quantity-error', 'Please enter a valid quantity');
-            isValid = false;
-        }
-
-        // Image validation
-        const validTypes = ['image/jpeg', 'image/png'];
-        let uploadedImages = 0;
-        const existingImagesCount = <%= product.productImage.length %>;
-
-        imageInputs.forEach((input, index) => {
-            if (input.files && input.files.length > 0) {
-                const file = input.files[0];
-                if (!validTypes.includes(file.type)) {
-                    displayErrorMessage(`image-error-${index + 1}`, 'Only JPG or PNG files are allowed');
-                    isValid = false;
-                } else {
-                    uploadedImages++;
-                }
-            }
-        });
-
-        // Calculate total images: existing + new uploads
-        const totalImages = existingImagesCount + uploadedImages;
-        if (totalImages < 3) {
-            displayErrorMessage('image-error-1', 'Product must have at least 3 images (JPG or PNG only)');
             isValid = false;
         }
 
