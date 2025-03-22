@@ -10,7 +10,7 @@
        <div class="d-flex">
         <form action="/admin/category/" method="get" class="d-inline">
             <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px">
-                <input type="text" class="form-control border-0 rounded-pill mt-3" placeholder="Search categories" name="search"/>
+                <input type="text" class="form-control border-0 rounded-pill mt-3" placeholder="Search categories" name="search" value="<%= search %>"/>
                 <button class="btn" type="submit">Search</button>
             </div>
         </form>
@@ -99,17 +99,17 @@
     </div>
     <div class="pagination-container">
         <% if (currentPage > 1) { %>
-        <a href="?page=<%= currentPage - 1 %>">« Previous</a>
+        <a href="?page=<%= currentPage - 1 %>&search=<%= search %>">« Previous</a>
         <% } %>
         <% for (let i = 1; i <= totalPages; i++) { %>
             <% if (i === currentPage) { %>
             <span class="current-page"><%= i %></span>
             <% } else { %>
-            <a href="?page=<%= i %>"><%= i %></a>
+            <a href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
             <% } %>
         <% } %>
         <% if (currentPage < totalPages) { %>
-        <a href="?page=<%= currentPage + 1 %>">Next »</a>
+        <a href="?page=<%= currentPage + 1 %>&search=<%= search %>">Next »</a>
         <% } %>
     </div>
 </section>
