@@ -18,6 +18,8 @@ const userAuth =(req,res,next)=>{
   }else{
     res.redirect("/login")
   }
+
+  
 }
 
 const adminAuth = (req, res, next) => {

@@ -567,9 +567,17 @@
         <% } %>
     </div>
 </section>
-
+<%- include("../../views/user/partials/footer") %>
 <!-- Image Zoom JS -->
 <script>
+        // Back to top button
+        const backToTopButton = document.querySelector('button.fixed');
+          backToTopButton.addEventListener('click', function() {
+            window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
     // Image zoom functionality
     document.addEventListener('DOMContentLoaded', function() {
         const zoomContainer = document.getElementById('productZoomContainer');
@@ -810,6 +818,8 @@
         });
     }
     
+
+    
     // Add to wishlist functionality
     function addToWishlist(productId) {
         fetch('/api/wishlist/add', {
@@ -838,7 +848,8 @@
                 notification.remove();
             }, 2000);
         });
+        
     }
+    
 </script>
 
-<%- include("../../views/user/partials/footer") %>

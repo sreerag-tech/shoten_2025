@@ -22,6 +22,7 @@
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         <% products.forEach(product => { %>
+            <a href="/shop/product/<%= product._id %>" class="block">
             <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-[#00ffff] transition">
                 <div class="relative">
                     <img src="uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="w-full h-64 object-cover">                    <% if (product.productOffer) { %>
@@ -43,6 +44,7 @@
                     </div>
                 </div>
             </div>
+        </a>
         <% }) %>
     </div>
     
