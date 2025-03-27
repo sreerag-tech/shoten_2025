@@ -239,6 +239,14 @@ const login = async (req, res) => {
   }
 };
 
+const googleCallbackHandler = (req, res) =.{
+  try {
+    
+  } catch (error) {
+    
+  }
+}
+
 const logout = async (req, res) => {
   try {
     req.session.destroy((err) => {
@@ -712,6 +720,7 @@ module.exports = {
   resendOtp,
   pageNotFound,
   login,
+  googleCallbackHandler,
   logout,
   loadForgotPassword,
   resetPassword,

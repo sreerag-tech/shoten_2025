@@ -24,29 +24,20 @@ const addProducts = async (req, res) => {
     if (!productExists) {
       const images = [];
 
-      if (req.files && req.files.length > 0) {
-        for (let i = 0; i < req.files.length; i++) {
-          const originalImagePath = req.files[i].path;
-          const resizedImagePath = path.join(
-            "public",
-            "uploads",
-            "product-images",
-            "resized_" + req.files[i].filename
-          );
 
-          await sharp(originalImagePath)
-            .resize({ width: 440, height: 440 })
-            .toFile(resizedImagePath);
+if (req.files && req.files.length > 0) {
+  for (let i = 0; i < req.files.length; i++) {
+    const imagePath = path.join("public", "uploads", "product-images", req.files[i].filename);
 
-          images.push("resized_" + req.files[i].filename);
-
-          try {
-            await fs.promises.unlink(originalImagePath);
-          } catch (unlinkError) {
-            console.warn(`Failed to delete original image ${originalImagePath}: ${unlinkError.message}`);
-          }
-        }
-      }
+    // Move the uploaded file to the desired folder
+    try {
+      await fs.promises.rename(req.files[i].path, imagePath);
+      images.push(req.files[i].filename);
+    } catch (error) {
+      console.error(`Error saving image: ${error.message}`);
+    }
+  }
+}
 
       const categoryId = await Category.findOne({ name: products.category });
       if (!categoryId) {

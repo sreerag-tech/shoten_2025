@@ -26,10 +26,11 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/signup" }),
-  (req, res) => {
-    req.session.user = req.user._id;
-    res.redirect("/home");
-  }
+  // (req, res) => {
+  //   req.session.user = req.user._id;
+  //   res.redirect("/home");
+  // }
+   userController.googleCallbackHandler
 );
 
 module.exports = router;
