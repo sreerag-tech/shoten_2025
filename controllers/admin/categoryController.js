@@ -1,5 +1,9 @@
 const Category = require("../../models/categorySchema");
 const Product = require("../../models/productSchema");
+
+
+
+
 const categoryInfo = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -38,6 +42,8 @@ const addCategory = async (req, res) => {
     const existingCategory = await Category.findOne({ name });
     if (existingCategory) {
       return res.status(400).json({ error: "Category already exists" });
+      
+      
     }
     const newCategory = new Category({
       name,
@@ -80,33 +86,48 @@ const getEditCategory = async (req, res) => {
     res.redirect("/admin/pageerror");
   }
 };
-
 const editCategory = async (req, res) => {
   try {
     const id = req.params.id;
     const { categoryName, description } = req.body;
+
+    // Validate input
+    if (!categoryName) {
+      return res.status(400).json({ error: "Category name is required" });
+    }
+
+    // Check for existing category with the same name (excluding current category)
     const existingCategory = await Category.findOne({ 
       name: categoryName,
       _id: { $ne: id }
     });
+
     if (existingCategory) {
       return res.status(400).json({ error: "Category already exists" });
     }
 
-    const updateCategory = await Category.findByIdAndUpdate(
+    // Update the category
+    const updatedCategory = await Category.findByIdAndUpdate(
       id,
       {
         name: categoryName,
-        description: description,
+        description: description || "", // Default to empty string if undefined
       },
-      { new: true }
+      { new: true, runValidators: true }
     );
-    if (updateCategory) {
-      res.redirect("/admin/category");
-    } else {
-      res.status(404).json({ error: "category not found" });
+
+    if (!updatedCategory) {
+      return res.status(404).json({ error: "Category not found" });
     }
+
+    // Return success response
+    return res.status(200).json({ 
+      message: "Category updated successfully",
+      category: updatedCategory 
+    });
+
   } catch (error) {
+    console.error("Error in editCategory:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -3,9 +3,15 @@ const mongoose = require("mongoose");
 const bcrypt = require(`bcrypt`);
 
 
+
+
+
 const pageerror= async(req,res)=>{
   res.render("admin-error")
 }
+
+
+
 
 
 const loadLogin=(req,res)=>{
@@ -16,27 +22,56 @@ const loadLogin=(req,res)=>{
 }
 
 
-const login= async(req,res)=>{
+
+
+
+
+const login = async (req, res) => {
   try {
-    const {email,password}=req.body;
-    const admin = await User.findOne({email,isAdmin:true});
-    if(admin){
-      const passwordMatch=bcrypt.compare(password,admin.password);
-      if(passwordMatch){
-        req.session.admin =true;
-        return res.redirect("/admin/dashboard")
-      }else{
-        return res.redirect("/login")
-      }
-    }else{
-      return res.redirect("/login")
-    }
-  } catch (error) {
-    console.log("login error",error);
-    return res.redirect("/pageerror")
+    const { email, password } = req.body;
+
+    // Find admin user
+    const admin = await User.findOne({ email, isAdmin: true });
     
+    if (!admin) {
+      // Render admin login page with error message if no admin found
+      return res.render('admin-login', { 
+        message: 'Invalid email or password',
+       
+      });
+    }
+    // Compare passwords
+    const passwordMatch = await bcrypt.compare(password, admin.password);
+    
+    if (passwordMatch) {
+      // Successful login
+      req.session.admin = true;
+      return res.redirect('/admin/dashboard');
+    } else {
+      // Render admin login page with error message if password doesn't match
+      return res.render('admin-login', { 
+        message: 'Invalid email or password',
+        email // Keep email in form
+      });
+    }
+
+  } catch (error) {
+    console.error('Login error:', error);
+    // Render admin login page with generic error
+    return res.render('admin-login', { 
+      message: 'An error occurred. Please try again.',
+      email: req.body.email
+    });
   }
-}
+};
+
+
+
+
+
+
+
+
 
 const loadDashboard= async(req,res)=>{
   if(req.session.admin){
@@ -47,6 +82,13 @@ const loadDashboard= async(req,res)=>{
     }
   }
 }
+
+
+
+
+
+
+
 
 
 const logout = async(req,res)=>{
@@ -63,6 +105,9 @@ const logout = async(req,res)=>{
     res.redirect("/pageerror")
   }
 }
+
+
+
 
 
 

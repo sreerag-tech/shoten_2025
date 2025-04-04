@@ -54,7 +54,7 @@ if (req.files && req.files.length > 0) {
         quantity: products.quantity,
         productImage: images,
         status: "Available",
-      });
+      });+
 
       await newProduct.save();
       return res.redirect("/admin/add-products");

@@ -71,9 +71,9 @@ const loadLoginpage = async (req, res) => {
 const loadHome = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) {
-      return res.redirect("/login");
-    }
+    // if (!userId) {
+    //   return res.redirect("/login");
+    // }
     
     const userData = await User.findById(userId);
     const products = await Product.find({ 
@@ -238,15 +238,43 @@ const login = async (req, res) => {
     res.render("login", { message: "Login failed, please try again later" });
   }
 };
-
-const googleCallbackHandler = (req, res) =.{
+const googleCallbackHandler = async (req, res) => {
   try {
-    
-  } catch (error) {
-    
-  }
-}
+    // Fetch the user from the database first
+    const user = await User.findOne({ _id: req.user._id });
+    if (!user) {
+      return res.render("login", { message: "User not found" });
+    }
 
+    // Check if the user is blocked before setting the session
+    if (user.isBlocked) {
+      console.log("User is blocked:", user._id);
+      // Destroy the session to ensure the user isn't logged in
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+          return res.redirect("/pageNotFound");
+        }
+        return res.render("login", { message: "User is blocked by admin" });
+      });
+      return; 
+    }
+
+    // If user is not blocked, set the session and proceed
+    req.session.user = req.user._id;
+    console.log("User logged in via Google:", req.user._id);
+    res.redirect("/home");
+  } catch (error) {
+    console.error("Error in Google callback handler:", error);
+    // Destroy session in case of error to prevent partial login states
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+      }
+      res.redirect("/login");
+    });
+  }
+};
 const logout = async (req, res) => {
   try {
     req.session.destroy((err) => {

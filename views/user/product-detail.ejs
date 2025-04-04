@@ -503,7 +503,7 @@
                     <% if (relatedProducts && relatedProducts.length > 0) { %>
                         <% relatedProducts.forEach(relatedProduct => { %>
                             <div class="bg-gray-800 rounded-xl overflow-hidden transition transform hover:-translate-y-1">
-                                <a href="/product/<%= relatedProduct._id %>" class="block relative">
+                                <a href="/shop/product/<%= relatedProduct._id %>" class="block relative">
                                     <img 
                                         src="<%= relatedProduct.image %>" 
                                         alt="<%= relatedProduct.name %>" 

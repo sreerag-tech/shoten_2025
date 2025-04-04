@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require("passport");
 const userController = require("../controllers/user/userController");
 
+
 router.get("/", userController.loadLandingpage);
 router.get("/signup", userController.loadSignUppage);
 router.get("/login", userController.loadLoginpage);
@@ -34,3 +35,7 @@ router.get(
 );
 
 module.exports = router;
+
+
+
+
