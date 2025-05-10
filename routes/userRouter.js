@@ -20,6 +20,7 @@ router.get("/newPassword", userController.loadNewPassword);
 router.post("/newPassword", userController.newPassword);
 router.get("/shop", userController.loadShop);
 router.get('/shop/product/:id', userController.loadProductDetail);
+
 router.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -27,6 +28,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/signup" }),
+  
   // (req, res) => {
   //   req.session.user = req.user._id;
   //   res.redirect("/home");

@@ -93,7 +93,8 @@ const loadHome = async (req, res) => {
   }
 };
 
-const loadLandingpage = async (req, res) => {
+const loadLandingpage = async (req, res) => { 
+  
   try {
     if (req.session.user) {
       return res.redirect("/home");

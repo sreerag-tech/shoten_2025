@@ -45,6 +45,8 @@ const addCategory = async (req, res) => {
       
       
     }
+
+    
     const newCategory = new Category({
       name,
       description,
@@ -95,10 +97,11 @@ const editCategory = async (req, res) => {
     if (!categoryName) {
       return res.status(400).json({ error: "Category name is required" });
     }
-
+    
     // Check for existing category with the same name (excluding current category)
     const existingCategory = await Category.findOne({ 
       name: categoryName,
+
       _id: { $ne: id }
     });
 

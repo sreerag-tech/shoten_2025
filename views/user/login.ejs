@@ -28,9 +28,168 @@
             display: none;
             margin: 0px !important;
         }
+        /* Loader Styling */
+        .loader-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000 !important;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        /* Cyber ring animation */
+        .cyber-ring {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            mix-blend-mode: screen;
+        }
+        .ring:nth-child(1) {
+            width: 150pxbreaking
+            width: 150px;
+            height: 150px;
+            border-top: 4px solid #00ffff;
+            border-bottom: 4px solid #00ffff;
+            animation: spin 2s linear infinite;
+        }
+        .ring:nth-child(2) {
+            width: 180px;
+            height: 180px;
+            border-left: 4px solid #ff0066;
+            border-right: 4px solid #ff0066;
+            animation: spin 2.5s linear infinite reverse;
+        }
+        .ring:nth-child(3) {
+            width: 120px;
+            height: 120px;
+            border-top: 4px solid #ffcc00;
+            border-left: 4px solid #ffcc00;
+            animation: spin 1.5s linear infinite;
+        }
+        /* Progress text */
+        .progress-text {
+            position: absolute;
+            font-family: monospace;
+            font-size: 1.5rem;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        /* Loading percentage counter */
+        .percentage-container {
+            margin-top: 30px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            color: #00ffff;
+        }
+        /* Fun status messages */
+        .status-message {
+            margin-top: 30px;
+            font-family: monospace;
+            font-size: 1rem;
+            color: white;
+            max-width: 300px;
+            text-align: center;
+            min-height: 2.5rem;
+        }
+        /* Glitchy binary background */
+        .binary-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            opacity: 0.1;
+            z-index: -1;
+            color: #00ffff;
+            font-family: monospace;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        /* Animations */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 5px #00ffff; }
+            50% { text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff; }
+        }
+        .glow-text {
+            animation: glow 1.5s ease-in-out infinite;
+        }
+        .loader-container.active {
+            display: flex !important;
+        }
+        /* Welcome Animation Styling */
+        .welcome-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 20000 !important;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .welcome-text {
+            font-family: monospace;
+            font-size: 4rem;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+            animation: fadeInOut 3s ease-in-out forwards;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.2); }
+        }
+        .welcome-container.active {
+            display: flex !important;
+        }
     </style>
 </head>
 <body class="flex justify-center items-center h-screen text-white relative">
+    <!-- Animated Loader -->
+    <div class="loader-container" id="loader">
+        <div class="cyber-ring">
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="progress-text glow-text" id="progress-text">LOADING</div>
+        </div>
+        <div class="percentage-container">
+            <span id="percentage-counter">0%</span> COMPLETE
+        </div>
+        <div class="status-message" id="status-message">Initializing secure connection...</div>
+        <div class="binary-bg" id="binary-bg"></div>
+    </div>
+
+    <!-- Welcome Animation -->
+    <div class="welcome-container" id="welcome-animation">
+        <h1 class="welcome-text">Welcome to Shoten</h1>
+        <div class="binary-bg" id="welcome-binary-bg"></div>
+    </div>
+
     <!-- Animated Background Text -->
     <div class="absolute inset-0 flex justify-center items-center">
         <h1 class="animate-glitch">ショップ</h1>
@@ -53,13 +212,12 @@
             />
             <div id="error2" class="error-message"></div>
 
-           <% if(locals.message && message.length>0){%>
+            <% if(locals.message && message.length>0){%>
             <div class="alert alert-danger text-center" style="color: red;">
                 <%=message%>
             </div>
             <%}%>
 
-            
             <div class="flex items-center mt-2">
                 <input type="checkbox" id="show-password" class="mr-2">
                 <label for="show-password" class="text-sm text-gray-400">Show Password</label>
@@ -76,15 +234,124 @@
             </button>
         </form>
         <div class="my-4 border-b border-gray-700"></div>
-        <a href="/auth/google" class="w-full flex items-center justify-center p-3 bg-gray-800 rounded-xl hover:bg-gray-700 transition">
+        <a href="/auth/google" class="w-full flex items-center justify-center p-3 bg-gray-800 rounded-xl hover:bg-gray-700 transition" id="google-login">
             <img src="https://imgs.search.brave.com/cMeR-TEzSzc3L_T_t4c0ZKSZu5B4BxkMPGrZ48urikE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4x/Lmljb25maW5kZXIu/Y29tL2RhdGEvaWNv/bnMvZ29vZ2xlLXMt/bG9nby8xNTAvR29v/Z2xlX0ljb25zLTA5/LTUxMi5wbmc" class="w-6 h-6 mr-2" alt="Google Logo"> Login with Google
         </a>
         <p class="mt-4 text-gray-400 text-sm">
             Don't have an account? <a href="/signup" class="text-[#00ffff] hover:underline">Sign up</a>
         </p>
     </div>
-</body>
+
 <script>
+    // Loader Functions & Animation
+    let loaderTimeout = null;
+    const MIN_LOADER_DURATION = 1000; // 1 second minimum display time for faster animation
+    
+    // Fun status messages
+    const statusMessages = [
+        "Initializing secure connection...",
+        "Bypassing neural firewall...",
+        "Decoding quantum encryption...",
+        "Synchronizing neural interfaces...",
+        "Hacking the mainframe...",
+        "Enhancing digital signatures...",
+        "Compiling binary matrices...",
+        "Calibrating cyberspace protocols...",
+        "Processing data packets...",
+        "Establishing secure channel..."
+    ];
+    
+    function showLoader() {
+        console.log('Showing loader');
+        clearTimeout(loaderTimeout);
+        document.getElementById('loader').classList.add('active');
+        
+        const percentageCounter = document.getElementById('percentage-counter');
+        const statusMessage = document.getElementById('status-message');
+        const progressText = document.getElementById('progress-text');
+        const binaryBg = document.getElementById('binary-bg');
+        
+        binaryBg.innerHTML = '';
+        generateBinaryBackground();
+        
+        let count = 0;
+        percentageCounter.textContent = '0%';
+        let messageIndex = 0;
+        statusMessage.textContent = statusMessages[messageIndex];
+        
+        const counterInterval = setInterval(() => {
+            count += Math.floor(Math.random() * 10) + 5;
+            if (count > 100) count = 100;
+            percentageCounter.textContent = count + '%';
+            
+            if (count % 30 === 0) {
+                messageIndex = (messageIndex + 1) % statusMessages.length;
+                statusMessage.textContent = statusMessages[messageIndex];
+            }
+            
+            const dots = ".".repeat(Math.floor(count / 25) + 1);
+            progressText.textContent = "LOADING" + dots;
+            
+            if (count === 100) {
+                clearInterval(counterInterval);
+                progressText.textContent = "COMPLETE";
+            }
+        }, 50);
+    }
+    
+    function generateBinaryBackground(containerId = 'binary-bg') {
+        const binaryBg = document.getElementById(containerId);
+        const characters = '01';
+        const rows = 50;
+        const cols = 100;
+        
+        for (let i = 0; i < rows; i++) {
+            const row = document.createElement('div');
+            let rowContent = '';
+            for (let j = 0; j < cols; j++) {
+                rowContent += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            row.textContent = rowContent;
+            binaryBg.appendChild(row);
+        }
+        
+        setInterval(() => {
+            const rows = binaryBg.children;
+            for (let i = 0; i < rows.length; i++) {
+                if (Math.random() > 0.7) {
+                    const position = Math.floor(Math.random() * cols);
+                    const rowText = rows[i].textContent;
+                    const newChar = characters.charAt(Math.floor(Math.random() * characters.length));
+                    rows[i].textContent = rowText.substring(0, position) + newChar + rowText.substring(position + 1);
+                }
+            }
+        }, 50);
+    }
+
+    function hideLoader() {
+        console.log('Scheduling loader hide');
+        loaderTimeout = setTimeout(() => {
+            console.log('Hiding loader');
+            document.getElementById('loader').classList.remove('active');
+        }, MIN_LOADER_DURATION);
+    }
+
+    function showWelcomeAnimation(callback) {
+        console.log('Showing welcome animation');
+        const welcomeContainer = document.getElementById('welcome-animation');
+        const welcomeBinaryBg = document.getElementById('welcome-binary-bg');
+        welcomeBinaryBg.innerHTML = '';
+        generateBinaryBackground('welcome-binary-bg');
+        
+        welcomeContainer.classList.add('active');
+        
+        setTimeout(() => {
+            welcomeContainer.classList.remove('active');
+            if (callback) callback();
+        }, 3000); // Matches the duration of fadeInOut animation
+    }
+
+    // Validation Logic
     const emailid = document.getElementById("email");
     const passid = document.getElementById("password");
     const error1 = document.getElementById("error1");
@@ -123,7 +390,11 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+        showLoader();
+        setTimeout(hideLoader, MIN_LOADER_DURATION);
+
         loginform.addEventListener("submit", function (e) {
+            e.preventDefault();
             emailValidateChecking();
             passValidateChecking();
 
@@ -131,14 +402,52 @@
                 error1.style.display === "block" ||
                 error2.style.display === "block"
             ) {
-                e.preventDefault();
+                return;
             }
-        });
-    });
 
-    document.getElementById("show-password").addEventListener("change", function () {
-        const passInput = document.querySelector('input[name="password"]');
-        passInput.type = this.checked ? "text" : "password";
+            showLoader();
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'email': emailid.value,
+                    'password': passid.value
+                })
+            })
+            .then(response => response.text())
+            .then(html => {
+                if (html.includes('User not found') || html.includes('Incorrect password') || html.includes('User is blocked')) {
+                    hideLoader();
+                    document.querySelector('.alert').innerHTML = html.match(/<div class="alert alert-danger text-center" style="color: red;">(.*?)<\/div>/)[1];
+                    document.querySelector('.alert').style.display = 'block';
+                } else {
+                    showWelcomeAnimation(() => {
+                        window.location.href = '/home';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                hideLoader();
+                document.querySelector('.alert').innerHTML = 'Login failed, please try again later';
+                document.querySelector('.alert').style.display = 'block';
+            });
+        });
+
+        const googleLogin = document.getElementById("google-login");
+        if (googleLogin) {
+            googleLogin.addEventListener("click", function () {
+                console.log('Google login clicked, showing loader');
+                showLoader();
+            });
+        }
+
+        document.getElementById("show-password").addEventListener("change", function () {
+            const passInput = document.querySelector('input[name="password"]');
+            passInput.type = this.checked ? "text" : "password";
+        });
     });
 </script>
 </html>
