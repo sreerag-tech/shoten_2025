@@ -86,24 +86,24 @@ async function validateForm() {
     } else if (!/^[a-zA-Z\s]+$/.test(name)) {
         displayErrorMessage("name-error", "Category name should contain only alphabetic characters");
         isValid = false;
-    } else {
-        try {
-            const response = await fetch(`/admin/checkCategory?name=${encodeURIComponent(name)}&id=${originalCategoryId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            const result = await response.json();
-            if (result.exists) {
-                displayErrorMessage("name-error", "Category already exists");
-                isValid = false;
-            }
-        } catch (error) {
-            console.error("Error checking category:", error);
-            displayErrorMessage("name-error", "Error checking category name");
-            isValid = false;
-        }
+    // } else {
+    //     try {
+    //         const response = await fetch(`/admin/checkCategory?name=${encodeURIComponent(name)}&id=${originalCategoryId}`, {
+    //             method: 'GET',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             }
+    //         });
+    //         const result = await response.json();
+    //         if (result.exists) {
+    //             displayErrorMessage("name-error", "Category already exists");
+    //             isValid = false;
+    //         }
+    //     } catch (error) {
+    //         console.error("Error checking category:", error);
+    //         displayErrorMessage("name-error", "Error checking category name");
+    //         isValid = false;
+    //     }
     }
 
     if (description === "") {

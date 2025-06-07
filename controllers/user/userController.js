@@ -71,27 +71,32 @@ const loadLoginpage = async (req, res) => {
 const loadHome = async (req, res) => {
   try {
     const userId = req.session.user;
-    // if (!userId) {
-    //   return res.redirect("/login");
-    // }
-    
+
     const userData = await User.findById(userId);
+
     const products = await Product.find({ 
       isBlocked: false,
-      status: "Available" 
+      status: "Available",
+    })
+    .populate({
+      path: 'category',
+      match: { isListed: true }
     })
     .sort({ createdAt: -1 })
     .limit(8);
 
+    const filteredProducts = products.filter(product => product.category);
+
     res.render("home", { 
       user: userData,
-      products: products
+      products: filteredProducts
     });
   } catch (error) {
     console.log("Home not found", error);
     res.status(500).send("server error");
   }
 };
+
 
 const loadLandingpage = async (req, res) => { 
   

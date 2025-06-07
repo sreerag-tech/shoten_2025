@@ -89,6 +89,7 @@
                                             <% } %>
                                         </td>
                                         <td><%= product.productName %></td>
+                                        <td><%= product.category ? product.category.name : "N/A" %></td>
                                         <td>$<%= product.regularPrice.toFixed(2) %></td>
                                         <td>$<%= product.salePrice.toFixed(2) %></td>
                                         <td><%= product.quantity %></td>
