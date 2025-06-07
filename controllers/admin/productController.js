@@ -19,6 +19,8 @@ const getProductAddPage = async (req, res) => {
 const addProducts = async (req, res) => {
   try {
     const products = req.body;
+    
+
     const productExists = await Product.findOne({ productName: products.productName });
 
     if (!productExists) {
@@ -57,7 +59,9 @@ if (req.files && req.files.length > 0) {
       });+
 
       await newProduct.save();
+      
       return res.redirect("/admin/add-products");
+      
     } else {
       return res.redirect("/admin/add-products?error=Product+already+exists");
     }

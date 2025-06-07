@@ -36,28 +36,37 @@ const categoryInfo = async (req, res) => {
   }
 };
 
+
+
 const addCategory = async (req, res) => {
   const { name, description } = req.body;
   try {
-    const existingCategory = await Category.findOne({ name });
+    // Case-insensitive search using regex
+    const existingCategory = await Category.findOne({
+      name: { $regex: `^${name}$`, $options: 'i' } // ^ and $ ensure exact match, 'i' makes it case-insensitive
+    });
+
     if (existingCategory) {
-      return res.status(400).json({ error: "Category already exists" });
-      
-      
+      return res.status(400).json({ error: "Category already exists (case-insensitive match)" });
     }
 
-    
+    // Optional: Normalize name to a standard case (e.g., capitalize first letter)
     const newCategory = new Category({
-      name,
-      description,
+      name: name.trim(),
+      description
     });
+
     await newCategory.save();
-    return res.json({ message: "Category added successfully" });
+    res.status(200).json({ message: "Category added successfully" });
+
   } catch (error) {
-    console.error("Error in addCategory:", error);
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    console.error("Error adding category:", error);
+    res.status(500).json({ error: "Server error while adding category" });
   }
 };
+
+
+
 
 const getListCategory = async (req, res) => {
   try {

@@ -334,16 +334,16 @@
         if (!regularPrice.value.trim()) {
             errorElements.regularPrice.textContent = 'Regular price is required';
             isValid = false;
-        } else if (isNaN(regularPrice.value) || Number(regularPrice.value) < 0) {
-            errorElements.regularPrice.textContent = 'Please enter a valid non-negative number';
+        } else if (isNaN(regularPrice.value) || Number(regularPrice.value) <= 0) {
+            errorElements.regularPrice.textContent = 'Please enter a valid non-negative number greater than 0';
             isValid = false;
         }
 
         if (!salePrice.value.trim()) {
             errorElements.salePrice.textContent = 'Sale price is required';
             isValid = false;
-        } else if (isNaN(salePrice.value) || Number(salePrice.value) < 0) {
-            errorElements.salePrice.textContent = 'Please enter a valid non-negative number';
+        } else if (isNaN(salePrice.value) || Number(salePrice.value) <= 0) {
+            errorElements.salePrice.textContent = 'Please enter a valid non-negative number greater than 0';
             isValid = false;
         }
 

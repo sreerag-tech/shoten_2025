@@ -21,11 +21,13 @@
     <p class="text-center text-gray-400 mb-12">Explore our latest anime merchandise collection</p>
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-        <% products.forEach(product => { %>
-            <a href="/shop/product/<%= product._id %>" class="block">
+        <% products.forEach(product => { 
+     if (product.status === 'listed') { %>
+        <a href="/shop/product/<%= product._id %>" class="block">
             <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-[#00ffff] transition">
                 <div class="relative">
-                    <img src="uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="w-full h-64 object-cover">                    <% if (product.productOffer) { %>
+                    <img src="uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="w-full h-64 object-cover">                    
+                    <% if (product.productOffer) { %>
                         <div class="absolute top-2 right-2 bg-[#00ffff] text-black text-xs font-bold px-2 py-1 rounded">OFFER</div>
                     <% } else if (new Date() - product.createdAt < 7 * 24 * 60 * 60 * 1000) { %>
                         <div class="absolute top-2 right-2 bg-[#00ffff] text-black text-xs font-bold px-2 py-1 rounded">NEW</div>
@@ -45,8 +47,9 @@
                 </div>
             </div>
         </a>
-        <% }) %>
-    </div>
+<%  } 
+}) %>
+
     
     <div class="text-center mt-12">
         <a href="/shop" class="px-8 py-3 border-2 border-[#00ffff] text-[#00ffff] font-bold rounded-lg hover:bg-[#00ffff] hover:text-black transition">View All Products</a>
@@ -134,5 +137,6 @@
             });
         });
     </script>
+    
 </body>
 </html>

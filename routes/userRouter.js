@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const userController = require("../controllers/user/userController");
-
+const  {userAuth}  = require("../middlewares/auth"); // Import userAuth middleware
 
 router.get("/", userController.loadLandingpage);
 router.get("/signup", userController.loadSignUppage);
 router.get("/login", userController.loadLoginpage);
-router.get("/home", userController.loadHome);
+router.get("/home",userAuth,userController.loadHome);
 router.post("/signup", userController.signup);
 router.post("/verify-otp", userController.verifyOtp);
 router.post("/resend-otp", userController.resendOtp);

@@ -268,12 +268,14 @@
             });
         }
         
-        const resetBtn = document.getElementById('resetFilters');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function() {
-                window.location.href = '/products';
-            });
-        }
+      const resetBtn = document.getElementById('resetFilters');
+const filterForm = document.getElementById('filterForm');
+if (resetBtn && filterForm) {
+    resetBtn.addEventListener('click', function() {
+        filterForm.reset(); // Reset all form elements to their initial values
+        window.location.href = '/products'; // Redirect to /products to reload with default state
+    });
+}
         
         const allCategoriesCheckbox = document.getElementById('category_all');
         const categoryCheckboxes = document.querySelectorAll('input[name="category"]:not([value="all"])');

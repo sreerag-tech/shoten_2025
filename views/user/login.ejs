@@ -58,7 +58,6 @@
             mix-blend-mode: screen;
         }
         .ring:nth-child(1) {
-            width: 150pxbreaking
             width: 150px;
             height: 150px;
             border-top: 4px solid #00ffff;
@@ -212,11 +211,11 @@
             />
             <div id="error2" class="error-message"></div>
 
-            <% if(locals.message && message.length>0){%>
-            <div class="alert alert-danger text-center" style="color: red;">
-                <%=message%>
-            </div>
-            <%}%>
+            <% if(locals.message && message.length > 0) { %>
+                <div class="alert alert-danger text-center" style="color: red;">
+                    <%= message %>
+                </div>
+            <% } %>
 
             <div class="flex items-center mt-2">
                 <input type="checkbox" id="show-password" class="mr-2">
@@ -251,7 +250,7 @@
     const statusMessages = [
         "Initializing secure connection...",
         "Bypassing neural firewall...",
-        "Decoding quantum encryption...",
+        "Decoding quantum encryption...", 
         "Synchronizing neural interfaces...",
         "Hacking the mainframe...",
         "Enhancing digital signatures...",
@@ -394,7 +393,7 @@
         setTimeout(hideLoader, MIN_LOADER_DURATION);
 
         loginform.addEventListener("submit", function (e) {
-            e.preventDefault();
+            // Perform client-side validation
             emailValidateChecking();
             passValidateChecking();
 
@@ -402,38 +401,15 @@
                 error1.style.display === "block" ||
                 error2.style.display === "block"
             ) {
+                e.preventDefault();
                 return;
             }
 
+            // Show loader before submitting the form
             showLoader();
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    'email': emailid.value,
-                    'password': passid.value
-                })
-            })
-            .then(response => response.text())
-            .then(html => {
-                if (html.includes('User not found') || html.includes('Incorrect password') || html.includes('User is blocked')) {
-                    hideLoader();
-                    document.querySelector('.alert').innerHTML = html.match(/<div class="alert alert-danger text-center" style="color: red;">(.*?)<\/div>/)[1];
-                    document.querySelector('.alert').style.display = 'block';
-                } else {
-                    showWelcomeAnimation(() => {
-                        window.location.href = '/home';
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Login error:', error);
-                hideLoader();
-                document.querySelector('.alert').innerHTML = 'Login failed, please try again later';
-                document.querySelector('.alert').style.display = 'block';
-            });
+
+            // Let the form submit naturally
+            // The server will either redirect to /home or render login.ejs with an error message
         });
 
         const googleLogin = document.getElementById("google-login");
@@ -448,6 +424,13 @@
             const passInput = document.querySelector('input[name="password"]');
             passInput.type = this.checked ? "text" : "password";
         });
+
+        // Check if the page loaded with a successful login (e.g., redirected back after login)
+        if (window.location.pathname === '/home') {
+            showWelcomeAnimation(() => {
+                // Already on /home, no further redirect needed
+            });
+        }
     });
 </script>
 </html>

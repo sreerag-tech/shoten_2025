@@ -50,14 +50,17 @@ const customerBlocked=async (req,res) => {
     let id=req.query.id;
     await User.updateOne({_id:id},{$set:{isBlocked:true}});
   
-    if(req.session.user===id){
-      req.session.destroy()
-    }
+    // if(req.session.user===id){
+    //   req.session.destroy()
+    // }
+    
+
     res.redirect("/admin/users")
   } catch (error) {
     res.redirect("/admin/pageerror");
   }
 }
+ 
 
 const customerunBlocked= async (req,res) => {
   try {

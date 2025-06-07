@@ -6,8 +6,9 @@ const userAuth =(req,res,next)=>{
     User.findById(req.session.user)
     .then(data=>{
       if(data && !data.isBlocked){
-        next()
+        next();
       }else{
+        req.session.destroy()
         res.redirect("/login")
       }
     })
@@ -21,6 +22,7 @@ const userAuth =(req,res,next)=>{
 
   
 }
+
 
 const adminAuth = (req, res, next) => {
   if (req.session.admin) {
