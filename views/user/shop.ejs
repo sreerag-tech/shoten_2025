@@ -1,10 +1,52 @@
 <%- include("../../views/user/partials/header") %>
 
-<!-- Hero Section -->
-<div class="bg-gray-900 py-20 px-8">
-    <div class="max-w-7xl mx-auto text-center">
-        <h1 class="text-5xl font-bold mb-4 text-[#00ffff]">Our Collection</h1>
-        <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">Discover premium anime collectibles that bring your favorite characters to life</p>
+<!-- Hero Section with Background Video -->
+<div class="relative bg-gray-900 py-20 px-8 overflow-hidden">
+    <!-- Background Video -->
+    <video 
+        class="absolute inset-0 w-full h-full object-cover z-0" 
+        autoplay 
+        muted 
+        loop 
+        playsinline
+        poster="videos/anime-montage.mp4 e.mp4"
+    >
+        <source src="videos/videoplayback.mp4" type="video/mp4">
+        <source src="" type="video/webm">
+        <!-- Fallback for browsers that don't support video -->
+        Your browser does not support the video tag.
+    </video>
+    
+    <!-- Dark overlay for better text readability -->
+    <div class="absolute inset-0 bg-black bg-opacity-60 z-10000"></div>
+    
+    <!-- Content -->
+    <div class="relative z-20 max-w-7xl mx-auto text-center hero-content">
+        <h1 class="text-5xl font-bold mb-4 text-[#00ffff] drop-shadow-lg">Our Collection</h1>
+        <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto drop-shadow-md">
+            Discover premium anime collectibles that bring your favorite characters to life
+        </p>
+        
+        <!-- Optional: Add a subtle animation to the text -->
+        <div class="animate-pulse">
+            <div class="w-16 h-1 bg-[#00ffff] mx-auto rounded-full"></div>
+        </div>
+    </div>
+    
+    <!-- Optional: Video controls overlay (hidden by default) -->
+    <div class="absolute bottom-4 right-4 z-30 opacity-20 hover:opacity-80 transition-opacity duration-300">
+        <button 
+            id="videoToggle" 
+            class="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
+            title="Pause/Play Video"
+        >
+            <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </button>
     </div>
 </div>
 
@@ -338,29 +380,128 @@
 
 <%- include("../../views/user/partials/footer") %>
 
+<style>
+/* Additional CSS for video background and animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-content {
+    animation: fadeInUp 1s ease-out;
+}
+
+/* Ensure video covers the entire container */
+video {
+    min-width: 100%;
+    min-height: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+    .hero-content p {
+        font-size: 1.125rem;
+    }
+}
+
+/* Enhanced product card hover effects */
+.bg-gray-800:hover {
+    transform: translateY(-5px);
+    transition: all 0.3s ease;
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar for better aesthetics */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #00ffff;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #0088ff;
+}
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Video control functionality
+        const video = document.querySelector('video');
+        const videoToggle = document.getElementById('videoToggle');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        
+        if (video && videoToggle) {
+            videoToggle.addEventListener('click', function() {
+                if (video.paused) {
+                    video.play();
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                } else {
+                    video.pause();
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                }
+            });
+            
+            // Handle video load errors gracefully
+            video.addEventListener('error', function() {
+                console.log('Video failed to load, falling back to static background');
+                video.style.display = 'none';
+            });
+            
+            // Ensure video plays when it's loaded
+            video.addEventListener('loadeddata', function() {
+                video.play().catch(function(error) {
+                    console.log('Auto-play was prevented:', error);
+                });
+            });
+        }
+
         // Price range indicator
         const minPrice = document.getElementById('min_price');
         const maxPrice = document.getElementById('max_price');
         const priceIndicator = document.getElementById('priceRangeIndicator');
         
         function updatePriceRangeIndicator() {
-            const min = parseInt(minPrice.value || 0);
-            const max = parseInt(maxPrice.value || 200);
-            const totalRange = 200;
-            
-            const leftPos = (min / totalRange) * 100;
-            const rightPos = 100 - ((max / totalRange) * 100);
-            
-            priceIndicator.style.left = leftPos + '%';
-            priceIndicator.style.right = rightPos + '%';
+            if (priceIndicator) {
+                const min = parseInt(minPrice.value || 0);
+                const max = parseInt(maxPrice.value || 200);
+                const totalRange = 200;
+                
+                const leftPos = (min / totalRange) * 100;
+                const rightPos = 100 - ((max / totalRange) * 100);
+                
+                priceIndicator.style.left = leftPos + '%';
+                priceIndicator.style.right = rightPos + '%';
+            }
         }
         
-        updatePriceRangeIndicator();
-        
-        minPrice.addEventListener('input', updatePriceRangeIndicator);
-        maxPrice.addEventListener('input', updatePriceRangeIndicator);
+        if (minPrice && maxPrice) {
+            updatePriceRangeIndicator();
+            minPrice.addEventListener('input', updatePriceRangeIndicator);
+            maxPrice.addEventListener('input', updatePriceRangeIndicator);
+        }
         
         // Clear search button
         const searchInput = document.getElementById('search');
@@ -379,10 +520,18 @@
         
         // Reset filters button
         const resetBtn = document.getElementById('resetFilters');
+        const filterForm = document.getElementById('filterForm');
         
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function() {
-                window.location.href = '/shop';
+        if (resetBtn && filterForm) {
+            resetBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                filterForm.reset(); // Reset all form fields
+                if (searchInput) searchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                if (minPrice) minPrice.value = '0';
+                if (maxPrice) maxPrice.value = '2000';
+                updatePriceRangeIndicator();
+                window.location.href = '/shop'; // Redirect to base shop URL
             });
         }
         

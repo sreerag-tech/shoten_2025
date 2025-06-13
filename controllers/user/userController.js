@@ -15,6 +15,9 @@ const pageNotFound = async (req, res) => {
   }
 };
 
+
+
+
 const loadSignUppage = async (req, res) => {
   try {
     return res.render("signup");
@@ -24,9 +27,12 @@ const loadSignUppage = async (req, res) => {
   }
 };
 
+
+
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
+
 
 async function sendVerificationEmail(email, otp) {
   try {
@@ -68,6 +74,11 @@ const loadLoginpage = async (req, res) => {
   }
 };
 
+
+
+
+
+
 const loadHome = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -98,6 +109,11 @@ const loadHome = async (req, res) => {
 };
 
 
+
+
+
+
+
 const loadLandingpage = async (req, res) => { 
   
   try {
@@ -110,6 +126,11 @@ const loadLandingpage = async (req, res) => {
     res.status(500).send("server error");
   }
 };
+
+
+
+
+
 
 const signup = async (req, res) => {
   try {
@@ -125,7 +146,7 @@ const signup = async (req, res) => {
 
     const findUser = await User.findOne({ email });
     if (findUser) {
-      return res.render("signup", { message: "User already exists" });
+      return res.render("login", { message: "User already exists" });
     }
 
     const otp = generateOtp();
@@ -138,7 +159,7 @@ const signup = async (req, res) => {
     }
     console.log('Otp in signup controller',otp);
     
-    req.session.userOtp = otp;
+    req.session.userOtp = otp;  
     req.session.otpTimestamp = Date.now();
     req.session.userData = { name, email, password };
     res.render("verify-otp");
@@ -148,6 +169,10 @@ const signup = async (req, res) => {
   }
 };
 
+
+
+
+
 const securePassword = async (password) => {
   try {
     return await bcrypt.hash(password, 10);
@@ -155,6 +180,10 @@ const securePassword = async (password) => {
     console.error("Error hashing password:", error);
   }
 };
+
+
+
+
 
 const verifyOtp = async (req, res) => {
   try {
@@ -179,7 +208,7 @@ const verifyOtp = async (req, res) => {
 
       const passwordHash = await securePassword(user.password);
       const saveUserData = new User({
-        name: user.name,
+        name: user.name,  
         email: user.email,
         password: passwordHash,
       });
@@ -244,6 +273,9 @@ const login = async (req, res) => {
     res.render("login", { message: "Login failed, please try again later" });
   }
 };
+
+
+
 const googleCallbackHandler = async (req, res) => {
   try {
     // Fetch the user from the database first
@@ -281,6 +313,10 @@ const googleCallbackHandler = async (req, res) => {
     });
   }
 };
+
+
+
+
 const logout = async (req, res) => {
   try {
     req.session.destroy((err) => {
@@ -509,81 +545,6 @@ const loadShop = async (req, res) => {
 
 
 
-// const loadProductDetails = async (req, res) => {
-  
-//   try {
-    
-//     const productId = req.params.id;
-//     console.log(`Attempting to load product with ID: ${productId}`);
-
-//     // Validate ObjectId
-//     if (!mongoose.Types.ObjectId.isValid(productId)) {
-//       console.log(`Invalid ObjectId: ${productId}`);
-//       return res.redirect('/pageNotFound');
-//     }
-
-//     const product = await Product.findById(productId).populate('category');
-    
-//     if (!product) {
-//       console.log(`Product not found for ID: ${productId}`);
-//       return res.redirect('/pageNotFound');
-//     }
-    
-//     if (product.isBlocked) {
-//       console.log(`Product is blocked: ${productId}`);
-//       return res.redirect('/pageNotFound');
-//     }
-    
-//     if (product.status !== "Available") {
-//       console.log(`Product status is ${product.status}, not Available: ${productId}`);
-//       return res.redirect('/pageNotFound');
-//     }
-
-//     const productData = {
-//       _id: product._id,
-//       name: product.productName,
-//       images: product.productImage.map(img => `/uploads/product-images/${img}`),
-//       category: product.category?.name || 'Uncategorized',
-//       price: product.salePrice,
-//       originalPrice: product.regularPrice,
-//       discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
-//       description: product.description || 'No description available',
-//       stock: product.quantity,
-//       isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
-//     };
-
-//     const relatedProducts = await Product.find({
-//       _id: { $ne: productId },
-//       category: product.category?._id,
-//       isBlocked: false,
-//       status: "Available"
-//     })
-//       .limit(4)
-//       .select('productName productImage salePrice regularPrice offerPercentage category createdAt')
-//       .populate('category');
-
-//     const relatedProductData = relatedProducts.map(product => ({
-//       _id: product._id,
-//       name: product.productName,
-//       image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
-//       category: product.category?.name || 'Uncategorized',
-//       price: product.salePrice,
-//       originalPrice: product.regularPrice,
-//       discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
-//       isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
-//     }));
-
-//     res.render('user/product-details', { 
-//       user:userData,
-//       product: productData,
-//       relatedProducts: relatedProductData,
-//       user: req.session.user ? await User.findById(req.session.user) : null
-//     });
-//   } catch (error) {
-//     console.error(`Error loading product details for ID ${req.params.id}:`, error.message);
-//     res.redirect('/pageNotFound');
-//   }
-// };
 
 const loadProductsView = async (req, res) => {
   try {
@@ -770,3 +731,5 @@ module.exports = {
   // loadProductsView,
   loadProductDetail
 };
+
+

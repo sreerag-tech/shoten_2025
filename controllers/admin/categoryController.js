@@ -119,6 +119,7 @@ const editCategory = async (req, res) => {
 
     // Update category
     const updatedCategory = await Category.findByIdAndUpdate(id, {
+      
       name: categoryName,
       description
     }, { new: true });
@@ -126,6 +127,9 @@ const editCategory = async (req, res) => {
     if (!updatedCategory) {
       return res.status(404).json({ error: "Category not found" });
     }
+
+
+    
 
     res.json({ message: "Category updated successfully", category: updatedCategory });
 

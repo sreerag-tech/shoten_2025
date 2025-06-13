@@ -33,12 +33,15 @@ app.use((req, res, next) => {
     next();
   });
 
-
-app.use("/", userRouter); 
+// Disable caching for all requests
 app.use((req, res, next) => {
-    res.set(`cache-control`, `no-store`);
+    res.set('Cache-Control', 'no-store');
     next();
 });
+
+// Then mount the router
+app.use("/", userRouter);
+
 
 app.set("view engine", "ejs");
 app.set("views", [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);

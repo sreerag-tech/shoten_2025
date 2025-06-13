@@ -9,7 +9,7 @@ const userAuth =(req,res,next)=>{
         next();
       }else{
         req.session.destroy()
-        res.redirect("/login")
+        res.redirect("/login")        
       }
     })
     .catch(error=>{
