@@ -6,11 +6,26 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 
+// ✅ ADDED: Helper function to safely delete files with delay to prevent EPERM errors
+const safeDeleteFile = (filePath, delay = 1000) => {
+  setTimeout(async () => {
+    try {
+      if (fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath);
+        console.log(`Successfully deleted: ${filePath}`);
+      }
+    } catch (error) {
+      console.warn(`Failed to delete file ${filePath}: ${error.message}`);
+    }
+  }, delay);
+};
+
 const getProductAddPage = async (req, res) => {
   try {
     const category = await Category.find({ isListed: true });
     const error = req.query.error || null;
-    res.render("product-add", { cat: category, error });
+    const success = req.query.success || null; // ✅ ADDED: Success message support
+    res.render("product-add", { cat: category, error, success });
   } catch (error) {
     res.redirect("/admin/pageerror");
   }
@@ -31,12 +46,28 @@ if (req.files && req.files.length > 0) {
   for (let i = 0; i < req.files.length; i++) {
     const imagePath = path.join("public", "uploads", "product-images", req.files[i].filename);
 
-    // Move the uploaded file to the desired folder
+    // ✅ ENHANCED: Move the uploaded file to the desired folder with better error handling
     try {
-      await fs.promises.rename(req.files[i].path, imagePath);
-      images.push(req.files[i].filename);
+      // ✅ ADDED: Check if source file exists before trying to move it
+      if (fs.existsSync(req.files[i].path)) {
+        await fs.promises.rename(req.files[i].path, imagePath);
+        images.push(req.files[i].filename);
+      } else {
+        console.warn(`Source file does not exist: ${req.files[i].path}`);
+      }
     } catch (error) {
       console.error(`Error saving image: ${error.message}`);
+      // ✅ ADDED: Try copying instead of moving if rename fails
+      try {
+        if (fs.existsSync(req.files[i].path)) {
+          await fs.promises.copyFile(req.files[i].path, imagePath);
+          images.push(req.files[i].filename);
+          // ✅ ADDED: Delete original file after successful copy using safe delete
+          safeDeleteFile(req.files[i].path, 1000);
+        }
+      } catch (copyError) {
+        console.error(`Error copying image: ${copyError.message}`);
+      }
     }
   }
 }
@@ -56,11 +87,11 @@ if (req.files && req.files.length > 0) {
         quantity: products.quantity,
         productImage: images,
         status: "Available",
-      });+
+      });
 
       await newProduct.save();
-      
-      return res.redirect("/admin/add-products");
+
+      return res.redirect("/admin/add-products?success=Product+added+successfully"); // ✅ ADDED: Success message
       
     } else {
       return res.redirect("/admin/add-products?error=Product+already+exists");
@@ -73,9 +104,44 @@ if (req.files && req.files.length > 0) {
 
 const getProductList = async (req, res) => {
   try {
-    const products = await Product.find().populate("category").sort({ createdAt: -1});
+    const page = parseInt(req.query.page) || 1;
+    const limit = 6; // Number of products per page
+    const skip = (page - 1) * limit;
+    const search = req.query.search || "";
     const error = req.query.error || null;
-    res.render("products", { products, error });
+    const success = req.query.success || null; // ✅ ADDED: Success message support
+
+    // ✅ ADDED: Build search query (exclude soft-deleted products)
+    const query = search
+      ? {
+          isDeleted: { $ne: true }, // ✅ ADDED: Exclude soft-deleted products
+          $or: [
+            { productName: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } }
+          ]
+        }
+      : { isDeleted: { $ne: true } }; // ✅ ADDED: Exclude soft-deleted products
+
+    // Fetch products with search, pagination, and populate category
+    const products = await Product.find(query)
+      .populate("category")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Get total count for pagination
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.render("products", {
+      products,
+      error,
+      success, // ✅ ADDED: Pass success message to view
+      currentPage: page,
+      totalPages: totalPages,
+      totalProducts: totalProducts,
+      search: search,
+    });
   } catch (error) {
     console.error("Error fetching products:", error);
     res.redirect("/admin/pageerror");
@@ -91,19 +157,17 @@ const deleteProduct = async (req, res) => {
       return res.redirect("/admin/products?error=Product+not+found");
     }
 
-    if (product.productImage && product.productImage.length > 0) {
-      for (const image of product.productImage) {
-        const imagePath = path.join("public", "uploads", "product-images", image);
-        try {
-          await fs.promises.unlink(imagePath);
-        } catch (unlinkError) {
-          console.warn(`Failed to delete image ${imagePath}: ${unlinkError.message}`);
-        }
-      }
+    if (product.isDeleted) {
+      return res.redirect("/admin/products?error=Product+already+deleted");
     }
 
-    await Product.findByIdAndDelete(productId);
-    return res.redirect("/admin/products");
+    // ✅ ADDED: Soft delete: mark as deleted instead of actually deleting
+    await Product.findByIdAndUpdate(productId, {
+      isDeleted: true, // ✅ ADDED: Soft delete flag
+      status: "Discont" // ✅ ADDED: Mark as discontinued
+    });
+
+    return res.redirect("/admin/products?success=Product+deleted+successfully"); // ✅ ADDED: Success message
   } catch (error) {
     console.error("Error deleting product:", error);
     return res.redirect("/admin/pageerror");
@@ -186,24 +250,30 @@ const editProduct = async (req, res) => {
 
         newImages[i] = "resized_" + file.filename;
 
-        try {
-          await fs.promises.unlink(originalImagePath);
-        } catch (unlinkError) {
-          console.warn(`Failed to delete original image ${originalImagePath}: ${unlinkError.message}`);
-        }
+        // ✅ ADDED: Safely delete original uploaded file using helper function
+        safeDeleteFile(originalImagePath, 1000);
 
-        if (existingImages[i]) {
+        // ✅ ENHANCED: Safely delete old image if it exists and is not empty
+        if (existingImages[i] && existingImages[i].trim() !== '') {
           const oldImagePath = path.join("public", "uploads", "product-images", existingImages[i]);
-          try {
-            await fs.promises.unlink(oldImagePath);
-          } catch (unlinkError) {
-            console.warn(`Failed to delete old image ${oldImagePath}: ${unlinkError.message}`);
+          // ✅ ADDED: Only delete if the old image file actually exists
+          if (fs.existsSync(oldImagePath)) {
+            safeDeleteFile(oldImagePath, 1500);
           }
         }
       }
     }
 
-    product.productImage = existingImages.map((img, index) => newImages[index] || img).filter(Boolean);
+    // ✅ ADDED: Build the final image array, handling sparse arrays properly
+    const finalImages = [];
+    for (let i = 0; i < Math.max(existingImages.length, newImages.length, 4); i++) {
+      if (newImages[i]) {
+        finalImages[i] = newImages[i]; // ✅ ADDED: Use new image if available
+      } else if (existingImages[i] && existingImages[i].trim() !== '') {
+        finalImages[i] = existingImages[i]; // ✅ ADDED: Keep existing image if valid
+      }
+    }
+    product.productImage = finalImages.filter(Boolean); // ✅ ADDED: Remove empty slots
 
     if (product.productImage.length < 3) {
       return res.redirect(`/admin/edit-product/${productId}?error=Product+must+have+at+least+3+images`);
@@ -222,7 +292,7 @@ const editProduct = async (req, res) => {
     product.quantity = products.quantity;
 
     await product.save();
-    return res.redirect("/admin/products");
+    return res.redirect("/admin/products?success=Product+updated+successfully"); // ✅ ADDED: Success message
   } catch (error) {
     console.error("Error updating product:", error);
     return res.redirect(`/admin/edit-product/${req.params.id}?error=Update+failed`);

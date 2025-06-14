@@ -1,274 +1,85 @@
 
-
 <%- include("../../views/admin/partials/header", { activePage: 'dashboard' }) %>
 
+<div class="content-main">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Overview of your store performance</p>
+    </div>
 
-
-            <!-- Main Content -->
-            <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                    <div class="container-fluid">
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-bell"></i>
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                            3
-                                        </span>
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                        <li><a class="dropdown-item" href="#">New order received</a></li>
-                                        <li><a class="dropdown-item" href="#">New customer registered</a></li>
-                                        <li><a class="dropdown-item" href="#">Inventory alert</a></li>
-                                    </ul>
-                                </li>
-                            </ul>
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Customers</div>
+                            <div class="h3 mb-0 fw-bold text-primary">854</div>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> 12% from last month
+                            </small>
+                        </div>
+                        <div class="card-icon text-primary">
+                            <i class="fas fa-users"></i>
                         </div>
                     </div>
-                </nav>
+                </div>
+            </div>
+        </div>
 
-                <div class="main-content">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Dashboard</h1>
-                        <div class="btn-toolbar mb-2 mb-md-0">
-                            <div class="btn-group me-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                                <i class="fas fa-calendar-alt"></i>
-                                This week
-                            </button>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Products</div>
+                            <div class="h3 mb-0 fw-bold text-success">143</div>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> 8% from last month
+                            </small>
+                        </div>
+                        <div class="card-icon text-success">
+                            <i class="fas fa-box"></i>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Stats Cards -->
-                    <div class="row">
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card bg-primary text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="text-xs fw-bold text-uppercase mb-1">Customers</div>
-                                            <div class="h5 mb-0 fw-bold">854</div>
-                                        </div>
-                                        <div class="card-icon">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Orders</div>
+                            <div class="h3 mb-0 fw-bold text-info">328</div>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> 15% from last month
+                            </small>
                         </div>
-
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card bg-success text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="text-xs fw-bold text-uppercase mb-1">Products</div>
-                                            <div class="h5 mb-0 fw-bold">143</div>
-                                        </div>
-                                        <div class="card-icon">
-                                            <i class="fas fa-box"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card bg-info text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="text-xs fw-bold text-uppercase mb-1">Orders</div>
-                                            <div class="h5 mb-0 fw-bold">328</div>
-                                        </div>
-                                        <div class="card-icon">
-                                            <i class="fas fa-shopping-cart"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card bg-warning text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="text-xs fw-bold text-uppercase mb-1">Categories</div>
-                                            <div class="h5 mb-0 fw-bold">12</div>
-                                        </div>
-                                        <div class="card-icon">
-                                            <i class="fas fa-th-large"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="card-icon text-info">
+                            <i class="fas fa-shopping-cart"></i>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Recent Orders Table -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title">Recent Orders</h5>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Categories</div>
+                            <div class="h3 mb-0 fw-bold text-warning">12</div>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> 2 new this month
+                            </small>
                         </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Order ID</th>
-                                            <th>Customer</th>
-                                            <th>Date</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>#ORD-001</td>
-                                            <td>John Doe</td>
-                                            <td>Mar 15, 2025</td>
-                                            <td>$126.50</td>
-                                            <td><span class="badge bg-success">Completed</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-002</td>
-                                            <td>Jane Smith</td>
-                                            <td>Mar 16, 2025</td>
-                                            <td>$89.25</td>
-                                            <td><span class="badge bg-warning">Processing</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-003</td>
-                                            <td>Robert Johnson</td>
-                                            <td>Mar 17, 2025</td>
-                                            <td>$432.10</td>
-                                            <td><span class="badge bg-primary">Shipped</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-004</td>
-                                            <td>Emily Davis</td>
-                                            <td>Mar 18, 2025</td>
-                                            <td>$78.00</td>
-                                            <td><span class="badge bg-danger">Cancelled</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-005</td>
-                                            <td>Michael Brown</td>
-                                            <td>Mar 19, 2025</td>
-                                            <td>$245.75</td>
-                                            <td><span class="badge bg-warning">Processing</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Latest Products -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title">Latest Products</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Product ID</th>
-                                            <th>Name</th>
-                                            <th>Category</th>
-                                            <th>Price</th>
-                                            <th>Stock</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>#PRD-001</td>
-                                            <td>Premium Headphones</td>
-                                            <td>Electronics</td>
-                                            <td>$199.99</td>
-                                            <td>45</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#PRD-002</td>
-                                            <td>Leather Wallet</td>
-                                            <td>Accessories</td>
-                                            <td>$49.99</td>
-                                            <td>120</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#PRD-003</td>
-                                            <td>Smart Watch</td>
-                                            <td>Electronics</td>
-                                            <td>$299.99</td>
-                                            <td>28</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#PRD-004</td>
-                                            <td>Cotton T-Shirt</td>
-                                            <td>Clothing</td>
-                                            <td>$24.99</td>
-                                            <td>200</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#PRD-005</td>
-                                            <td>Wireless Mouse</td>
-                                            <td>Electronics</td>
-                                            <td>$39.99</td>
-                                            <td>85</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="card-icon text-warning">
+                            <i class="fas fa-th-large"></i>
                         </div>
                     </div>
                 </div>
@@ -276,6 +87,249 @@
         </div>
     </div>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Recent Orders Table -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Recent Orders</h5>
+            <a href="/admin/orders" class="btn btn-sm btn-primary">View All</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="fw-semibold">#ORD-001</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <span class="text-white fw-bold">JD</span>
+                                    </div>
+                                    <span>John Doe</span>
+                                </div>
+                            </td>
+                            <td>Mar 15, 2025</td>
+                            <td><span class="fw-semibold">$126.50</span></td>
+                            <td><span class="badge bg-success">Completed</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="fw-semibold">#ORD-002</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <span class="text-white fw-bold">JS</span>
+                                    </div>
+                                    <span>Jane Smith</span>
+                                </div>
+                            </td>
+                            <td>Mar 16, 2025</td>
+                            <td><span class="fw-semibold">$89.25</span></td>
+                            <td><span class="badge bg-warning">Processing</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="fw-semibold">#ORD-003</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-info rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <span class="text-white fw-bold">RJ</span>
+                                    </div>
+                                    <span>Robert Johnson</span>
+                                </div>
+                            </td>
+                            <td>Mar 17, 2025</td>
+                            <td><span class="fw-semibold">$432.10</span></td>
+                            <td><span class="badge bg-primary">Shipped</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="fw-semibold">#ORD-004</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-danger rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <span class="text-white fw-bold">ED</span>
+                                    </div>
+                                    <span>Emily Davis</span>
+                                </div>
+                            </td>
+                            <td>Mar 18, 2025</td>
+                            <td><span class="fw-semibold">$78.00</span></td>
+                            <td><span class="badge bg-danger">Cancelled</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="fw-semibold">#ORD-005</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-warning rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <span class="text-white fw-bold">MB</span>
+                                    </div>
+                                    <span>Michael Brown</span>
+                                </div>
+                            </td>
+                            <td>Mar 19, 2025</td>
+                            <td><span class="fw-semibold">$245.75</span></td>
+                            <td><span class="badge bg-warning">Processing</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Products -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Latest Products</h5>
+            <a href="/admin/products" class="btn btn-sm btn-primary">View All</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="fw-semibold">#PRD-001</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="product-thumb bg-light rounded me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-headphones text-muted"></i>
+                                    </div>
+                                    <span>Premium Headphones</span>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-dark">Electronics</span></td>
+                            <td><span class="fw-semibold">$199.99</span></td>
+                            <td>
+                                <span class="badge bg-success">45 in stock</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="fw-semibold">#PRD-002</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="product-thumb bg-light rounded me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-wallet text-muted"></i>
+                                    </div>
+                                    <span>Leather Wallet</span>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-dark">Accessories</span></td>
+                            <td><span class="fw-semibold">$49.99</span></td>
+                            <td>
+                                <span class="badge bg-success">120 in stock</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="fw-semibold">#PRD-003</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="product-thumb bg-light rounded me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-clock text-muted"></i>
+                                    </div>
+                                    <span>Smart Watch</span>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-dark">Electronics</span></td>
+                            <td><span class="fw-semibold">$299.99</span></td>
+                            <td>
+                                <span class="badge bg-warning">28 in stock</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="fw-semibold">#PRD-004</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="product-thumb bg-light rounded me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-tshirt text-muted"></i>
+                                    </div>
+                                    <span>Cotton T-Shirt</span>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-dark">Clothing</span></td>
+                            <td><span class="fw-semibold">$24.99</span></td>
+                            <td>
+                                <span class="badge bg-success">200 in stock</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+
+    .product-thumb {
+        border: 1px solid var(--border-color);
+    }
+</style>
+
 <%- include("../../views/admin/partials/footer", { activePage: 'dashboard' }) %>

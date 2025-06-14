@@ -85,8 +85,9 @@ const loadHome = async (req, res) => {
 
     const userData = await User.findById(userId);
 
-    const products = await Product.find({ 
+    const products = await Product.find({
       isBlocked: false,
+      isDeleted: { $ne: true },
       status: "Available",
     })
     .populate({
@@ -441,6 +442,7 @@ const loadShop = async (req, res) => {
     // Base query to filter available and unblocked products
     let query = {
       isBlocked: false,
+      isDeleted: { $ne: true },
       status: "Available"
     };
 
@@ -497,6 +499,7 @@ const loadShop = async (req, res) => {
     const listedCategories = await Category.find({ isListed: true });
     const recommendedProducts = await Product.find({
       isBlocked: false,
+      isDeleted: { $ne: true },
       status: "Available",
       category: { $in: listedCategories.map(cat => cat._id) } // Only from listed categories
     })
@@ -565,6 +568,7 @@ const loadProductsView = async (req, res) => {
 
     let query = {
       isBlocked: false,
+      isDeleted: { $ne: true },
       status: "Available"
     };
 
@@ -644,8 +648,10 @@ const loadProductDetail = async (req, res) => {
       return res.render("product-detail", { product: null, relatedProducts: [] });
     }
 
-    const product = await Product.findById(productId)
-      .populate('category');
+    const product = await Product.findOne({
+      _id: productId,
+      isDeleted: { $ne: true }
+    }).populate('category');
 
     if (!product) {
       return res.render("product-detail", { product: null, relatedProducts: [] });
@@ -657,7 +663,10 @@ const loadProductDetail = async (req, res) => {
       name: product.productName,
       description: product.description,
       image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
-      gallery: product.productImage.map(img => `/uploads/product-images/${img}`),
+      // Fix: Only include additional images in gallery (excluding the main image)
+      gallery: product.productImage && product.productImage.length > 1
+        ? product.productImage.slice(1).map(img => `/uploads/product-images/${img}`)
+        : [],
       category: product.category?.name || 'Uncategorized',
       price: product.salePrice,
       originalPrice: product.regularPrice,
@@ -681,6 +690,7 @@ const loadProductDetail = async (req, res) => {
       category: product.category,
       _id: { $ne: product._id },
       isBlocked: false,
+      isDeleted: { $ne: true },
       status: "Available"
     })
       .sort({ popularityScore: -1 })

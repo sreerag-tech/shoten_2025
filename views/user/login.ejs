@@ -42,11 +42,11 @@
             align-items: center;
             flex-direction: column;
         }
-        /* Cyber ring animation */
+        /* Enhanced Cyber ring animation */
         .cyber-ring {
             position: relative;
-            width: 200px;
-            height: 200px;
+            width: 250px;
+            height: 250px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -56,27 +56,41 @@
             border-radius: 50%;
             border: 4px solid transparent;
             mix-blend-mode: screen;
+            filter: drop-shadow(0 0 10px currentColor);
         }
         .ring:nth-child(1) {
-            width: 150px;
-            height: 150px;
-            border-top: 4px solid #00ffff;
-            border-bottom: 4px solid #00ffff;
-            animation: spin 2s linear infinite;
-        }
-        .ring:nth-child(2) {
             width: 180px;
             height: 180px;
+            border-top: 4px solid #00ffff;
+            border-bottom: 4px solid #00ffff;
+            animation: spin 2s linear infinite, pulse-ring 3s ease-in-out infinite;
+        }
+        .ring:nth-child(2) {
+            width: 220px;
+            height: 220px;
             border-left: 4px solid #ff0066;
             border-right: 4px solid #ff0066;
-            animation: spin 2.5s linear infinite reverse;
+            animation: spin 2.5s linear infinite reverse, pulse-ring 3s ease-in-out infinite 0.5s;
         }
         .ring:nth-child(3) {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-top: 4px solid #ffcc00;
             border-left: 4px solid #ffcc00;
-            animation: spin 1.5s linear infinite;
+            animation: spin 1.5s linear infinite, pulse-ring 3s ease-in-out infinite 1s;
+        }
+        .ring:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            border: 4px solid #00ff88;
+            animation: spin 3s linear infinite reverse, pulse-ring 3s ease-in-out infinite 1.5s;
+        }
+        .ring:nth-child(5) {
+            width: 260px;
+            height: 260px;
+            border-right: 4px solid #8800ff;
+            border-bottom: 4px solid #8800ff;
+            animation: spin 4s linear infinite, pulse-ring 3s ease-in-out infinite 2s;
         }
         /* Progress text */
         .progress-text {
@@ -119,17 +133,58 @@
             font-size: 14px;
             pointer-events: none;
         }
-        /* Animations */
+        /* Enhanced Animations */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        @keyframes pulse-ring {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.7;
+            }
+        }
         @keyframes glow {
             0%, 100% { text-shadow: 0 0 5px #00ffff; }
-            50% { text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff; }
+            50% { text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff, 0 0 40px #00ffff; }
+        }
+        @keyframes matrix-rain {
+            0% { transform: translateY(-100vh); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+        @keyframes hologram-flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+            75% { opacity: 0.9; }
+        }
+        @keyframes data-stream {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100vw); }
         }
         .glow-text {
             animation: glow 1.5s ease-in-out infinite;
+        }
+        .hologram-effect {
+            animation: hologram-flicker 0.1s infinite;
+        }
+        /* Particle effects */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: matrix-rain 3s linear infinite;
+        }
+        .data-stream {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            animation: data-stream 2s linear infinite;
         }
         .loader-container.active {
             display: flex !important;
@@ -168,19 +223,25 @@
     </style>
 </head>
 <body class="flex justify-center items-center h-screen text-white relative">
-    <!-- Animated Loader -->
+    <!-- Enhanced Animated Loader -->
     <div class="loader-container" id="loader">
         <div class="cyber-ring">
             <div class="ring"></div>
             <div class="ring"></div>
             <div class="ring"></div>
-            <div class="progress-text glow-text" id="progress-text">LOADING</div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="progress-text glow-text hologram-effect" id="progress-text">LOADING</div>
         </div>
         <div class="percentage-container">
             <span id="percentage-counter">0%</span> COMPLETE
         </div>
-        <div class="status-message" id="status-message">Initializing secure connection...</div>
+        <div class="status-message hologram-effect" id="status-message">Initializing secure connection...</div>
         <div class="binary-bg" id="binary-bg"></div>
+        <!-- Particle effects -->
+        <div id="particles-container"></div>
+        <!-- Data streams -->
+        <div id="data-streams-container"></div>
     </div>
 
     <!-- Welcome Animation -->
@@ -264,38 +325,76 @@
         console.log('Showing loader');
         clearTimeout(loaderTimeout);
         document.getElementById('loader').classList.add('active');
-        
+
         const percentageCounter = document.getElementById('percentage-counter');
         const statusMessage = document.getElementById('status-message');
         const progressText = document.getElementById('progress-text');
         const binaryBg = document.getElementById('binary-bg');
-        
+
         binaryBg.innerHTML = '';
         generateBinaryBackground();
-        
+        createParticleEffect();
+        createDataStreams();
+
         let count = 0;
         percentageCounter.textContent = '0%';
         let messageIndex = 0;
         statusMessage.textContent = statusMessages[messageIndex];
-        
+
         const counterInterval = setInterval(() => {
             count += Math.floor(Math.random() * 10) + 5;
             if (count > 100) count = 100;
             percentageCounter.textContent = count + '%';
-            
-            if (count % 30 === 0) {
+
+            if (count % 20 === 0) {
                 messageIndex = (messageIndex + 1) % statusMessages.length;
                 statusMessage.textContent = statusMessages[messageIndex];
+                // Add glitch effect on message change
+                statusMessage.style.animation = 'none';
+                setTimeout(() => {
+                    statusMessage.style.animation = 'hologram-flicker 0.1s infinite';
+                }, 10);
             }
-            
+
             const dots = ".".repeat(Math.floor(count / 25) + 1);
             progressText.textContent = "LOADING" + dots;
-            
+
             if (count === 100) {
                 clearInterval(counterInterval);
-                progressText.textContent = "COMPLETE";
+                progressText.textContent = "ACCESS GRANTED";
+                progressText.style.color = '#00ff88';
+                statusMessage.textContent = "Welcome to the system...";
             }
         }, 50);
+    }
+
+    function createParticleEffect() {
+        const particlesContainer = document.getElementById('particles-container');
+        particlesContainer.innerHTML = '';
+
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 3 + 's';
+            particle.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    function createDataStreams() {
+        const streamsContainer = document.getElementById('data-streams-container');
+        streamsContainer.innerHTML = '';
+
+        for (let i = 0; i < 10; i++) {
+            const stream = document.createElement('div');
+            stream.className = 'data-stream';
+            stream.style.top = Math.random() * 100 + '%';
+            stream.style.width = (Math.random() * 200 + 100) + 'px';
+            stream.style.animationDelay = Math.random() * 2 + 's';
+            stream.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+            streamsContainer.appendChild(stream);
+        }
     }
     
     function generateBinaryBackground(containerId = 'binary-bg') {

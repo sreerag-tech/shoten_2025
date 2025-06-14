@@ -41,6 +41,10 @@ const productSchema = new Schema({
     type: Boolean,
     default: false
   },
+  isDeleted:{
+    type: Boolean,
+    default: false
+  },
   offerPercentage: {
     type: Number,
     default: 0,
