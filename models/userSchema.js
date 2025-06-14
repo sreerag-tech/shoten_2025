@@ -6,6 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   googleId: { type: String, index: { unique: true, sparse: true } }, // Sparse index
   password: { type: String, required: false },
+  phone: { type: String, default: null },
+  dateOfBirth: { type: Date, default: null },
+  bio: { type: String, default: null },
+  profileImage: { type: String, default: null },
   isBlocked: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
   cart: [{ type: mongoose.Schema.Types.ObjectId, ref: "Cart" }],

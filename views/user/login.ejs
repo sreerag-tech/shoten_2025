@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Shoten</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             background: black;
@@ -530,6 +532,60 @@
                 // Already on /home, no further redirect needed
             });
         }
+
+        // Show SweetAlert for authentication message
+        <% if (typeof authMessage !== 'undefined' && authMessage) { %>
+            Swal.fire({
+                title: '🔒 Authentication Required',
+                text: '<%= authMessage %>',
+                icon: 'info',
+                confirmButtonText: 'Got it!',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff',
+                customClass: {
+                    popup: 'cyber-alert',
+                    title: 'cyber-title',
+                    content: 'cyber-content'
+                },
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                }
+            });
+        <% } %>
     });
 </script>
+
+<!-- Custom SweetAlert Styling -->
+<style>
+.cyber-alert {
+    border: 2px solid #00ffff !important;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3) !important;
+}
+
+.cyber-title {
+    color: #00ffff !important;
+    text-shadow: 0 0 10px #00ffff !important;
+}
+
+.cyber-content {
+    color: #ffffff !important;
+}
+
+.swal2-confirm {
+    background: linear-gradient(135deg, #00ffff, #0088ff) !important;
+    color: black !important;
+    font-weight: bold !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3) !important;
+}
+
+.swal2-confirm:hover {
+    background: linear-gradient(135deg, #0088ff, #00ffff) !important;
+    transform: scale(1.05) !important;
+}
+</style>
 </html>

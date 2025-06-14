@@ -17,6 +17,8 @@ const userAuth =(req,res,next)=>{
       res.status(500).send("Internal Server Error")
     })
   }else{
+    // Set auth message for any protected route
+    req.session.authMessage = "Please sign in to access this page";
     res.redirect("/login")
   }
 
