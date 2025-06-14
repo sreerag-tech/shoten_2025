@@ -76,6 +76,21 @@ router.put('/orders/:id/return', userAuth, userController.returnOrder);
 router.put('/orders/:id/items/:itemIndex/return', userAuth, userController.returnOrderItem);
 router.get('/orders/:id/invoice', userAuth, userController.downloadInvoice);
 
+// Cart Management Routes
+router.get('/cart', userAuth, userController.loadCart);
+router.get('/cart/count', userController.getCartCount);
+router.post('/cart/add', userAuth, userController.addToCart);
+router.put('/cart/update-quantity', userAuth, userController.updateCartQuantity);
+router.delete('/cart/remove', userAuth, userController.removeFromCart);
+router.delete('/cart/clear', userAuth, userController.clearCart);
+
+// Checkout Routes
+router.get('/checkout', userAuth, userController.loadCheckout);
+router.post('/checkout/place-order', userAuth, userController.placeOrder);
+router.post('/checkout/add-address', userAuth, userController.addCheckoutAddress);
+router.put('/checkout/set-default-address', userAuth, userController.setDefaultCheckoutAddress);
+router.get('/order-success/:orderId', userAuth, userController.loadOrderSuccess);
+
 
 router.get(
   "/auth/google",

@@ -10,6 +10,10 @@ const profileController = require('./profileController');
 const orderController = require('./orderController');
 const orderActionsController = require('./orderActionsController');
 const invoiceController = require('./invoiceController');
+const cartController = require('./cartController');
+const cartActionsController = require('./cartActionsController');
+const checkoutController = require('./checkoutController');
+const checkoutActionsController = require('./checkoutActionsController');
 
 //  Export functions from organized controllers
 
@@ -75,6 +79,33 @@ const {
   downloadInvoice
 } = invoiceController;
 
+// Cart functions
+const {
+  loadCart,
+  getCartCount
+} = cartController;
+
+// Cart action functions
+const {
+  addToCart,
+  updateCartQuantity,
+  removeFromCart,
+  clearCart
+} = cartActionsController;
+
+// Checkout functions
+const {
+  loadCheckout,
+  loadOrderSuccess
+} = checkoutController;
+
+// Checkout action functions
+const {
+  placeOrder,
+  addCheckoutAddress,
+  setDefaultCheckoutAddress
+} = checkoutActionsController;
+
 // ✅ REFACTORED: Export all functions from organized controller modules
 module.exports = {
   // Home and landing page functions
@@ -125,5 +156,20 @@ module.exports = {
   cancelOrderItem,
   returnOrder,
   returnOrderItem,
-  downloadInvoice
+  downloadInvoice,
+
+  // Cart functions
+  loadCart,
+  getCartCount,
+  addToCart,
+  updateCartQuantity,
+  removeFromCart,
+  clearCart,
+
+  // Checkout functions
+  loadCheckout,
+  loadOrderSuccess,
+  placeOrder,
+  addCheckoutAddress,
+  setDefaultCheckoutAddress
 };
