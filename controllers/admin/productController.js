@@ -299,6 +299,68 @@ const editProduct = async (req, res) => {
   }
 };
 
+// Get Returned Items for a Product
+const getProductReturnedItems = async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const Order = require("../../models/orderSchema");
+    const mongoose = require('mongoose');
+
+    // Find all returned items for this product
+    const returnedItems = await Order.aggregate([
+      { $unwind: '$orderedItems' },
+      {
+        $match: {
+          'orderedItems.product': new mongoose.Types.ObjectId(productId),
+          'orderedItems.status': 'Returned'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          orderId: 1,
+          customerName: '$user.name',
+          customerEmail: '$user.email',
+          customerPhone: '$user.phone',
+          quantity: '$orderedItems.quantity',
+          price: '$orderedItems.price',
+          refundAmount: { $multiply: ['$orderedItems.price', '$orderedItems.quantity'] },
+          returnReason: '$orderedItems.returnReason',
+          adminResponse: '$orderedItems.adminResponse',
+          returnDate: '$orderedItems.updatedAt',
+          orderDate: '$createdOn'
+        }
+      },
+      { $sort: { returnDate: -1 } }
+    ]);
+
+    // Calculate statistics
+    const totalReturns = returnedItems.length;
+    const totalRefundAmount = returnedItems.reduce((sum, item) => sum + item.refundAmount, 0);
+    const totalQuantityReturned = returnedItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    res.json({
+      success: true,
+      returnedItems: returnedItems,
+      statistics: {
+        totalReturns: totalReturns,
+        totalRefundAmount: totalRefundAmount,
+        totalQuantityReturned: totalQuantityReturned
+      }
+    });
+  } catch (error) {
+    res.json({ success: false, message: 'Failed to fetch returned items' });
+  }
+};
+
 module.exports = {
   getProductAddPage,
   addProducts,
@@ -307,4 +369,5 @@ module.exports = {
   toggleBlockProduct,
   getEditProductPage,
   editProduct,
+  getProductReturnedItems
 };

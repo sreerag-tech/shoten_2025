@@ -32,14 +32,16 @@ const orderSchema = new Schema({
         type: String,
         required: true,
         enum: [
+          "Pending",
           "Processing",
           "Shipped",
+          "Out for Delivery",
           "Delivered",
           "Cancelled",
           "Return Request",
           "Returned",
         ],
-        default: "Processing",
+        default: "Pending",
       },
       returnReason: {
         type: String,
@@ -51,6 +53,19 @@ const orderSchema = new Schema({
       },
     },
   ],
+  status: {
+    type: String,
+    required: true,
+    enum: [
+      "Pending",
+      "Processing",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled",
+    ],
+    default: "Pending",
+  },
   totalPrice: {
     type: Number,
     required: true,

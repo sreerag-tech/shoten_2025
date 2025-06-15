@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shoten - Anime Merchandise</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             background: black;
@@ -175,8 +177,12 @@
             <div class="flex items-center">
                 <a href="/home" class="text-2xl font-bold text-[#00ffff] mr-12">SHOTEN</h1>
                 <nav class="hidden md:flex space-x-8">
-                    <a href="/home" class="header-link">Home</a>
-                    <a href="/shop" class="header-link">Shop</a>
+                    <a href="/home" class="header-link flex items-center gap-2">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/shop" class="header-link flex items-center gap-2">
+                        <i class="fas fa-store"></i> Shop
+                    </a>
                 </nav>
             </div>
             
@@ -191,18 +197,47 @@
                 </div>
                 <% if (locals.user) { %>
                 <div class="dropdown">
-                    <a href="#" class="sign-in-link"><%= locals.user.name %></a>
+                    <a href="#" class="sign-in-link flex items-center gap-2">
+                        <i class="fas fa-user-circle"></i> <%= locals.user.name %>
+                    </a>
                     <div class="dropdown-content">
-                        <a href="/profile">Profile</a>
-                        <a href="/orders">My Orders</a>
+                        <a href="/profile" class="flex items-center gap-2">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                        <a href="/orders" class="flex items-center gap-2">
+                            <i class="fas fa-box"></i> My Orders
+                        </a>
+                        <a href="/wallet" class="flex items-center gap-2">
+                            <i class="fas fa-wallet"></i> Wallet
+                        </a>
                         <form action="/logout" method="POST">
-                            <button type="submit">Logout</button>
+                            <button type="submit" class="flex items-center gap-2">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
                         </form>
                     </div>
                 </div>
                 <% } else { %>
-                <a href="/login" class="header-link">Login</a>
-                <a href="/signup" class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition">Sign Up</a>
+                <a href="/login" class="header-link flex items-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                <a href="/signup" class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition flex items-center gap-2">
+                    <i class="fas fa-user-plus"></i> Sign Up
+                </a>
+                <% } %>
+                <% if (locals.user) { %>
+                <a href="/wishlist" class="relative wishlist-link hover:text-[#00ffff] transition-colors duration-300 mr-4" title="My Wishlist">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span class="wishlist-count absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" style="display: none;">0</span>
+                </a>
+                <a href="/wallet" class="relative wallet-link hover:text-[#00ffff] transition-colors duration-300 mr-4" title="My Wallet">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span class="wallet-balance absolute -top-2 -right-2 bg-[#00ffff] text-black text-xs font-bold rounded-full px-1 min-w-[20px] h-5 flex items-center justify-center" style="display: none;">₹0</span>
+                </a>
                 <% } %>
                 <a href="/cart" class="relative cart-link hover:text-[#00ffff] transition-colors duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,6 +254,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Update cart count on page load
         updateCartCount();
+        // Update wishlist count on page load
+        updateWishlistCount();
     });
 
     function updateCartCount() {
@@ -242,8 +279,30 @@
             });
     }
 
-    // Make updateCartCount globally available
+    function updateWishlistCount() {
+        fetch('/api/wishlist/count')
+            .then(response => response.json())
+            .then(data => {
+                const wishlistCountElements = document.querySelectorAll('.wishlist-count');
+                wishlistCountElements.forEach(element => {
+                    element.textContent = data.count || 0;
+
+                    // Show/hide wishlist count badge
+                    if (data.count > 0) {
+                        element.style.display = 'flex';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error updating wishlist count:', error);
+            });
+    }
+
+    // Make functions globally available
     window.updateCartCount = updateCartCount;
+    window.updateWishlistCount = updateWishlistCount;
     </script>
 </body>
 </html>

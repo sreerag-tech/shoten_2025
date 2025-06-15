@@ -40,14 +40,30 @@ app.use((req, res, next) => {
     next();
 });
 
-// Then mount the router
-app.use("/", userRouter);
-
-
+// Set view engine first
 app.set("view engine", "ejs");
 app.set("views", [path.join(__dirname, 'views/user'), path.join(__dirname, 'views/admin')]);
 app.use(express.static(path.join(__dirname, "public")));
-app.use('/admin',adminRouter);
+
+// Middleware to set admin views directory for admin routes
+app.use('/admin', (req, res, next) => {
+    app.set("views", path.join(__dirname, 'views/admin'));
+    next();
+});
+
+// Mount admin router
+app.use('/admin', adminRouter);
+
+// Middleware to set user views directory for user routes
+app.use('/', (req, res, next) => {
+    if (!req.path.startsWith('/admin')) {
+        app.set("views", path.join(__dirname, 'views/user'));
+    }
+    next();
+});
+
+// Mount user router
+app.use("/", userRouter);
 
 
 

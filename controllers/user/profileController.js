@@ -27,6 +27,41 @@ const loadProfile=async(req,res)=>{
     // Get user orders
     const orders = await Order.find({userId: userId}).sort({createdOn: -1}).limit(10);
 
+    // Get user wishlist items
+    const mongoose = require('mongoose');
+    const Wishlist = mongoose.models.Wishlist || require("../../models/wishListSchema");
+
+    const wishlistItems = await Wishlist.find({ userId: userId })
+      .populate({
+        path: 'products.productId',
+        populate: {
+          path: 'category',
+          model: 'Category'
+        }
+      })
+      .sort({ 'products.addedOn': -1 });
+
+    // Extract wishlist products (limit to 6 for profile preview)
+    let wishlistProducts = [];
+    if (wishlistItems.length > 0) {
+      wishlistProducts = wishlistItems[0].products
+        .filter(item => item.productId && !item.productId.isDeleted && !item.productId.isBlocked)
+        .slice(0, 6) // Limit to 6 items for profile preview
+        .map(item => ({
+          _id: item.productId._id,
+          name: item.productId.productName,
+          price: item.productId.salePrice,
+          originalPrice: item.productId.regularPrice,
+          image: item.productId.productImage && item.productId.productImage.length > 0
+            ? `/uploads/product-images/${item.productId.productImage[0]}`
+            : '/images/placeholder.jpg',
+          category: item.productId.category ? item.productId.category.name : 'Unknown',
+          isAvailable: item.productId.quantity > 0,
+          discount: item.productId.offerPercentage || 0,
+          addedOn: item.addedOn
+        }));
+    }
+
     // Get success/error messages from session
     const profileMessage = req.session.profileMessage || null;
     req.session.profileMessage = null;
@@ -35,6 +70,8 @@ const loadProfile=async(req,res)=>{
       user: userData,
       addresses: addresses,
       orders: orders,
+      wishlistItems: wishlistProducts,
+      wishlistCount: wishlistProducts.length,
       profileMessage: profileMessage
     })
   }catch(error){
@@ -301,6 +338,68 @@ const addAddress = async (req, res) => {
   }
 };
 
+const getAddress = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const addressId = req.params.id;
+
+    const address = await Address.findOne({ _id: addressId, userId: userId });
+
+    if (!address) {
+      return res.json({ success: false, message: 'Address not found' });
+    }
+
+    res.json({ success: true, address: address });
+  } catch (error) {
+    console.error('Error fetching address:', error);
+    res.json({ success: false, message: 'Failed to fetch address' });
+  }
+};
+
+const editAddress = async (req, res) => {
+  try {
+    const addressId = req.params.id;
+    const userId = req.session.user;
+    const { name, phone, pincode, address, locality, city, state, landMark, addressType, isDefault } = req.body;
+
+    // Find and update the address
+    const updatedAddress = await Address.findOneAndUpdate(
+      { _id: addressId, userId: userId },
+      {
+        name: name.trim(),
+        phone: phone.trim(),
+        pincode: pincode.trim(),
+        address: address.trim(),
+        locality: locality.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        landMark: landMark ? landMark.trim() : '',
+        addressType: addressType
+      },
+      { new: true }
+    );
+
+    if (!updatedAddress) {
+      return res.json({ success: false, message: 'Address not found' });
+    }
+
+    // If setting as default, update other addresses
+    if (isDefault) {
+      await Address.updateMany(
+        { userId: userId, _id: { $ne: addressId } },
+        { isDefault: false }
+      );
+      updatedAddress.isDefault = true;
+      await updatedAddress.save();
+    }
+
+    res.json({ success: true, message: 'Address updated successfully' });
+  } catch (error) {
+    console.error('Error updating address:', error);
+    res.json({ success: false, message: 'Failed to update address' });
+  }
+};
+
 const deleteAddress = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -506,11 +605,113 @@ const resendEmailOTP = async (req, res) => {
   }
 };
 
+// Update Basic Profile (without email)
+const updateBasicProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { name, phone, dateOfBirth, bio } = req.body;
+
+    // Basic validation for required fields (excluding email)
+    if (!name || name.trim().length === 0) {
+      req.session.profileMessage = {
+        type: 'error',
+        text: 'Name is required'
+      };
+      return res.redirect('/profile');
+    }
+
+    // Prepare update data (excluding email)
+    const updateData = {
+      name: name.trim(),
+      phone: phone ? phone.trim() : null,
+      dateOfBirth: dateOfBirth || null,
+      bio: bio ? bio.trim() : null
+    };
+
+    // Update user in database
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {new: true});
+    console.log('Updated User:', updatedUser);
+
+    // Set success message in session and redirect
+    req.session.profileMessage = { type: 'success', text: 'Profile updated successfully!' };
+    res.redirect('/profile');
+  } catch (error) {
+    console.error('Error updating basic profile:', error);
+    req.session.profileMessage = { type: 'error', text: 'Failed to update profile. Please try again.' };
+    res.redirect('/profile');
+  }
+};
+
+// Change Email (separate function)
+const changeEmail = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.json({ success: false, message: 'Email is required' });
+    }
+
+    // Validate email format
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return res.json({ success: false, message: 'Please enter a valid email address' });
+    }
+
+    // Get current user
+    const currentUser = await User.findById(userId);
+    if (email === currentUser.email) {
+      return res.json({ success: false, message: 'New email must be different from current email' });
+    }
+
+    // Check if new email already exists
+    const existingUser = await User.findOne({ email: email, _id: { $ne: userId } });
+    if (existingUser) {
+      return res.json({ success: false, message: 'Email already exists!' });
+    }
+
+    // Generate OTP for email verification
+    const otp = generateOtp();
+    const emailSent = await sendVerificationEmail(email, otp);
+
+    if (!emailSent) {
+      return res.json({ success: false, message: 'Failed to send verification email!' });
+    }
+
+    // Store pending update data in session
+    req.session.pendingProfileUpdate = {
+      name: currentUser.name,
+      email: email.trim(),
+      phone: currentUser.phone,
+      dateOfBirth: currentUser.dateOfBirth,
+      bio: currentUser.bio
+    };
+
+    req.session.emailVerificationOtp = otp;
+    req.session.otpTimestamp = Date.now();
+    req.session.newEmail = email.trim();
+
+    // Return success response
+    res.json({
+      success: true,
+      message: 'Verification code sent successfully!',
+      redirectUrl: '/profile/verify-email'
+    });
+  } catch (error) {
+    console.error('Error changing email:', error);
+    res.json({ success: false, message: 'Failed to send verification email. Please try again.' });
+  }
+};
+
 module.exports={
   loadProfile,
   loadEditProfile,
   updateProfile,
+  updateBasicProfile,
+  changeEmail,
   addAddress,
+  getAddress,
+  editAddress,
   deleteAddress,
   setDefaultAddress,
   changePassword,

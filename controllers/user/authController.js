@@ -117,7 +117,7 @@ const verifyOtp = async (req, res) => {
     if (!otpTimestamp || timeDifference > 120) {
       return res.status(400).json({ success: false, message: "OTP has expired" });
     }
-
+console.log(otp)
     if (otp === req.session.userOtp) {
       const user = req.session.userData;
       const existingUser = await User.findOne({ email: user.email });

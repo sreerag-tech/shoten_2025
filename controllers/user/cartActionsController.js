@@ -2,7 +2,8 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Category = require("../../models/categorySchema");
 const Cart = require("../../models/cartSchema");
-const Wishlist = require("../../models/wishlistSchema");
+const mongoose = require('mongoose');
+const Wishlist = mongoose.models.Wishlist || require("../../models/wishListSchema");
 
 // Maximum quantity per product
 const MAX_QUANTITY_PER_PRODUCT = 10;
@@ -97,7 +98,7 @@ const addToCart = async (req, res) => {
     }
     
     // Remove from wishlist if exists
-    await Wishlist.findOneAndDelete({ userId, productId });
+    await removeFromWishlistHelper(userId, productId);
     
     // Get updated cart count
     const cartCount = await getCartItemCount(userId);
@@ -255,6 +256,21 @@ const clearCart = async (req, res) => {
   } catch (error) {
     console.error('Error clearing cart:', error);
     res.json({ success: false, message: 'Failed to clear cart' });
+  }
+};
+
+// Helper function to remove product from wishlist
+const removeFromWishlistHelper = async (userId, productId) => {
+  try {
+    const wishlist = await Wishlist.findOne({ userId: userId });
+    if (wishlist) {
+      wishlist.products = wishlist.products.filter(
+        item => item.productId.toString() !== productId.toString()
+      );
+      await wishlist.save();
+    }
+  } catch (error) {
+    console.error('Error removing from wishlist:', error);
   }
 };
 

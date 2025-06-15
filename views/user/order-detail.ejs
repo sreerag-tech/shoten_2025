@@ -185,22 +185,97 @@
                     </div>
                 </div>
 
+                <!-- Order Status Tracker -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-bold text-white mb-4">📦 Order Status</h2>
+
+                    <%
+                    // Determine overall order status
+                    const orderStatuses = order.orderedItems.map(item => item.status);
+                    let overallStatus = order.status;
+
+                    // Status progression
+                    const statusSteps = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+                    const currentStepIndex = statusSteps.indexOf(overallStatus);
+                    %>
+
+                    <div class="space-y-4">
+                        <% statusSteps.forEach((step, index) => { %>
+                            <div class="flex items-center">
+                                <div class="flex items-center justify-center w-8 h-8 rounded-full mr-3
+                                    <% if (index <= currentStepIndex && overallStatus !== 'Cancelled') { %>
+                                        bg-[#00ffff] text-black
+                                    <% } else { %>
+                                        bg-gray-600 text-gray-400
+                                    <% } %>">
+                                    <% if (index <= currentStepIndex && overallStatus !== 'Cancelled') { %>
+                                        ✓
+                                    <% } else { %>
+                                        <%= index + 1 %>
+                                    <% } %>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-white font-medium"><%= step %></p>
+                                    <% if (step === overallStatus) { %>
+                                        <p class="text-[#00ffff] text-sm">Current Status</p>
+                                    <% } %>
+                                </div>
+                                <% if (step === overallStatus && overallStatus !== 'Delivered' && overallStatus !== 'Cancelled') { %>
+                                    <div class="animate-pulse">
+                                        <div class="w-2 h-2 bg-[#00ffff] rounded-full"></div>
+                                    </div>
+                                <% } %>
+                            </div>
+                            <% if (index < statusSteps.length - 1) { %>
+                                <div class="ml-4 w-0.5 h-4
+                                    <% if (index < currentStepIndex && overallStatus !== 'Cancelled') { %>
+                                        bg-[#00ffff]
+                                    <% } else { %>
+                                        bg-gray-600
+                                    <% } %>"></div>
+                            <% } %>
+                        <% }) %>
+
+                        <% if (overallStatus === 'Cancelled') { %>
+                            <div class="flex items-center mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <div class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center mr-3">
+                                    ❌
+                                </div>
+                                <div>
+                                    <p class="text-red-400 font-medium">Order Cancelled</p>
+                                    <p class="text-red-300 text-sm">This order has been cancelled</p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
                 <!-- Order Timeline -->
                 <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
                     <h2 class="text-xl font-bold text-white mb-4">📅 Order Timeline</h2>
-                    
+
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-400">Order Date:</span>
-                            <span class="text-white"><%= new Date(order.orderDate).toLocaleDateString() %></span>
+                            <span class="text-white"><%= new Date(order.orderDate || order.createdOn).toLocaleDateString() %></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400">Expected Delivery:</span>
-                            <span class="text-white"><%= new Date(order.deliveryDate).toLocaleDateString() %></span>
+                            <span class="text-white">
+                                <%
+                                const expectedDelivery = new Date(order.deliveryDate || order.createdOn);
+                                expectedDelivery.setDate(expectedDelivery.getDate() + 7); // Add 7 days
+                                %>
+                                <%= expectedDelivery.toLocaleDateString() %>
+                            </span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400">Created On:</span>
                             <span class="text-white"><%= new Date(order.createdOn).toLocaleDateString() %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Last Updated:</span>
+                            <span class="text-white"><%= new Date(order.updatedAt || order.createdOn).toLocaleDateString() %></span>
                         </div>
                     </div>
                 </div>

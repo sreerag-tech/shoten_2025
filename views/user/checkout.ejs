@@ -14,8 +14,8 @@
         
         <div class="relative max-w-6xl mx-auto px-8">
             <div class="text-center mb-8">
-                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up">
-                    🛒 CHECKOUT
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up flex items-center justify-center gap-4">
+                    <i class="fas fa-credit-card"></i> CHECKOUT
                 </h1>
                 <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
                     Complete your order
@@ -34,7 +34,9 @@
                 <!-- Delivery Address Section -->
                 <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-white">📍 Delivery Address</h2>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                            <i class="fas fa-map-marker-alt"></i> Delivery Address
+                        </h2>
                         <button class="add-address-btn px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-colors duration-300 font-semibold">
                             + Add New Address
                         </button>
@@ -65,12 +67,16 @@
                                                 <p class="text-gray-300 text-sm mb-1">
                                                     <%= address.locality %>, <%= address.city %>, <%= address.state %> - <%= address.pincode %>
                                                 </p>
-                                                <p class="text-gray-400 text-sm">
-                                                    📞 <%= address.phone %>
+                                                <p class="text-gray-400 text-sm flex items-center gap-2">
+                                                    <i class="fas fa-phone"></i> <%= address.phone %>
                                                 </p>
                                             </div>
                                         </div>
                                         <div class="flex gap-2">
+                                            <button class="edit-address-btn text-[#00ffff] hover:text-[#0088ff] text-sm transition-colors duration-300"
+                                                    data-address-id="<%= address._id %>">
+                                                ✏️ Edit
+                                            </button>
                                             <% if (!address.isDefault) { %>
                                                 <button class="set-default-btn text-[#00ffff] hover:text-[#0088ff] text-sm transition-colors duration-300"
                                                         data-address-id="<%= address._id %>">
@@ -84,7 +90,9 @@
                         </div>
                     <% } else { %>
                         <div class="text-center py-8">
-                            <div class="text-6xl mb-4">📍</div>
+                            <div class="text-6xl mb-4 text-gray-400">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
                             <h3 class="text-xl font-bold text-gray-300 mb-2">No Addresses Found</h3>
                             <p class="text-gray-400 mb-4">Please add a delivery address to continue</p>
                         </div>
@@ -93,14 +101,18 @@
 
                 <!-- Payment Method Section -->
                 <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
-                    <h2 class="text-2xl font-bold text-white mb-6">💳 Payment Method</h2>
+                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-credit-card"></i> Payment Method
+                    </h2>
                     
                     <div class="space-y-4">
                         <div class="payment-option border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50 border-[#00ffff] bg-[#00ffff]/5">
                             <div class="flex items-center gap-3">
                                 <input type="radio" name="paymentMethod" value="COD" class="payment-radio" checked>
                                 <div>
-                                    <h3 class="text-white font-semibold text-lg">💰 Cash on Delivery</h3>
+                                    <h3 class="text-white font-semibold text-lg flex items-center gap-2">
+                                        <i class="fas fa-money-bill-wave"></i> Cash on Delivery
+                                    </h3>
                                     <p class="text-gray-400 text-sm">Pay when your order is delivered</p>
                                 </div>
                             </div>
@@ -111,7 +123,9 @@
                             <div class="flex items-center gap-3">
                                 <input type="radio" name="paymentMethod" value="ONLINE" disabled>
                                 <div>
-                                    <h3 class="text-gray-400 font-semibold text-lg">💳 Online Payment</h3>
+                                    <h3 class="text-gray-400 font-semibold text-lg flex items-center gap-2">
+                                        <i class="fas fa-credit-card"></i> Online Payment
+                                    </h3>
                                     <p class="text-gray-500 text-sm">Coming Soon - UPI, Cards, Net Banking</p>
                                 </div>
                             </div>
@@ -123,7 +137,9 @@
             <!-- Order Summary -->
             <div class="lg:col-span-1">
                 <div class="bg-gray-800 rounded-2xl p-6 shadow-xl sticky top-8">
-                    <h2 class="text-xl font-bold text-white mb-6">📋 Order Summary</h2>
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-clipboard-list"></i> Order Summary
+                    </h2>
                     
                     <!-- Order Items -->
                     <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
@@ -135,7 +151,7 @@
                                              alt="<%= item.productId.productName %>" 
                                              class="w-full h-full object-cover rounded-lg">
                                     <% } else { %>
-                                        <span class="text-lg">📦</span>
+                                        <i class="fas fa-box text-lg text-gray-400"></i>
                                     <% } %>
                                 </div>
                                 <div class="flex-1">
@@ -194,8 +210,8 @@
                     <% } %>
                     
                     <!-- Place Order Button -->
-                    <button class="place-order-btn w-full py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105 mb-4">
-                        🛒 Place Order
+                    <button class="place-order-btn w-full py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105 mb-4 flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle"></i> Place Order
                     </button>
                     
                     <a href="/cart" class="block w-full py-3 bg-gray-700 text-white text-center rounded-lg hover:bg-gray-600 transition-colors duration-300">

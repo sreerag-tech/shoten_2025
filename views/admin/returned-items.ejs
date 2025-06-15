@@ -1,0 +1,283 @@
+<%- include('partials/header') %>
+
+<div class="container-fluid">
+    <div class="row">
+        <%- include('partials/sidebar') %>
+        
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">📦 Returned Items Log</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportReturnedItems()">
+                            <i class="fas fa-download me-1"></i>Export CSV
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshData()">
+                            <i class="fas fa-refresh me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Total Returns</h6>
+                                    <h3 class="mb-0"><%= stats.totalReturns %></h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-undo fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Total Refunds</h6>
+                                    <h3 class="mb-0">₹<%= stats.totalRefundAmount.toLocaleString() %></h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-money-bill fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Avg Refund</h6>
+                                    <h3 class="mb-0">₹<%= Math.round(stats.avgRefundAmount || 0).toLocaleString() %></h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-chart-line fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">This Month</h6>
+                                    <h3 class="mb-0"><%= returnedItems.filter(item => new Date(item.returnDate).getMonth() === new Date().getMonth()).length %></h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-calendar fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" action="/admin/returned-items" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" name="search" value="<%= search %>" 
+                                   placeholder="Order ID, Customer, Product...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date From</label>
+                            <input type="date" class="form-control" name="dateFrom" value="<%= dateFrom %>">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date To</label>
+                            <input type="date" class="form-control" name="dateTo" value="<%= dateTo %>">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Sort By</label>
+                            <select class="form-select" name="sortBy">
+                                <option value="returnDate" <%= sortBy === 'returnDate' ? 'selected' : '' %>>Return Date</option>
+                                <option value="refundAmount" <%= sortBy === 'refundAmount' ? 'selected' : '' %>>Refund Amount</option>
+                                <option value="customerName" <%= sortBy === 'customerName' ? 'selected' : '' %>>Customer Name</option>
+                                <option value="productName" <%= sortBy === 'productName' ? 'selected' : '' %>>Product Name</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Order</label>
+                            <select class="form-select" name="sortOrder">
+                                <option value="desc" <%= sortOrder === 'desc' ? 'selected' : '' %>>Desc</option>
+                                <option value="asc" <%= sortOrder === 'asc' ? 'selected' : '' %>>Asc</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>Search
+                            </button>
+                            <a href="/admin/returned-items" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Returned Items Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Returned Items (<%= totalReturns %> total)</h5>
+                </div>
+                <div class="card-body">
+                    <% if (returnedItems && returnedItems.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Refund Amount</th>
+                                        <th>Return Reason</th>
+                                        <th>Admin Response</th>
+                                        <th>Return Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% returnedItems.forEach(item => { %>
+                                        <tr>
+                                            <td>
+                                                <span class="fw-bold text-primary">#<%= item.orderId %></span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm me-2">
+                                                        <% if (item.user?.profileImage) { %>
+                                                            <img src="/uploads/profile-images/<%= item.user.profileImage %>" 
+                                                                 alt="<%= item.customerName %>" 
+                                                                 class="rounded-circle" 
+                                                                 style="width: 32px; height: 32px; object-fit: cover;">
+                                                        <% } else { %>
+                                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                                <span class="text-white fw-bold text-sm">
+                                                                    <%= item.customerName ? item.customerName.charAt(0).toUpperCase() : 'U' %>
+                                                                </span>
+                                                            </div>
+                                                        <% } %>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-medium"><%= item.customerName || 'Unknown' %></div>
+                                                        <small class="text-muted"><%= item.customerEmail || 'N/A' %></small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="fw-medium"><%= item.productName || 'Product Not Found' %></div>
+                                                <small class="text-muted">SKU: #<%= item.product?._id?.slice(-6) || 'N/A' %></small>
+                                            </td>
+                                            <td><span class="badge bg-secondary"><%= item.orderedItems.quantity %></span></td>
+                                            <td><span class="fw-bold text-success">₹<%= item.refundAmount.toLocaleString() %></span></td>
+                                            <td>
+                                                <% if (item.returnReason) { %>
+                                                    <span class="text-truncate d-inline-block" style="max-width: 150px;" title="<%= item.returnReason %>">
+                                                        <%= item.returnReason %>
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="text-muted">No reason provided</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (item.adminResponse) { %>
+                                                    <span class="text-truncate d-inline-block" style="max-width: 150px;" title="<%= item.adminResponse %>">
+                                                        <%= item.adminResponse %>
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="text-muted">No response</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <div><%= new Date(item.returnDate).toLocaleDateString() %></div>
+                                                <small class="text-muted"><%= new Date(item.returnDate).toLocaleTimeString() %></small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="/admin/orders/<%= item._id %>" class="btn btn-sm btn-outline-primary" title="View Order">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-outline-info" onclick="viewReturnDetails('<%= item._id %>', <%= returnedItems.indexOf(item) %>)" title="Return Details">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <% if (totalPages > 1) { %>
+                            <nav aria-label="Returned items pagination" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    <% if (currentPage > 1) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>">Previous</a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                            <a class="page-link" href="?page=<%= i %>&search=<%= search %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <% if (currentPage < totalPages) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>">Next</a>
+                                        </li>
+                                    <% } %>
+                                </ul>
+                            </nav>
+                        <% } %>
+                    <% } else { %>
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Returned Items Found</h5>
+                            <p class="text-muted">No items have been returned yet or match your search criteria.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Export returned items data
+function exportReturnedItems() {
+    window.location.href = '/admin/returned-items/export';
+}
+
+// Refresh data
+function refreshData() {
+    location.reload();
+}
+
+// View return details
+function viewReturnDetails(orderId, itemIndex) {
+    // This could open a modal with detailed return information
+    window.location.href = `/admin/orders/${orderId}`;
+}
+</script>
+
+<%- include('partials/footer') %>

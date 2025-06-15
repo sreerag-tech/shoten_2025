@@ -56,11 +56,15 @@ router.post('/profile', userAuth, profileUpload.single('profileImage'), userCont
 
 // Address Management Routes
 router.post('/profile/address', userAuth, userController.addAddress);
+router.put('/profile/address/:id', userAuth, userController.editAddress);
 router.delete('/profile/address/:id', userAuth, userController.deleteAddress);
 router.put('/profile/address/:id/default', userAuth, userController.setDefaultAddress);
 
 // Password Change Route
 router.post('/profile/change-password', userAuth, userController.changePassword);
+
+// Email Change Route
+router.post('/profile/change-email', userAuth, userController.changeEmail);
 
 // Email Verification Routes
 router.get('/profile/verify-email', userAuth, userController.loadEmailVerification);
@@ -70,6 +74,7 @@ router.post('/profile/resend-email-otp', userAuth, userController.resendEmailOTP
 // Order Management Routes
 router.get('/orders', userAuth, userController.loadOrders);
 router.get('/orders/:id', userAuth, userController.loadOrderDetail);
+router.get('/api/orders/:id', userAuth, userController.getOrderDetailsAPI);
 router.put('/orders/:id/cancel', userAuth, userController.cancelOrder);
 router.put('/orders/:id/items/:itemIndex/cancel', userAuth, userController.cancelOrderItem);
 router.put('/orders/:id/return', userAuth, userController.returnOrder);
@@ -83,6 +88,22 @@ router.post('/cart/add', userAuth, userController.addToCart);
 router.put('/cart/update-quantity', userAuth, userController.updateCartQuantity);
 router.delete('/cart/remove', userAuth, userController.removeFromCart);
 router.delete('/cart/clear', userAuth, userController.clearCart);
+
+// Wishlist Management Routes
+router.get('/wishlist', userAuth, userController.loadWishlist);
+router.get('/api/wishlist/count', userController.getWishlistCount);
+router.post('/api/wishlist/add', userAuth, userController.addToWishlist);
+router.delete('/api/wishlist/remove', userAuth, userController.removeFromWishlist);
+router.post('/api/wishlist/move-to-cart', userAuth, userController.moveToCart);
+router.post('/api/wishlist/move-all-to-cart', userAuth, userController.moveAllToCart);
+router.delete('/api/wishlist/clear', userAuth, userController.clearWishlist);
+
+// Wallet Management Routes
+router.get('/wallet', userAuth, userController.loadWallet);
+router.post('/wallet/add-money', userAuth, userController.addMoney);
+router.get('/wallet/balance', userAuth, userController.getWalletBalance);
+router.get('/wallet/transactions', userAuth, userController.getTransactionHistory);
+router.post('/wallet/use-for-payment', userAuth, userController.useWalletForPayment);
 
 // Checkout Routes
 router.get('/checkout', userAuth, userController.loadCheckout);

@@ -1,0 +1,390 @@
+<%- include('partials/header') %>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                <h4 class="mb-sm-0">Order Details</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/orders">Orders</a></li>
+                        <li class="breadcrumb-item active">Order Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Order Information -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order #<%= order.orderId %></h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <div class="text-muted">
+                                <h5 class="font-size-16 mb-3">Order Date:</h5>
+                                <p class="mb-2"><%= new Date(order.createdOn).toLocaleDateString() %></p>
+                                <p class="mb-0"><%= new Date(order.createdOn).toLocaleTimeString() %></p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">
+                                <h5 class="font-size-16 mb-3">Order Status:</h5>
+                                <div class="mb-3">
+                                    <% 
+                                    let statusClass = 'bg-secondary';
+                                    if (order.status === 'Processing') statusClass = 'bg-warning';
+                                    else if (order.status === 'Shipped') statusClass = 'bg-info';
+                                    else if (order.status === 'Out for Delivery') statusClass = 'bg-primary';
+                                    else if (order.status === 'Delivered') statusClass = 'bg-success';
+                                    else if (order.status === 'Cancelled') statusClass = 'bg-danger';
+                                    %>
+                                    <span class="badge <%= statusClass %> font-size-12"><%= order.status %></span>
+                                </div>
+                                <% if (order.status !== 'Delivered' && order.status !== 'Cancelled') { %>
+                                    <select class="form-select" id="orderStatusSelect" onchange="updateOrderStatus()">
+                                        <option value="">Change Status</option>
+                                        <%
+                                        // Define available status options based on current status
+                                        let availableStatuses = [];
+                                        if (order.status === 'Pending') {
+                                            availableStatuses = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+                                        } else if (order.status === 'Processing') {
+                                            availableStatuses = ['Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+                                        } else if (order.status === 'Shipped') {
+                                            availableStatuses = ['Out for Delivery', 'Delivered', 'Cancelled'];
+                                        } else if (order.status === 'Out for Delivery') {
+                                            availableStatuses = ['Delivered', 'Cancelled'];
+                                        }
+                                        %>
+                                        <% availableStatuses.forEach(status => { %>
+                                            <option value="<%= status %>"><%= status %></option>
+                                        <% }) %>
+                                    </select>
+                                <% } else { %>
+                                    <span class="text-muted">Status cannot be changed</span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Items -->
+                    <div class="table-responsive">
+                        <table class="table table-nowrap">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Product</th>
+                                    <th scope="col">Price</th>
+                                    <th scope="col">Quantity</th>
+                                    <th scope="col">Total</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% order.orderedItems.forEach((item, index) => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 avatar-md me-3">
+                                                    <img src="<%= item.product?.productImage && item.product.productImage.length > 0 ? `/uploads/product-images/${item.product.productImage[0]}` : '/images/placeholder.jpg' %>" 
+                                                         alt="<%= item.product?.productName || 'Product' %>" 
+                                                         class="img-fluid rounded">
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h5 class="font-size-14 text-truncate">
+                                                        <a href="#" class="text-dark"><%= item.product?.productName || 'Product Not Found' %></a>
+                                                    </h5>
+                                                    <p class="text-muted mb-0">SKU: #<%= item.product?._id.toString().slice(-6) || 'N/A' %></p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>₹<%= item.price.toLocaleString() %></td>
+                                        <td><%= item.quantity %></td>
+                                        <td>₹<%= (item.price * item.quantity).toLocaleString() %></td>
+                                        <td>
+                                            <% 
+                                            let itemStatusClass = 'bg-secondary';
+                                            if (item.status === 'Processing') itemStatusClass = 'bg-warning';
+                                            else if (item.status === 'Shipped') itemStatusClass = 'bg-info';
+                                            else if (item.status === 'Out for Delivery') itemStatusClass = 'bg-primary';
+                                            else if (item.status === 'Delivered') itemStatusClass = 'bg-success';
+                                            else if (item.status === 'Cancelled') itemStatusClass = 'bg-danger';
+                                            else if (item.status === 'Return Request') itemStatusClass = 'bg-warning';
+                                            else if (item.status === 'Returned') itemStatusClass = 'bg-purple';
+                                            %>
+                                            <span class="badge <%= itemStatusClass %> font-size-11"><%= item.status %></span>
+                                        </td>
+                                        <td>
+                                            <% if (item.status === 'Return Request') { %>
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-success" onclick="handleReturnRequest('<%= order._id %>', <%= index %>, 'approve')">
+                                                        <i class="fas fa-check me-1"></i>Approve
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger" onclick="handleReturnRequest('<%= order._id %>', <%= index %>, 'reject')">
+                                                        <i class="fas fa-times me-1"></i>Reject
+                                                    </button>
+                                                </div>
+                                            <% } else if (item.status !== 'Delivered' && item.status !== 'Cancelled' && item.status !== 'Returned') { %>
+                                                <select class="form-select form-select-sm" onchange="updateItemStatus('<%= order._id %>', <%= index %>, this.value)">
+                                                    <option value="">Change Status</option>
+                                                    <%
+                                                    // Define available status options based on current item status
+                                                    let itemAvailableStatuses = [];
+                                                    if (item.status === 'Pending') {
+                                                        itemAvailableStatuses = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+                                                    } else if (item.status === 'Processing') {
+                                                        itemAvailableStatuses = ['Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+                                                    } else if (item.status === 'Shipped') {
+                                                        itemAvailableStatuses = ['Out for Delivery', 'Delivered', 'Cancelled'];
+                                                    } else if (item.status === 'Out for Delivery') {
+                                                        itemAvailableStatuses = ['Delivered', 'Cancelled'];
+                                                    }
+                                                    %>
+                                                    <% itemAvailableStatuses.forEach(status => { %>
+                                                        <option value="<%= status %>"><%= status %></option>
+                                                    <% }) %>
+                                                </select>
+                                            <% } else { %>
+                                                <span class="text-muted">Status cannot be changed</span>
+                                            <% } %>
+                                            
+                                            <% if (item.returnReason) { %>
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Return Reason:</small>
+                                                    <p class="small mb-0"><%= item.returnReason %></p>
+                                                </div>
+                                            <% } %>
+                                            
+                                            <% if (item.adminResponse) { %>
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Admin Response:</small>
+                                                    <p class="small mb-0"><%= item.adminResponse %></p>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer & Payment Info -->
+        <div class="col-lg-4">
+            <!-- Customer Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="avatar-lg mx-auto mb-3">
+                            <% if (order.userId?.profileImage) { %>
+                                <img src="/uploads/profile-images/<%= order.userId.profileImage %>"
+                                     alt="<%= order.userId.name %>"
+                                     class="avatar-lg rounded-circle"
+                                     style="width: 64px; height: 64px; object-fit: cover;">
+                            <% } else { %>
+                                <div class="avatar-title bg-primary rounded-circle font-size-20">
+                                    <%= order.userId?.name ? order.userId.name.charAt(0).toUpperCase() : 'U' %>
+                                </div>
+                            <% } %>
+                        </div>
+                        <h5 class="font-size-16 mb-1"><%= order.userId?.name || 'Unknown Customer' %></h5>
+                        <p class="text-muted mb-2"><%= order.userId?.email || 'N/A' %></p>
+                        <p class="text-muted mb-0"><%= order.userId?.phone || 'N/A' %></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td>Sub Total :</td>
+                                    <td class="text-end">₹<%= (order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0)).toLocaleString() %></td>
+                                </tr>
+                                <% if (order.discount > 0) { %>
+                                    <tr>
+                                        <td>Discount :</td>
+                                        <td class="text-end text-success">-₹<%= order.discount.toLocaleString() %></td>
+                                    </tr>
+                                <% } %>
+                                <% if (order.shippingCharge > 0) { %>
+                                    <tr>
+                                        <td>Shipping Charge :</td>
+                                        <td class="text-end">₹<%= order.shippingCharge.toLocaleString() %></td>
+                                    </tr>
+                                <% } %>
+                                <tr class="border-top">
+                                    <th>Total :</th>
+                                    <th class="text-end">₹<%= order.totalPrice.toLocaleString() %></th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Payment Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-credit-card text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">Payment Method</h6>
+                            <p class="text-muted mb-0"><%= order.paymentMethod || 'Cash on Delivery' %></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">Payment Status</h6>
+                            <p class="text-muted mb-0"><%= order.paymentStatus || 'Pending' %></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Update order status
+function updateOrderStatus() {
+    const status = document.getElementById('orderStatusSelect').value;
+    if (!status) return;
+
+    Swal.fire({
+        title: `Change order status to ${status}?`,
+        text: 'This will update the status of the entire order.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, update!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/orders/<%= order._id %>/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error!', 'Failed to update order status', 'error');
+            });
+        }
+    });
+}
+
+// Update item status
+function updateItemStatus(orderId, itemIndex, status) {
+    if (!status) return;
+
+    fetch(`/admin/orders/${orderId}/items/${itemIndex}/status`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Success!', data.message, 'success').then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire('Error!', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        Swal.fire('Error!', 'Failed to update item status', 'error');
+    });
+}
+
+// Handle return request
+function handleReturnRequest(orderId, itemIndex, action) {
+    const title = action === 'approve' ? 'Approve Return Request?' : 'Reject Return Request?';
+    const text = action === 'approve' ? 
+        'This will approve the return and refund the amount to customer wallet.' : 
+        'This will reject the return request and mark the item as delivered.';
+
+    Swal.fire({
+        title: title,
+        text: text,
+        input: 'textarea',
+        inputLabel: 'Admin Response (Optional)',
+        inputPlaceholder: 'Enter your response...',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: action === 'approve' ? '#28a745' : '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: action === 'approve' ? 'Approve Return' : 'Reject Return'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/orders/${orderId}/items/${itemIndex}/return`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    action: action,
+                    adminResponse: result.value || ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error!', 'Failed to process return request', 'error');
+            });
+        }
+    });
+}
+</script>
+
+<%- include('partials/footer') %>

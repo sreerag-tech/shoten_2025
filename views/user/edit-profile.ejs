@@ -59,7 +59,9 @@
 
             <!-- Edit Profile Form -->
             <form action="/profile" method="POST" enctype="multipart/form-data" class="space-y-6" id="edit-profile-form">
-                
+                <!-- Hidden email field to maintain current email -->
+                <input type="hidden" name="email" value="<%= (user && user.email) ? user.email : '' %>">
+
                 <!-- Personal Information Section -->
                 <div class="border border-gray-700 rounded-lg p-6">
                     <h3 class="text-xl font-bold text-white mb-4 flex items-center">
@@ -78,19 +80,20 @@
                             <div class="error-message text-red-400 text-xs mt-1 hidden" id="name-error"></div>
                         </div>
                         <div>
-                            <label class="block text-gray-300 text-sm font-semibold mb-2">Email Address *</label>
+                            <label class="block text-gray-300 text-sm font-semibold mb-2">Email Address</label>
                             <div class="relative">
-                                <input type="email" name="email" value="<%= (user && user.email) ? user.email : '' %>"
-                                       class="edit-input" required
-                                       placeholder="Enter your email"
-                                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-                                       title="Please enter a valid email address">
+                                <input type="email" value="<%= (user && user.email) ? user.email : '' %>"
+                                       class="edit-input bg-gray-600 text-gray-400" readonly
+                                       placeholder="Email managed separately">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                    <span class="text-yellow-400 text-sm">📧 Verification Required</span>
+                                    <a href="/profile" class="text-[#00ffff] text-sm hover:text-[#0088ff] transition-colors">
+                                        <i class="fas fa-external-link-alt mr-1"></i> Change in Profile
+                                    </a>
                                 </div>
                             </div>
-                            <p class="text-yellow-400 text-xs mt-1">⚠️ Changing email requires OTP verification</p>
-                            <div class="error-message text-red-400 text-xs mt-1 hidden" id="email-error"></div>
+                            <p class="text-gray-400 text-xs mt-1">
+                                <i class="fas fa-info-circle mr-1"></i> Email changes are handled in the main profile page for security
+                            </p>
                         </div>
                     </div>
 
@@ -188,6 +191,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Ensure email field is included
+        const emailField = this.querySelector('input[name="email"]');
+        if (!emailField || !emailField.value) {
+            console.error('Email field missing or empty');
+            e.preventDefault();
+            alert('Error: Email field is missing. Please refresh the page and try again.');
+            return;
+        }
+
+        console.log('Form submitting with email:', emailField.value);
+
         // Show loading state
         const submitBtn = this.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
@@ -229,7 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeValidation() {
     // Real-time validation
     const nameInput = document.querySelector('input[name="name"]');
-    const emailInput = document.querySelector('input[name="email"]');
     const phoneInput = document.querySelector('input[name="phone"]');
     const dobInput = document.querySelector('input[name="dateOfBirth"]');
     const bioInput = document.querySelector('textarea[name="bio"]');
@@ -238,11 +251,6 @@ function initializeValidation() {
     // Name validation
     nameInput.addEventListener('input', function() {
         validateName(this.value);
-    });
-
-    // Email validation
-    emailInput.addEventListener('input', function() {
-        validateEmail(this.value);
     });
 
     // Phone validation
@@ -274,7 +282,6 @@ function initializeValidation() {
 
 function validateForm() {
     const name = document.querySelector('input[name="name"]').value.trim();
-    const email = document.querySelector('input[name="email"]').value.trim();
     const phone = document.querySelector('input[name="phone"]').value.trim();
     const dob = document.querySelector('input[name="dateOfBirth"]').value;
     const bio = document.querySelector('textarea[name="bio"]').value.trim();
@@ -283,7 +290,6 @@ function validateForm() {
 
     // Validate required fields
     if (!validateName(name)) isValid = false;
-    if (!validateEmail(email)) isValid = false;
 
     // Validate optional fields if they have values
     if (phone && !validatePhone(phone)) isValid = false;

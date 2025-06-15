@@ -16,8 +16,8 @@
                         <div class="checkmark"></div>
                     </div>
                 </div>
-                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up">
-                    🎉 ORDER PLACED SUCCESSFULLY!
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up flex items-center justify-center gap-4">
+                    <i class="fas fa-check-circle"></i> ORDER PLACED SUCCESSFULLY!
                 </h1>
                 <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
                     Thank you for shopping with Shoten
@@ -65,12 +65,14 @@
                 
                 <!-- Order Items Preview -->
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold text-white mb-4">📦 Your Items</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                        <i class="fas fa-box"></i> Your Items
+                    </h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <% order.orderedItems.slice(0, 6).forEach((item, index) => { %>
                             <div class="bg-gray-600 rounded-lg p-4">
                                 <div class="w-16 h-16 bg-gray-500 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                                    <span class="text-2xl">📦</span>
+                                    <i class="fas fa-box text-2xl text-gray-400"></i>
                                 </div>
                                 <div class="text-center">
                                     <p class="text-white text-sm font-medium mb-1">Item #<%= index + 1 %></p>
@@ -94,13 +96,13 @@
                 
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="/orders/<%= order._id %>" 
-                       class="px-8 py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105">
-                        📋 View Order Details
+                    <a href="/orders/<%= order._id %>"
+                       class="px-8 py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fas fa-clipboard-list"></i> View Order Details
                     </a>
-                    <a href="/shop" 
-                       class="px-8 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
-                        🛍️ Continue Shopping
+                    <a href="/shop"
+                       class="px-8 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fas fa-store"></i> Continue Shopping
                     </a>
                 </div>
             </div>
@@ -178,8 +180,8 @@
                         </div>
                     </div>
                     <div class="mt-6">
-                        <a href="/orders" class="text-[#00ffff] hover:text-[#0088ff] transition-colors duration-300 font-semibold">
-                            📋 Track all your orders →
+                        <a href="/orders" class="text-[#00ffff] hover:text-[#0088ff] transition-colors duration-300 font-semibold flex items-center gap-2">
+                            <i class="fas fa-clipboard-list"></i> Track all your orders →
                         </a>
                     </div>
                 </div>

@@ -6,9 +6,9 @@ function showCancelOrderModal(orderId) {
         html: `
             <div class="text-left">
                 <p class="mb-4 text-gray-300">Are you sure you want to cancel this entire order?</p>
-                <label class="block text-sm font-medium mb-2">Reason for cancellation (Optional):</label>
-                <textarea id="cancel-reason" class="w-full p-3 border rounded bg-gray-700 text-white" rows="3" 
-                          placeholder="Please provide a reason for cancellation..."></textarea>
+                <label class="block text-sm font-medium mb-2">Reason for cancellation (Required):</label>
+                <textarea id="cancel-reason" class="w-full p-3 border rounded bg-gray-700 text-white" rows="3"
+                          placeholder="Please provide a reason for cancellation..." required></textarea>
             </div>
         `,
         showCancelButton: true,
@@ -19,8 +19,16 @@ function showCancelOrderModal(orderId) {
         background: '#1f2937',
         color: '#ffffff',
         preConfirm: () => {
-            const reason = document.getElementById('cancel-reason').value;
-            return { reason: reason || 'No reason provided' };
+            const reason = document.getElementById('cancel-reason').value.trim();
+            if (!reason) {
+                Swal.showValidationMessage('Please provide a reason for cancellation');
+                return false;
+            }
+            if (reason.length < 5) {
+                Swal.showValidationMessage('Reason must be at least 5 characters long');
+                return false;
+            }
+            return { reason: reason };
         }
     }).then((result) => {
         if (result.isConfirmed) {
@@ -35,9 +43,9 @@ function showCancelItemModal(orderId, itemIndex) {
         html: `
             <div class="text-left">
                 <p class="mb-4 text-gray-300">Are you sure you want to cancel this item?</p>
-                <label class="block text-sm font-medium mb-2">Reason for cancellation (Optional):</label>
-                <textarea id="cancel-item-reason" class="w-full p-3 border rounded bg-gray-700 text-white" rows="3" 
-                          placeholder="Please provide a reason for cancellation..."></textarea>
+                <label class="block text-sm font-medium mb-2">Reason for cancellation (Required):</label>
+                <textarea id="cancel-item-reason" class="w-full p-3 border rounded bg-gray-700 text-white" rows="3"
+                          placeholder="Please provide a reason for cancellation..." required></textarea>
             </div>
         `,
         showCancelButton: true,
@@ -48,8 +56,16 @@ function showCancelItemModal(orderId, itemIndex) {
         background: '#1f2937',
         color: '#ffffff',
         preConfirm: () => {
-            const reason = document.getElementById('cancel-item-reason').value;
-            return { reason: reason || 'No reason provided' };
+            const reason = document.getElementById('cancel-item-reason').value.trim();
+            if (!reason) {
+                Swal.showValidationMessage('Please provide a reason for cancellation');
+                return false;
+            }
+            if (reason.length < 5) {
+                Swal.showValidationMessage('Reason must be at least 5 characters long');
+                return false;
+            }
+            return { reason: reason };
         }
     }).then((result) => {
         if (result.isConfirmed) {

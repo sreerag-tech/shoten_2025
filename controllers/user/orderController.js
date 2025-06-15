@@ -64,7 +64,6 @@ const loadOrders = async (req, res) => {
       dateFilter: dateFilter
     });
   } catch (error) {
-    console.error('Error loading orders:', error);
     res.status(500).send('Internal Server Error');
   }
 };
@@ -91,12 +90,31 @@ const loadOrderDetail = async (req, res) => {
       order: order
     });
   } catch (error) {
-    console.error('Error loading order detail:', error);
     res.status(500).send('Internal Server Error');
+  }
+};
+
+// Get Order Details API (for modal)
+const getOrderDetailsAPI = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const orderId = req.params.id;
+
+    const order = await Order.findOne({ _id: orderId, userId: userId })
+      .populate('orderedItems.product', 'productName productImage regularPrice salePrice');
+
+    if (!order) {
+      return res.json({ success: false, message: 'Order not found' });
+    }
+
+    res.json({ success: true, order: order });
+  } catch (error) {
+    res.json({ success: false, message: 'Failed to fetch order details' });
   }
 };
 
 module.exports = {
   loadOrders,
-  loadOrderDetail
+  loadOrderDetail,
+  getOrderDetailsAPI
 };

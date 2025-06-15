@@ -89,9 +89,13 @@
                                     <%= status %>
                                 </span>
                                 <div class="flex gap-2">
-                                    <button class="view-order-btn px-3 py-1 bg-[#00ffff] text-black rounded text-sm hover:bg-[#0088ff] transition"
+                                    <button class="view-order-details-btn px-3 py-1 bg-[#00ffff] text-black rounded text-sm hover:bg-[#0088ff] transition"
                                             data-order-id="<%= order._id %>">
-                                        👁️ View Details
+                                        👁️ Quick View
+                                    </button>
+                                    <button class="view-order-btn px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition"
+                                            data-order-id="<%= order._id %>">
+                                        📋 Full Details
                                     </button>
                                     <button class="download-invoice-btn px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition"
                                             data-order-id="<%= order._id %>">
@@ -193,9 +197,202 @@
     </div>
 </div>
 
+<!-- Order Details Modal -->
+<div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-gray-800 border-b border-gray-700 p-6 flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-white">Order Details</h2>
+            <button onclick="closeOrderModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
+        </div>
+        <div id="orderModalContent" class="p-6">
+            <!-- Order details will be loaded here -->
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00ffff] mx-auto mb-4"></div>
+                <p class="text-gray-400">Loading order details...</p>
+            </div>
+        </div>
+        <div class="sticky bottom-0 bg-gray-800 border-t border-gray-700 p-6 flex justify-end gap-4">
+            <button onclick="closeOrderModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                Close
+            </button>
+            <button id="viewFullOrderBtn" class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition">
+                View Full Details
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- External JavaScript Files -->
 <script src="/js/orders.js"></script>
 <script src="/js/order-actions.js"></script>
+
+<!-- Order Details Modal Functions -->
+<script>
+// Order Details Modal Functions
+function viewOrderDetails(orderId) {
+    // Show modal
+    document.getElementById('orderDetailsModal').classList.remove('hidden');
+
+    // Set full details button
+    document.getElementById('viewFullOrderBtn').onclick = function() {
+        window.location.href = `/orders/${orderId}`;
+    };
+
+    // Fetch order details
+    fetch(`/api/orders/${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayUserOrderDetails(data.order);
+            } else {
+                document.getElementById('orderModalContent').innerHTML = `
+                    <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <span class="text-red-400 text-xl mr-3">⚠️</span>
+                            <div>
+                                <h3 class="text-red-400 font-semibold">Error Loading Order</h3>
+                                <p class="text-red-300">${data.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            document.getElementById('orderModalContent').innerHTML = `
+                <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <span class="text-red-400 text-xl mr-3">⚠️</span>
+                        <div>
+                            <h3 class="text-red-400 font-semibold">Connection Error</h3>
+                            <p class="text-red-300">Failed to load order details. Please try again.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function closeOrderModal() {
+    document.getElementById('orderDetailsModal').classList.add('hidden');
+}
+
+function displayUserOrderDetails(order) {
+    const content = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Order Information -->
+            <div class="lg:col-span-2">
+                <div class="bg-gray-700 rounded-xl p-6 mb-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Order #${order.orderId}</h3>
+                            <p class="text-gray-400">${new Date(order.createdOn).toLocaleDateString()} at ${new Date(order.createdOn).toLocaleTimeString()}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold ${getUserStatusClass(order.status)}">
+                            ${order.status}
+                        </span>
+                    </div>
+
+                    <!-- Order Items -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-white">Order Items</h4>
+                        ${order.orderedItems.map(item => `
+                            <div class="border border-gray-600 rounded-lg p-4">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center">
+                                        ${item.product?.productImage && item.product.productImage.length > 0 ?
+                                            `<img src="/uploads/product-images/${item.product.productImage[0]}" alt="${item.product.productName}" class="w-full h-full object-cover rounded-lg">` :
+                                            '<span class="text-2xl">📦</span>'
+                                        }
+                                    </div>
+                                    <div class="flex-1">
+                                        <h5 class="text-white font-semibold">${item.product?.productName || 'Product Not Found'}</h5>
+                                        <div class="grid grid-cols-2 gap-4 text-sm text-gray-400 mt-2">
+                                            <div><span class="font-medium">Quantity:</span> ${item.quantity}</div>
+                                            <div><span class="font-medium">Price:</span> ₹${item.price.toLocaleString()}</div>
+                                            <div><span class="font-medium">Total:</span> ₹${(item.price * item.quantity).toLocaleString()}</div>
+                                            <div>
+                                                <span class="font-medium">Status:</span>
+                                                <span class="px-2 py-1 rounded text-xs font-semibold ml-1 ${getUserStatusClass(item.status)}">
+                                                    ${item.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="space-y-6">
+                <!-- Summary -->
+                <div class="bg-gray-700 rounded-xl p-6">
+                    <h4 class="text-lg font-bold text-white mb-4">💰 Order Summary</h4>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Subtotal:</span>
+                            <span class="text-white">₹${order.totalPrice.toLocaleString()}</span>
+                        </div>
+                        <hr class="border-gray-600">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span class="text-white">Total:</span>
+                            <span class="text-[#00ffff]">₹${order.totalPrice.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Info -->
+                <div class="bg-gray-700 rounded-xl p-6">
+                    <h4 class="text-lg font-bold text-white mb-4">💳 Payment</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Method:</span>
+                            <span class="text-white">${order.paymentMethod || 'Cash on Delivery'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('orderModalContent').innerHTML = content;
+}
+
+function getUserStatusClass(status) {
+    switch(status) {
+        case 'Pending': return 'bg-gray-500/20 text-gray-400';
+        case 'Processing': return 'bg-yellow-500/20 text-yellow-400';
+        case 'Shipped': return 'bg-blue-500/20 text-blue-400';
+        case 'Out for Delivery': return 'bg-purple-500/20 text-purple-400';
+        case 'Delivered': return 'bg-green-500/20 text-green-400';
+        case 'Cancelled': return 'bg-red-500/20 text-red-400';
+        case 'Return Request': return 'bg-orange-500/20 text-orange-400';
+        case 'Returned': return 'bg-purple-500/20 text-purple-400';
+        default: return 'bg-gray-500/20 text-gray-400';
+    }
+}
+
+// Update existing event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Quick view buttons
+    document.querySelectorAll('.view-order-details-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            viewOrderDetails(orderId);
+        });
+    });
+
+    // Close modal on outside click
+    document.getElementById('orderDetailsModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeOrderModal();
+        }
+    });
+});
+</script>
 
 <!-- Initialize with server data -->
 <script>

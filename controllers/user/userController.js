@@ -12,6 +12,8 @@ const orderActionsController = require('./orderActionsController');
 const invoiceController = require('./invoiceController');
 const cartController = require('./cartController');
 const cartActionsController = require('./cartActionsController');
+const wishlistController = require('./wishlistController');
+const walletController = require('./walletController');
 const checkoutController = require('./checkoutController');
 const checkoutActionsController = require('./checkoutActionsController');
 
@@ -51,7 +53,11 @@ const {
   loadProfile,
   loadEditProfile,
   updateProfile,
+  updateBasicProfile,
+  changeEmail,
   addAddress,
+  getAddress,
+  editAddress,
   deleteAddress,
   setDefaultAddress,
   changePassword,
@@ -63,7 +69,8 @@ const {
 // Order functions
 const {
   loadOrders,
-  loadOrderDetail
+  loadOrderDetail,
+  getOrderDetailsAPI
 } = orderController;
 
 // Order action functions
@@ -92,6 +99,26 @@ const {
   removeFromCart,
   clearCart
 } = cartActionsController;
+
+// Wishlist functions
+const {
+  loadWishlist,
+  addToWishlist,
+  removeFromWishlist,
+  moveToCart,
+  moveAllToCart,
+  clearWishlist,
+  getWishlistCount
+} = wishlistController;
+
+// Wallet functions
+const {
+  loadWallet,
+  addMoney,
+  getWalletBalance,
+  getTransactionHistory,
+  useWalletForPayment
+} = walletController;
 
 // Checkout functions
 const {
@@ -141,7 +168,11 @@ module.exports = {
   loadProfile,
   loadEditProfile,
   updateProfile,
+  updateBasicProfile,
+  changeEmail,
   addAddress,
+  getAddress,
+  editAddress,
   deleteAddress,
   setDefaultAddress,
   changePassword,
@@ -152,6 +183,7 @@ module.exports = {
   // Order functions
   loadOrders,
   loadOrderDetail,
+  getOrderDetailsAPI,
   cancelOrder,
   cancelOrderItem,
   returnOrder,
@@ -165,6 +197,22 @@ module.exports = {
   updateCartQuantity,
   removeFromCart,
   clearCart,
+
+  // Wishlist functions
+  loadWishlist,
+  addToWishlist,
+  removeFromWishlist,
+  moveToCart,
+  moveAllToCart,
+  clearWishlist,
+  getWishlistCount,
+
+  // Wallet functions
+  loadWallet,
+  addMoney,
+  getWalletBalance,
+  getTransactionHistory,
+  useWalletForPayment,
 
   // Checkout functions
   loadCheckout,
