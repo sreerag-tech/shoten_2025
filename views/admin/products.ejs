@@ -1,0 +1,321 @@
+<%- include("./partials/header", { activePage: 'products' }) %>
+
+<!-- ✅ ADDED: SweetAlert2 CSS for beautiful confirmation dialogs -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="content-main">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Product Management</h1>
+        <p class="page-subtitle">Manage your product inventory and details</p>
+    </div>
+
+    <!-- Search and Action Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <form action="/admin/products" method="get" class="d-flex">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="Search products by name or description..." name="search" value="<%= search %>">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="/admin/products" class="btn btn-outline-secondary me-2">Clear Filter</a>
+                    <a href="/admin/add-products" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add New Product
+                    </a>
+                    <button class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-download me-2"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">All Products</h5>
+            <% if (typeof totalProducts !== 'undefined') { %>
+                <span class="badge bg-primary">Total: <%= totalProducts %></span>
+            <% } else if (products && products.length > 0) { %>
+                <span class="badge bg-primary">Total: <%= products.length %></span>
+            <% } %>
+        </div>
+        <div class="card-body">
+            <!-- ✅ ADDED: Success message display -->
+            <% if (success) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i><%= decodeURIComponent(success) %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+            <% if (error) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i><%= decodeURIComponent(error) %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+            <% if (products && products.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Pricing</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% products.forEach(product => { %>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="product-image-container me-3">
+                                                <% if (product.productImage && product.productImage.length > 0) { %>
+                                                    <img src="/uploads/product-images/<%= product.productImage[0] %>"
+                                                         class="product-image rounded"
+                                                         alt="<%= product.productName %>"
+                                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                                <% } else { %>
+                                                    <div class="product-placeholder bg-light rounded d-flex align-items-center justify-content-center"
+                                                         style="width: 60px; height: 60px;">
+                                                        <i class="fas fa-image text-muted"></i>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold"><%= product.productName %></div>
+                                                <small class="text-muted">ID: #<%= product._id.toString().slice(-6) %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            <%= product.category ? product.category.name : "N/A" %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <span class="fw-semibold text-success">$<%= product.salePrice.toFixed(2) %></span>
+                                            <% if (product.regularPrice !== product.salePrice) { %>
+                                                <br><small class="text-muted text-decoration-line-through">$<%= product.regularPrice.toFixed(2) %></small>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% if (product.quantity > 10) { %>
+                                            <span class="badge bg-success"><%= product.quantity %> in stock</span>
+                                        <% } else if (product.quantity > 0) { %>
+                                            <span class="badge bg-warning"><%= product.quantity %> low stock</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">Out of stock</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (product.isBlocked) { %>
+                                            <span class="badge bg-danger">Blocked</span>
+                                        <% } else { %>
+                                            <span class="badge bg-success">Active</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/admin/edit-product/<%= product._id %>" class="btn btn-sm btn-info">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <!-- ✅ CHANGED: Block/Unblock with SweetAlert confirmation -->
+                                            <form action="/admin/toggle-block-product/<%= product._id %>" method="POST" style="display:inline;" class="block-form">
+                                                <button type="button" class="btn btn-sm <%= product.isBlocked ? 'btn-success' : 'btn-warning' %>"
+                                                        onclick="confirmBlockAction('<%= product._id %>', '<%= product.productName %>', <%= product.isBlocked %>)">
+                                                    <i class="fas <%= product.isBlocked ? 'fa-check' : 'fa-ban' %>"></i>
+                                                </button>
+                                            </form>
+                                            <!-- ✅ CHANGED: Delete with SweetAlert confirmation -->
+                                            <form action="/admin/delete-product/<%= product._id %>" method="POST" style="display:inline;" class="delete-form">
+                                                <button type="button" class="btn btn-sm btn-danger"
+                                                        onclick="confirmDeleteAction('<%= product._id %>', '<%= product.productName %>')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-<%= search ? 'search' : 'box-open' %> fa-3x text-muted"></i>
+                    </div>
+                    <% if (search) { %>
+                        <h5 class="text-muted">No products found for "<%= search %>"</h5>
+                        <p class="text-muted">Try adjusting your search terms or browse all products.</p>
+                        <a href="/admin/products" class="btn btn-outline-secondary me-2">Clear Search</a>
+                        <a href="/admin/add-products" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Product
+                        </a>
+                    <% } else { %>
+                        <h5 class="text-muted">No products found</h5>
+                        <p class="text-muted">Start by adding your first product to the inventory.</p>
+                        <a href="/admin/add-products" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Product
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="text-muted">
+            <%
+                const startItem = ((currentPage - 1) * 6) + 1;
+                const endItem = Math.min(currentPage * 6, totalProducts);
+            %>
+            Showing <%= startItem %> to <%= endItem %> of <%= totalProducts %> products
+        </div>
+        <nav aria-label="Product pagination">
+            <ul class="pagination mb-0">
+                <% if (currentPage > 1) { %>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <% } %>
+
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <% if (i === currentPage) { %>
+                    <li class="page-item active">
+                        <span class="page-link"><%= i %></span>
+                    </li>
+                    <% } else { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
+                    </li>
+                    <% } %>
+                <% } %>
+
+                <% if (currentPage < totalPages) { %>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+    <% } %>
+</div>
+
+<style>
+    .product-image {
+        border: 1px solid var(--border-color);
+    }
+
+    .product-placeholder {
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-group .btn {
+        border-radius: 6px;
+        margin-right: 2px;
+    }
+
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: 1px solid var(--border-color);
+        color: var(--primary-color);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border-color: var(--primary-color);
+    }
+
+    .pagination .page-link:hover {
+        background-color: rgba(99, 102, 241, 0.1);
+        border-color: var(--primary-color);
+    }
+</style>
+
+
+
+<!-- ✅ ADDED: SweetAlert2 JS for beautiful confirmation dialogs -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// ✅ ADDED: SweetAlert confirmation for blocking/unblocking products
+function confirmBlockAction(productId, productName, isBlocked) {
+    const action = isBlocked ? 'unblock' : 'block';
+    const title = isBlocked ? 'Unblock Product?' : 'Block Product?';
+    const text = isBlocked
+        ? `Are you sure you want to unblock "${productName}"? It will become available to users.`
+        : `Are you sure you want to block "${productName}"? It will be hidden from users.`;
+    const confirmButtonText = isBlocked ? 'Yes, Unblock!' : 'Yes, Block!';
+    const icon = isBlocked ? 'question' : 'warning';
+
+    Swal.fire({
+        title: title,
+        text: text,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonColor: isBlocked ? '#28a745' : '#ffc107',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: confirmButtonText,
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Submit the form
+            const form = document.querySelector(`form[action="/admin/toggle-block-product/${productId}"]`);
+            form.submit();
+        }
+    });
+}
+
+// ✅ ADDED: SweetAlert confirmation for deleting products
+function confirmDeleteAction(productId, productName) {
+    Swal.fire({
+        title: 'Delete Product?',
+        text: `Are you sure you want to delete "${productName}"? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Delete!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Submit the form
+            const form = document.querySelector(`form[action="/admin/delete-product/${productId}"]`);
+            form.submit();
+        }
+    });
+}
+
+
+</script>
+
+<%- include("./partials/footer", { activePage: 'products' }) %>

@@ -1,0 +1,548 @@
+<%- include('partials/header') %>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                <h4 class="mb-sm-0">Order Management</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Orders</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-1">
+                            <p class="text-truncate font-size-14 mb-2">Total Orders</p>
+                            <h4 class="mb-2"><%= totalOrders %></h4>
+                        </div>
+                        <div class="avatar-sm">
+                            <span class="avatar-title bg-light text-primary rounded-3">
+                                <i class="fas fa-shopping-cart font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% if (orderStats) { %>
+            <% orderStats.forEach(stat => { %>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-1">
+                                    <p class="text-truncate font-size-14 mb-2"><%= stat._id %></p>
+                                    <h4 class="mb-2"><%= stat.count %></h4>
+                                    <p class="text-muted mb-0">₹<%= stat.totalAmount.toLocaleString() %></p>
+                                </div>
+                                <div class="avatar-sm">
+                                    <span class="avatar-title bg-light text-success rounded-3">
+                                        <i class="fas fa-chart-line font-size-24"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="/admin/orders" method="get" id="filterForm">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" class="form-control" name="search" value="<%= search %>" 
+                               placeholder="Order ID, Customer name or email...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="">All Status</option>
+                            <option value="Pending" <%= status === 'Pending' ? 'selected' : '' %>>Pending</option>
+                            <option value="Processing" <%= status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                            <option value="Shipped" <%= status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                            <option value="Out for Delivery" <%= status === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
+                            <option value="Delivered" <%= status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                            <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                            <option value="Returned" <%= status === 'Returned' ? 'selected' : '' %>>📦 Returned Items</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-control" name="dateFrom" value="<%= dateFrom %>">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-control" name="dateTo" value="<%= dateTo %>">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" name="sortBy">
+                            <option value="createdOn" <%= sortBy === 'createdOn' ? 'selected' : '' %>>Order Date</option>
+                            <option value="totalPrice" <%= sortBy === 'totalPrice' ? 'selected' : '' %>>Amount</option>
+                            <option value="status" <%= sortBy === 'status' ? 'selected' : '' %>>Status</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Order</label>
+                        <select class="form-select" name="sortOrder">
+                            <option value="desc" <%= sortOrder === 'desc' ? 'selected' : '' %>>Desc</option>
+                            <option value="asc" <%= sortOrder === 'asc' ? 'selected' : '' %>>Asc</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>Filter
+                        </button>
+                        <a href="/admin/orders" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                        <a href="/admin/return-requests" class="btn btn-warning">
+                            <i class="fas fa-undo me-1"></i>Return Requests
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">All Orders</h5>
+            <span class="badge bg-primary">Total: <%= totalOrders %></span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders && orders.length > 0) { %>
+                            <% orders.forEach(order => { %>
+                                <tr>
+                                    <td>
+                                        <span class="fw-semibold text-primary">#<%= order.orderId %></span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <% if (order.userId?.profileImage) { %>
+                                                <div class="avatar-sm me-2">
+                                                    <img src="/uploads/profiles/<%= order.userId.profileImage %>"
+                                                         alt="<%= order.userId.name %>"
+                                                         class="rounded-circle"
+                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                </div>
+                                            <% } %>
+                                            <div>
+                                                <div class="fw-medium"><%= order.userId?.name || 'Unknown' %></div>
+                                                <small class="text-muted"><%= order.userId?.email || 'N/A' %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div><%= new Date(order.createdOn).toLocaleDateString() %></div>
+                                        <small class="text-muted"><%= new Date(order.createdOn).toLocaleTimeString() %></small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info"><%= order.orderedItems.length %> items</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">₹<%= order.totalPrice.toLocaleString() %></span>
+                                    </td>
+                                    <td>
+                                        <%
+                                        let statusClass = 'bg-secondary';
+                                        let statusText = order.status;
+
+                                        // Check if order has returned items
+                                        const hasReturnedItems = order.orderedItems && order.orderedItems.some(item => item.status === 'Returned');
+
+                                        if (hasReturnedItems) {
+                                            statusClass = 'bg-warning';
+                                            statusText = '📦 Has Returns';
+                                        } else if (order.status === 'Pending') {
+                                            statusClass = 'bg-secondary';
+                                        } else if (order.status === 'Processing') {
+                                            statusClass = 'bg-warning';
+                                        } else if (order.status === 'Shipped') {
+                                            statusClass = 'bg-info';
+                                        } else if (order.status === 'Out for Delivery') {
+                                            statusClass = 'bg-primary';
+                                        } else if (order.status === 'Delivered') {
+                                            statusClass = 'bg-success';
+                                        } else if (order.status === 'Cancelled') {
+                                            statusClass = 'bg-danger';
+                                        }
+                                        %>
+                                        <span class="badge <%= statusClass %>"><%= statusText %></span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('<%= order._id %>')">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </button>
+                                            <a href="/admin/orders/<%= order._id %>" class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-edit me-1"></i>Manage
+                                            </a>
+                                            <% if (order.status !== 'Delivered' && order.status !== 'Cancelled') { %>
+                                                <button class="btn btn-sm btn-outline-success" onclick="updateOrderStatus('<%= order._id %>', 'Delivered')">
+                                                    <i class="fas fa-check me-1"></i>Deliver
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                        <p>No orders found</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <% if (currentPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>&status=<%= status %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>">Previous</a>
+                            </li>
+                        <% } %>
+                        
+                        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>&search=<%= search %>&status=<%= status %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>&status=<%= status %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>">Next</a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailsModalLabel">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent">
+                <!-- Order details will be loaded here -->
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading order details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="manageOrderBtn">
+                    <i class="fas fa-edit me-1"></i>Manage Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// View order details in modal
+function viewOrderDetails(orderId) {
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+    modal.show();
+
+    // Set manage button link
+    document.getElementById('manageOrderBtn').onclick = function() {
+        window.location.href = `/admin/orders/${orderId}`;
+    };
+
+    // Fetch order details
+    fetch(`/admin/api/orders/${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayOrderDetails(data.order);
+            } else {
+                document.getElementById('orderDetailsContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load order details: ${data.message}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            document.getElementById('orderDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading order details. Please try again.
+                </div>
+            `;
+        });
+}
+
+// Display order details in modal
+function displayOrderDetails(order) {
+    const content = `
+        <div class="row">
+            <!-- Order Information -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Order #${order.orderId}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <strong>Order Date:</strong><br>
+                                ${new Date(order.createdOn).toLocaleDateString()} ${new Date(order.createdOn).toLocaleTimeString()}
+                            </div>
+                            <div class="col-sm-6">
+                                <strong>Status:</strong><br>
+                                <span class="badge ${getStatusBadgeClass(order.status)}">${order.status}</span>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <h6 class="mb-3">Order Items</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${order.orderedItems.map(item => `
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="${item.product?.productImage && item.product.productImage.length > 0 ? `/uploads/product-images/${item.product.productImage[0]}` : '/images/placeholder.jpg'}"
+                                                         alt="${item.product?.productName || 'Product'}"
+                                                         class="admin-product-image me-2">
+                                                    <div>
+                                                        <div class="fw-medium">${item.product?.productName || 'Product Not Found'}</div>
+                                                        <small class="text-muted">SKU: #${item.product?._id?.slice(-6) || 'N/A'}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>${item.quantity}</td>
+                                            <td>₹${item.price.toLocaleString()}</td>
+                                            <td>₹${(item.price * item.quantity).toLocaleString()}</td>
+                                            <td><span class="badge ${getStatusBadgeClass(item.status)}">${item.status}</span></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer & Summary -->
+            <div class="col-md-4">
+                <!-- Customer Info -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Customer Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            ${order.userId?.profileImage ? `
+                                <div class="avatar-lg mx-auto mb-2">
+                                    <img src="/uploads/profiles/${order.userId.profileImage}"
+                                          alt="${order.userId.name}"
+                                          class="avatar-lg rounded-circle"
+                                          style="width: 64px; height: 64px; object-fit: cover;">
+                                </div>
+                            ` : ''}
+                            <h6 class="mb-1">${order.userId?.name || 'Unknown Customer'}</h6>
+                            <p class="text-muted mb-0">${order.userId?.email || 'N/A'}</p>
+                            <p class="text-muted">${order.userId?.phone || 'N/A'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Order Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>₹${(order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0)).toLocaleString()}</span>
+                        </div>
+                        ${order.discount > 0 ? `
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Discount:</span>
+                                <span>-₹${order.discount.toLocaleString()}</span>
+                            </div>
+                        ` : ''}
+                        ${order.shippingCharge > 0 ? `
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Shipping:</span>
+                                <span>₹${order.shippingCharge.toLocaleString()}</span>
+                            </div>
+                        ` : ''}
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total:</span>
+                            <span>₹${order.totalPrice.toLocaleString()}</span>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">Payment Method: ${order.paymentMethod || 'Cash on Delivery'}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('orderDetailsContent').innerHTML = content;
+}
+
+// Get status badge class
+function getStatusBadgeClass(status) {
+    switch(status) {
+        case 'Pending': return 'bg-secondary';
+        case 'Processing': return 'bg-warning';
+        case 'Shipped': return 'bg-info';
+        case 'Out for Delivery': return 'bg-primary';
+        case 'Delivered': return 'bg-success';
+        case 'Cancelled': return 'bg-danger';
+        case 'Return Request': return 'bg-warning';
+        case 'Returned': return 'bg-secondary';
+        default: return 'bg-secondary';
+    }
+}
+
+// Update order status function
+function updateOrderStatus(orderId, status) {
+    Swal.fire({
+        title: `Mark as ${status}?`,
+        text: `Are you sure you want to mark this order as ${status}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: `Yes, mark as ${status}!`
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error!', 'Failed to update order status', 'error');
+            });
+        }
+    });
+}
+</script>
+
+<style>
+/* Admin Image Display Improvements */
+.admin-product-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    transition: transform 0.2s ease;
+}
+
+.admin-product-image:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ensure images don't break layout */
+.table td img {
+    max-width: none !important;
+    flex-shrink: 0;
+}
+
+/* Loading placeholder for images */
+.image-loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+</style>
+
+<%- include('partials/footer') %>

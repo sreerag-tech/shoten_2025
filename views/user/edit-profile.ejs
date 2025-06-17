@@ -1,0 +1,622 @@
+<%- include("../../views/user/partials/header") %>
+
+<!-- Edit Profile Page -->
+<div class="min-h-screen bg-black">
+    <!-- Edit Profile Header -->
+    <div class="relative bg-gradient-to-r from-gray-900 via-black to-gray-900 pt-20 pb-16">
+        <!-- Animated background particles -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="floating-particles" id="edit-particles"></div>
+        </div>
+        
+        <div class="relative max-w-4xl mx-auto px-8">
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up">
+                    ✏️ EDIT PROFILE
+                </h1>
+                <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Update your account information
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <div class="max-w-4xl mx-auto px-8 py-12">
+        <div class="bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 animate-fade-in-up">
+            
+            <!-- Back to Profile Button -->
+            <div class="mb-6">
+                <a href="/profile" class="inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Profile
+                </a>
+            </div>
+
+            <!-- Profile Avatar Section -->
+            <div class="text-center mb-8">
+                <div class="relative inline-block">
+                    <% if (user && user.profileImage) { %>
+                        <img src="/uploads/profiles/<%= user.profileImage %>"
+                             alt="Profile Picture"
+                             class="w-32 h-32 rounded-full object-cover mx-auto mb-4 hover:scale-105 transition-transform duration-300 border-4 border-[#00ffff]">
+                    <% } else { %>
+                        <div class="w-32 h-32 bg-gradient-to-r from-[#00ffff] to-[#0088ff] rounded-full flex items-center justify-center text-4xl font-bold text-black mx-auto mb-4 hover:scale-105 transition-transform duration-300">
+                            <%= (user && user.name) ? user.name.charAt(0).toUpperCase() : 'U' %>
+                        </div>
+                    <% } %>
+                    <button class="absolute -bottom-2 -right-2 w-10 h-10 bg-[#00ffff] rounded-full border-4 border-gray-800 flex items-center justify-center text-black hover:bg-[#0088ff] transition-all duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-gray-400 text-sm">Click the camera icon to change your profile picture</p>
+            </div>
+
+            <!-- Edit Profile Form -->
+            <form action="/profile" method="POST" enctype="multipart/form-data" class="space-y-6" id="edit-profile-form">
+                <!-- Hidden email field to maintain current email -->
+                <input type="hidden" name="email" value="<%= (user && user.email) ? user.email : '' %>">
+
+                <!-- Personal Information Section -->
+                <div class="border border-gray-700 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="mr-2">👤</span> Personal Information
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-300 text-sm font-semibold mb-2">Full Name *</label>
+                            <input type="text" name="name" value="<%= (user && user.name) ? user.name : '' %>"
+                                   class="edit-input" required
+                                   placeholder="Enter your full name"
+                                   pattern="[A-Za-z\s]{2,50}"
+                                   title="Name should contain only letters and spaces (2-50 characters)"
+                                   minlength="2" maxlength="50">
+                            <div class="error-message text-red-400 text-xs mt-1 hidden" id="name-error"></div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 text-sm font-semibold mb-2">Email Address</label>
+                            <div class="relative">
+                                <input type="email" value="<%= (user && user.email) ? user.email : '' %>"
+                                       class="edit-input bg-gray-600 text-gray-400" readonly
+                                       placeholder="Email managed separately">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <a href="/profile" class="text-[#00ffff] text-sm hover:text-[#0088ff] transition-colors">
+                                        <i class="fas fa-external-link-alt mr-1"></i> Change in Profile
+                                    </a>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-xs mt-1">
+                                <i class="fas fa-info-circle mr-1"></i> Email changes are handled in the main profile page for security
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div>
+                            <label class="block text-gray-300 text-sm font-semibold mb-2">Phone Number</label>
+                            <input type="tel" name="phone" value="<%= (user && user.phone) ? user.phone : '' %>"
+                                   class="edit-input"
+                                   placeholder="Enter your 10-digit phone number"
+                                   pattern="[0-9]{10}"
+                                   title="Please enter a valid 10-digit phone number"
+                                   maxlength="10">
+                            <p class="text-gray-500 text-xs mt-1">Enter 10-digit phone number (e.g., 9876543210)</p>
+                            <div class="error-message text-red-400 text-xs mt-1 hidden" id="phone-error"></div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 text-sm font-semibold mb-2">Date of Birth</label>
+                            <input type="date" name="dateOfBirth"
+                                   value="<%= (user && user.dateOfBirth) ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '' %>"
+                                   class="edit-input"
+                                   max="<%= new Date().toISOString().split('T')[0] %>"
+                                   min="1900-01-01">
+                            <p class="text-gray-500 text-xs mt-1">You must be at least 13 years old</p>
+                            <div class="error-message text-red-400 text-xs mt-1 hidden" id="dob-error"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bio Section -->
+                <div class="border border-gray-700 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="mr-2">📝</span> About You
+                    </h3>
+                    <div>
+                        <label class="block text-gray-300 text-sm font-semibold mb-2">Bio</label>
+                        <textarea name="bio" rows="4" class="edit-input"
+                                  placeholder="Tell us about yourself..."
+                                  maxlength="500"
+                                  title="Bio should not exceed 500 characters"><%= (user && user.bio) ? user.bio : '' %></textarea>
+                        <p class="text-gray-500 text-xs mt-1">Maximum 500 characters (<span id="bio-count">0</span>/500)</p>
+                        <div class="error-message text-red-400 text-xs mt-1 hidden" id="bio-error"></div>
+                    </div>
+                </div>
+
+                <!-- Profile Picture Section -->
+                <div class="border border-gray-700 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="mr-2">📷</span> Profile Picture
+                    </h3>
+                    <div>
+                        <label class="block text-gray-300 text-sm font-semibold mb-2">Upload New Picture</label>
+                        <input type="file" name="profileImage" accept="image/jpeg,image/jpg,image/png,image/gif"
+                               class="edit-input file-input" id="profile-image-input">
+                        <p class="text-gray-500 text-xs mt-1">Supported formats: JPG, PNG, GIF (Max 5MB)</p>
+                        <div class="error-message text-red-400 text-xs mt-1 hidden" id="image-error"></div>
+                        <div class="image-preview mt-3 hidden" id="image-preview">
+                            <img src="" alt="Preview" class="w-20 h-20 rounded-lg object-cover">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                    <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                        💾 Save Changes
+                    </button>
+                    <a href="/profile" class="flex-1 px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-all duration-300 text-center">
+                        ❌ Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- JavaScript for Edit Profile -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Create floating particles
+    createEditParticles();
+
+    // Initialize validation
+    initializeValidation();
+
+    // Form validation and submission
+    const editForm = document.getElementById('edit-profile-form');
+
+    editForm.addEventListener('submit', function(e) {
+        // Comprehensive validation
+        if (!validateForm()) {
+            e.preventDefault();
+            return;
+        }
+
+        // Ensure email field is included
+        const emailField = this.querySelector('input[name="email"]');
+        if (!emailField || !emailField.value) {
+            console.error('Email field missing or empty');
+            e.preventDefault();
+            alert('Error: Email field is missing. Please refresh the page and try again.');
+            return;
+        }
+
+        console.log('Form submitting with email:', emailField.value);
+
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '⏳ Saving...';
+        submitBtn.disabled = true;
+    });
+    
+    // File input preview
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire({
+                        title: '❌ File Too Large',
+                        text: 'Please select an image smaller than 5MB',
+                        icon: 'error',
+                        confirmButtonColor: '#00ffff',
+                        background: '#1f2937',
+                        color: '#ffffff'
+                    });
+                    this.value = '';
+                    return;
+                }
+                
+                // Show preview (optional enhancement)
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Could add image preview here
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+
+function initializeValidation() {
+    // Real-time validation
+    const nameInput = document.querySelector('input[name="name"]');
+    const phoneInput = document.querySelector('input[name="phone"]');
+    const dobInput = document.querySelector('input[name="dateOfBirth"]');
+    const bioInput = document.querySelector('textarea[name="bio"]');
+    const imageInput = document.getElementById('profile-image-input');
+
+    // Name validation
+    nameInput.addEventListener('input', function() {
+        validateName(this.value);
+    });
+
+    // Phone validation
+    phoneInput.addEventListener('input', function() {
+        // Only allow numbers
+        this.value = this.value.replace(/[^0-9]/g, '');
+        validatePhone(this.value);
+    });
+
+    // Date of birth validation
+    dobInput.addEventListener('change', function() {
+        validateDateOfBirth(this.value);
+    });
+
+    // Bio character count and validation
+    bioInput.addEventListener('input', function() {
+        updateBioCount(this.value);
+        validateBio(this.value);
+    });
+
+    // Image validation
+    imageInput.addEventListener('change', function() {
+        validateImage(this.files[0]);
+    });
+
+    // Initialize bio count
+    updateBioCount(bioInput.value);
+}
+
+function validateForm() {
+    const name = document.querySelector('input[name="name"]').value.trim();
+    const phone = document.querySelector('input[name="phone"]').value.trim();
+    const dob = document.querySelector('input[name="dateOfBirth"]').value;
+    const bio = document.querySelector('textarea[name="bio"]').value.trim();
+
+    let isValid = true;
+
+    // Validate required fields
+    if (!validateName(name)) isValid = false;
+
+    // Validate optional fields if they have values
+    if (phone && !validatePhone(phone)) isValid = false;
+    if (dob && !validateDateOfBirth(dob)) isValid = false;
+    if (bio && !validateBio(bio)) isValid = false;
+
+    if (!isValid) {
+        Swal.fire({
+            title: '❌ Validation Error',
+            text: 'Please fix the errors in the form before submitting.',
+            icon: 'error',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    }
+
+    return isValid;
+}
+
+function validateName(name) {
+    const nameError = document.getElementById('name-error');
+    const namePattern = /^[A-Za-z\s]{2,50}$/;
+
+    if (!name) {
+        showError(nameError, 'Name is required');
+        return false;
+    }
+
+    if (!namePattern.test(name)) {
+        showError(nameError, 'Name should contain only letters and spaces (2-50 characters)');
+        return false;
+    }
+
+    hideError(nameError);
+    return true;
+}
+
+function validateEmail(email) {
+    const emailError = document.getElementById('email-error');
+    const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+
+    if (!email) {
+        showError(emailError, 'Email is required');
+        return false;
+    }
+
+    if (!emailPattern.test(email)) {
+        showError(emailError, 'Please enter a valid email address');
+        return false;
+    }
+
+    hideError(emailError);
+    return true;
+}
+
+function validatePhone(phone) {
+    const phoneError = document.getElementById('phone-error');
+    const phonePattern = /^[0-9]{10}$/;
+
+    if (phone && !phonePattern.test(phone)) {
+        showError(phoneError, 'Phone number must be exactly 10 digits');
+        return false;
+    }
+
+    hideError(phoneError);
+    return true;
+}
+
+function validateDateOfBirth(dob) {
+    const dobError = document.getElementById('dob-error');
+
+    if (!dob) {
+        hideError(dobError);
+        return true; // Optional field
+    }
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    if (age < 13) {
+        showError(dobError, 'You must be at least 13 years old');
+        return false;
+    }
+
+    if (birthDate > today) {
+        showError(dobError, 'Date of birth cannot be in the future');
+        return false;
+    }
+
+    hideError(dobError);
+    return true;
+}
+
+function validateBio(bio) {
+    const bioError = document.getElementById('bio-error');
+
+    if (bio.length > 500) {
+        showError(bioError, 'Bio cannot exceed 500 characters');
+        return false;
+    }
+
+    hideError(bioError);
+    return true;
+}
+
+function validateImage(file) {
+    const imageError = document.getElementById('image-error');
+    const imagePreview = document.getElementById('image-preview');
+
+    if (!file) {
+        hideError(imageError);
+        imagePreview.classList.add('hidden');
+        return true;
+    }
+
+    // Check file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showError(imageError, 'Image size must be less than 5MB');
+        imagePreview.classList.add('hidden');
+        return false;
+    }
+
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+        showError(imageError, 'Only JPG, PNG, and GIF images are allowed');
+        imagePreview.classList.add('hidden');
+        return false;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = imagePreview.querySelector('img');
+        img.src = e.target.result;
+        imagePreview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+
+    hideError(imageError);
+    return true;
+}
+
+function updateBioCount(bio) {
+    const bioCount = document.getElementById('bio-count');
+    if (bioCount) {
+        bioCount.textContent = bio.length;
+
+        // Change color based on length
+        if (bio.length > 450) {
+            bioCount.style.color = '#ef4444'; // Red
+        } else if (bio.length > 400) {
+            bioCount.style.color = '#f97316'; // Orange
+        } else {
+            bioCount.style.color = '#6b7280'; // Gray
+        }
+    }
+}
+
+function showError(errorElement, message) {
+    errorElement.textContent = message;
+    errorElement.classList.remove('hidden');
+    errorElement.parentElement.querySelector('input, textarea').style.borderColor = '#ef4444';
+}
+
+function hideError(errorElement) {
+    errorElement.classList.add('hidden');
+    errorElement.parentElement.querySelector('input, textarea').style.borderColor = '';
+}
+
+function createEditParticles() {
+    const particlesContainer = document.getElementById('edit-particles');
+    if (!particlesContainer) return;
+
+    for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 8 + 's';
+        particle.style.animationDuration = (Math.random() * 4 + 8) + 's';
+        particlesContainer.appendChild(particle);
+    }
+}
+</script>
+
+<!-- Enhanced CSS for Edit Profile Page -->
+<style>
+/* Edit profile specific styles */
+.edit-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: #374151;
+    border: 2px solid #4b5563;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: #00ffff;
+    box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1);
+    background: #1f2937;
+}
+
+.edit-input::placeholder {
+    color: #9ca3af;
+}
+
+.file-input {
+    padding: 8px 12px;
+    background: #1f2937;
+    border: 2px dashed #4b5563;
+    cursor: pointer;
+}
+
+.file-input:hover {
+    border-color: #00ffff;
+    background: #374151;
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(100vh) translateX(0px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Floating particles */
+.floating-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #00ffff;
+    border-radius: 50%;
+    animation: particle-float 8s linear infinite;
+}
+
+.particle:nth-child(2n) {
+    background: #ff0066;
+    animation-duration: 10s;
+}
+
+.particle:nth-child(3n) {
+    background: #ffcc00;
+    animation-duration: 12s;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .grid.md\\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .flex.sm\\:flex-row {
+        flex-direction: column;
+    }
+}
+
+/* Form section styling */
+.border.border-gray-700 {
+    transition: all 0.3s ease;
+}
+
+.border.border-gray-700:hover {
+    border-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+}
+
+/* Button hover effects */
+button:active {
+    transform: scale(0.98);
+}
+
+/* Profile avatar glow effect */
+.w-32.h-32 {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+.w-32.h-32:hover {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+}
+</style>
+
+<%- include("../../views/user/partials/footer") %>

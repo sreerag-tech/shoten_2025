@@ -1,0 +1,228 @@
+
+<%- include("../../views/admin/partials/header", { activePage: 'dashboard' }) %>
+
+<div class="content-main">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Overview of your store performance</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Customers</div>
+                            <div class="h3 mb-0 fw-bold text-primary"><%= totalCustomers %></div>
+                            <small class="text-success">
+                                <i class="fas fa-users"></i> Active Users
+                            </small>
+                        </div>
+                        <div class="card-icon text-primary">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Products</div>
+                            <div class="h3 mb-0 fw-bold text-success"><%= totalProducts %></div>
+                            <small class="text-success">
+                                <i class="fas fa-box"></i> Available Products
+                            </small>
+                        </div>
+                        <div class="card-icon text-success">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Orders</div>
+                            <div class="h3 mb-0 fw-bold text-info"><%= totalOrders %></div>
+                            <small class="text-success">
+                                <i class="fas fa-shopping-cart"></i> All Orders
+                            </small>
+                        </div>
+                        <div class="card-icon text-info">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Revenue</div>
+                            <div class="h3 mb-0 fw-bold text-warning">₹<%= totalRevenue.toLocaleString() %></div>
+                            <small class="text-success">
+                                <i class="fas fa-rupee-sign"></i> Total Earnings
+                            </small>
+                        </div>
+                        <div class="card-icon text-warning">
+                            <i class="fas fa-th-large"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders Table -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Recent Orders</h5>
+            <a href="/admin/orders" class="btn btn-sm btn-primary">View All</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (recentOrders && recentOrders.length > 0) { %>
+                            <% recentOrders.forEach(order => { %>
+                                <tr>
+                                    <td>
+                                        <span class="fw-semibold"><%= order.orderId %></span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <% if (order.userId?.profileImage) { %>
+                                                <img src="/uploads/profiles/<%= order.userId.profileImage %>"
+                                                     alt="<%= order.userId.name %>"
+                                                     class="avatar-sm rounded-circle me-2"
+                                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                            <% } %>
+                                            <span><%= order.userId?.name || 'Unknown User' %></span>
+                                        </div>
+                                    </td>
+                                    <td><%= new Date(order.createdOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+                                    <td><span class="fw-semibold">₹<%= order.totalPrice.toLocaleString() %></span></td>
+                                    <td>
+                                        <span class="badge bg-<%= order.status === 'Delivered' ? 'success' : order.status === 'Cancelled' ? 'danger' : order.status === 'Shipped' ? 'primary' : 'warning' %>">
+                                            <%= order.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/orders/<%= order._id %>" class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No recent orders found</td>
+                            </tr>
+                        <% } %>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Products -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Latest Products</h5>
+            <a href="/admin/products" class="btn btn-sm btn-primary">View All</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (latestProducts && latestProducts.length > 0) { %>
+                            <% latestProducts.forEach(product => { %>
+                                <tr>
+                                    <td><span class="fw-semibold">#<%= product._id.toString().slice(-6).toUpperCase() %></span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <% if (product.productImage && product.productImage.length > 0) { %>
+                                                <img src="/uploads/product-images/<%= product.productImage[0] %>"
+                                                     alt="<%= product.productName %>"
+                                                     class="product-thumb rounded me-2"
+                                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                            <% } else { %>
+                                                <div class="product-thumb bg-light rounded me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-box text-muted"></i>
+                                                </div>
+                                            <% } %>
+                                            <span><%= product.productName %></span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-light text-dark"><%= product.category?.name || 'Uncategorized' %></span></td>
+                                    <td><span class="fw-semibold">₹<%= product.salePrice.toLocaleString() %></span></td>
+                                    <td>
+                                        <span class="badge bg-<%= product.quantity > 10 ? 'success' : product.quantity > 0 ? 'warning' : 'danger' %>">
+                                            <%= product.quantity %> in stock
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/products" class="btn btn-sm btn-info me-1"><i class="fas fa-eye"></i></a>
+                                        <a href="/admin/edit-product/<%= product._id %>" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No products found</td>
+                            </tr>
+                        <% } %>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+
+    .product-thumb {
+        border: 1px solid var(--border-color);
+    }
+</style>
+
+<%- include("../../views/admin/partials/footer", { activePage: 'dashboard' }) %>

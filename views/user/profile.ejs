@@ -1,0 +1,1956 @@
+<%- include("../../views/user/partials/header") %>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Profile Hero Section -->
+<div class="min-h-screen bg-black">
+    <!-- Profile Header -->
+    <div class="relative bg-gradient-to-r from-gray-900 via-black to-gray-900 pt-20 pb-16">
+        <!-- Animated background particles -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="floating-particles" id="profile-particles"></div>
+        </div>
+
+        <div class="relative max-w-6xl mx-auto px-8">
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up flex items-center justify-center gap-4">
+                    <i class="fas fa-user-circle"></i> USER PROFILE
+                </h1>
+                <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Manage your account and preferences
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Content -->
+    <div class="max-w-6xl mx-auto px-8 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Profile Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 animate-fade-in-up">
+                    <!-- Profile Avatar -->
+                    <div class="text-center mb-6">
+                        <div class="relative inline-block">
+                            <% if (user && user.profileImage) { %>
+                                <img src="/uploads/profiles/<%= user.profileImage %>"
+                                     alt="Profile Picture"
+                                     class="w-32 h-32 rounded-full object-cover mx-auto mb-4 hover:scale-105 transition-transform duration-300 border-4 border-[#00ffff]">
+                            <% } else { %>
+                                <div class="w-32 h-32 bg-gradient-to-r from-[#00ffff] to-[#0088ff] rounded-full flex items-center justify-center text-4xl font-bold text-black mx-auto mb-4 hover:scale-105 transition-transform duration-300">
+                                    <%= (user && user.name) ? user.name.charAt(0).toUpperCase() : 'U' %>
+                                </div>
+                            <% } %>
+                            <button type="button" id="change-avatar-btn" class="absolute -bottom-2 -right-2 w-10 h-10 bg-[#00ffff] text-black rounded-full hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-110 flex items-center justify-center">
+                                <i class="fas fa-camera text-sm"></i>
+                            </button>
+                            <input type="file" id="avatar-upload" accept="image/jpeg,image/jpg,image/png,image/gif" class="hidden">
+                        </div>
+                        <h2 class="text-2xl font-bold text-white mb-2"><%= (user && user.name) ? user.name : 'User' %></h2>
+                        <p class="text-gray-400"><%= (user && user.email) ? user.email : 'user@example.com' %></p>
+                        <div class="mt-4">
+                            <span class="inline-block px-3 py-1 bg-[#00ffff]/20 text-[#00ffff] rounded-full text-sm font-semibold">
+                                🌟 Active Member
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                            <span class="text-gray-300">📦 Total Orders</span>
+                            <span class="text-[#00ffff] font-bold"><%= orders ? orders.length : 0 %></span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                            <span class="text-gray-300">❤️ Wishlist Items</span>
+                            <span class="text-[#00ffff] font-bold"><%= wishlistCount || 0 %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl mt-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                        <i class="fas fa-list"></i> Account Menu
+                    </h3>
+                    <nav class="space-y-2">
+                        <a href="#profile-info" class="profile-nav-link active" data-tab="profile-info">
+                            <span class="mr-3"><i class="fas fa-user"></i></span> Profile Information
+                        </a>
+                        <a href="#order-history" class="profile-nav-link" data-tab="order-history">
+                            <span class="mr-3"><i class="fas fa-box"></i></span> Order History
+                        </a>
+                        <a href="#wishlist" class="profile-nav-link" data-tab="wishlist">
+                            <span class="mr-3"><i class="fas fa-heart"></i></span> Wishlist
+                        </a>
+                        <a href="#addresses" class="profile-nav-link" data-tab="addresses">
+                            <span class="mr-3"><i class="fas fa-map-marker-alt"></i></span> Addresses
+                        </a>
+                        <a href="#security" class="profile-nav-link" data-tab="security">
+                            <span class="mr-3"><i class="fas fa-lock"></i></span> Security
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-2">
+
+                <!-- Profile Information Tab -->
+                <div id="profile-info" class="tab-content active">
+                    <div class="bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.3s;">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-white flex items-center gap-3">
+                                <i class="fas fa-user"></i> Profile Information
+                            </h3>
+                            <a href="/profile/edit" class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
+                                <i class="fas fa-edit"></i> Edit Profile
+                            </a>
+                        </div>
+
+
+
+                        <!-- Success/Error Messages -->
+                        <% if (typeof profileMessage !== 'undefined' && profileMessage) { %>
+                            <div class="alert mb-6 p-4 rounded-lg <%= profileMessage.type === 'success' ? 'bg-green-500/20 border border-green-500 text-green-400' : 'bg-red-500/20 border border-red-500 text-red-400' %>">
+                                <i class="fas <%= profileMessage.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle' %> mr-2"></i><%= profileMessage.text %>
+                            </div>
+                        <% } %>
+
+
+
+                        <!-- Profile Information Display -->
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-300 text-sm font-semibold mb-2">Full Name</label>
+                                    <div class="profile-display-field">
+                                        <%= (user && user.name) ? user.name : 'Not provided' %>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-300 text-sm font-semibold mb-2">Email Address</label>
+                                    <div class="flex gap-2 items-center">
+                                        <div class="profile-display-field flex-1">
+                                            <%= (user && user.email) ? user.email : 'Not provided' %>
+                                        </div>
+                                        <button type="button" id="change-email-btn" class="px-3 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 text-sm whitespace-nowrap">
+                                            <i class="fas fa-edit mr-1"></i> Change
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-300 text-sm font-semibold mb-2">Phone Number</label>
+                                    <div class="profile-display-field">
+                                        <%= (user && user.phone) ? user.phone : 'Not provided' %>
+                                    </div>
+                                </div>
+                                <div>
+                                    <!-- Empty space for better layout -->
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-300 text-sm font-semibold mb-2">Date of Birth</label>
+                                    <div class="profile-display-field">
+                                        <%= (user && user.dateOfBirth) ? new Date(user.dateOfBirth).toLocaleDateString() : 'Not provided' %>
+                                    </div>
+                                </div>
+                                <div>
+                                    <!-- Empty space for better layout -->
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-300 text-sm font-semibold mb-2">Bio</label>
+                                <div class="profile-display-field min-h-[100px]">
+                                    <%= (user && user.bio) ? user.bio : 'No bio provided' %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order History Tab -->
+                <div id="order-history" class="tab-content hidden">
+                    <div class="bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300">
+                        <h3 class="text-2xl font-bold text-white mb-6">📦 Order History</h3>
+
+                        <% if (orders && orders.length > 0) { %>
+                            <div class="space-y-4">
+                                <% orders.forEach(order => { %>
+                                    <div class="border border-gray-700 rounded-lg p-4 hover:border-[#00ffff] transition-all duration-300">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 class="text-white font-semibold">Order #<%= order.orderId || order._id.toString().slice(-8) %></h4>
+                                                <p class="text-gray-400 text-sm">Placed on <%= new Date(order.createdOn).toLocaleDateString() %></p>
+                                            </div>
+                                            <span class="px-3 py-1 bg-[#00ffff]/20 text-[#00ffff] rounded-full text-sm">
+                                                <%= order.orderedItems && order.orderedItems.length > 0 ? order.orderedItems[0].status : 'Processing' %>
+                                            </span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <p class="text-gray-300">Total: ₹<%= order.finalAmount || '0.00' %></p>
+                                            <div class="space-x-2">
+                                                <button class="view-order-btn px-3 py-1 bg-[#00ffff] text-black rounded text-sm hover:bg-[#0088ff] transition"
+                                                        data-order-id="<%= order._id %>">
+                                                    View Details
+                                                </button>
+                                                <%
+                                                    const orderStatus = order.orderedItems && order.orderedItems.length > 0 ? order.orderedItems[0].status : 'Processing';
+                                                    if (orderStatus === 'Processing' || orderStatus === 'Shipped') {
+                                                %>
+                                                    <button class="cancel-order-btn px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
+                                                            data-order-id="<%= order._id %>">
+                                                        Cancel Order
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <!-- Empty State -->
+                            <div class="text-center py-12">
+                                <div class="text-6xl mb-4">📦</div>
+                                <h4 class="text-xl font-semibold text-gray-300 mb-2">No Orders Yet</h4>
+                                <p class="text-gray-400 mb-6">Start shopping to see your order history here!</p>
+                                <a href="/shop" class="px-6 py-3 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105">
+                                    🛍️ Start Shopping
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Wishlist Tab -->
+                <div id="wishlist" class="tab-content hidden">
+                    <div class="bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-white">❤️ My Wishlist</h3>
+                            <div class="flex items-center gap-4">
+                                <span class="bg-[#00ffff]/20 text-[#00ffff] px-3 py-1 rounded-full text-sm font-medium">
+                                    <%= wishlistCount || 0 %> <%= (wishlistCount || 0) === 1 ? 'Item' : 'Items' %>
+                                </span>
+                                <a href="/wishlist" class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105 font-medium">
+                                    View Full Wishlist
+                                </a>
+                            </div>
+                        </div>
+
+                        <% if (wishlistItems && wishlistItems.length > 0) { %>
+                            <!-- Wishlist Items Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                                <% wishlistItems.forEach((item, index) => { %>
+                                    <div class="bg-gray-700 rounded-xl p-4 hover:bg-gray-600 transition-all duration-300 group">
+                                        <!-- Product Image -->
+                                        <div class="relative mb-3 overflow-hidden rounded-lg">
+                                            <img src="<%= item.image %>"
+                                                 alt="<%= item.name %>"
+                                                 class="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
+                                                 onerror="this.src='/images/placeholder.jpg'">
+
+                                            <!-- Stock Status -->
+                                            <% if (!item.isAvailable) { %>
+                                                <div class="absolute inset-0 bg-black/70 flex items-center justify-center">
+                                                    <span class="text-red-400 font-bold text-xs">Out of Stock</span>
+                                                </div>
+                                            <% } %>
+
+                                            <!-- Discount Badge -->
+                                            <% if (item.discount > 0) { %>
+                                                <div class="absolute top-1 left-1 bg-red-500 text-white px-1 py-0.5 rounded text-xs font-bold">
+                                                    -<%= item.discount %>%
+                                                </div>
+                                            <% } %>
+                                        </div>
+
+                                        <!-- Product Info -->
+                                        <div class="space-y-2">
+                                            <h4 class="text-white font-medium text-sm line-clamp-2 group-hover:text-[#00ffff] transition-colors duration-300">
+                                                <%= item.name %>
+                                            </h4>
+
+                                            <p class="text-gray-400 text-xs">
+                                                <%= item.category %>
+                                            </p>
+
+                                            <!-- Price -->
+                                            <div class="flex items-center gap-1">
+                                                <span class="text-[#00ffff] font-bold text-sm">₹<%= item.price %></span>
+                                                <% if (item.originalPrice > item.price) { %>
+                                                    <span class="text-gray-500 line-through text-xs">₹<%= item.originalPrice %></span>
+                                                <% } %>
+                                            </div>
+
+                                            <!-- Action Button -->
+                                            <div class="pt-1">
+                                                <a href="/shop/product/<%= item._id %>"
+                                                   class="block text-center px-3 py-1 bg-[#00ffff] text-black rounded text-xs hover:bg-[#0088ff] transition-all duration-300 font-medium">
+                                                    View Product
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+
+                            <!-- View All Button -->
+                            <div class="text-center">
+                                <a href="/wishlist" class="inline-block px-6 py-3 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105 font-medium">
+                                    View All Wishlist Items
+                                </a>
+                            </div>
+
+                        <% } else { %>
+                            <!-- Empty Wishlist State -->
+                            <div class="text-center py-12">
+                                <div class="text-6xl mb-4">💔</div>
+                                <h4 class="text-xl font-semibold text-gray-300 mb-2">Your Wishlist is Empty</h4>
+                                <p class="text-gray-400 mb-6">Start adding products to your wishlist to keep track of your favorites!</p>
+                                <div class="flex justify-center gap-4">
+                                    <a href="/wishlist" class="px-6 py-3 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105">
+                                        ❤️ Go to Wishlist
+                                    </a>
+                                    <a href="/shop" class="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
+                                        🔍 Browse Products
+                                    </a>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Addresses Tab -->
+                <div id="addresses" class="tab-content hidden">
+                    <div class="bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-white">📍 Saved Addresses</h3>
+                            <button id="add-address-btn" class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105">
+                                ➕ Add New Address
+                            </button>
+                        </div>
+
+                        <% if (addresses && addresses.length > 0) { %>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <% addresses.forEach(address => { %>
+                                    <div class="border border-gray-700 rounded-lg p-4 hover:border-[#00ffff] transition-all duration-300 relative">
+                                        <% if (address.isDefault) { %>
+                                            <span class="absolute top-2 right-2 px-2 py-1 bg-[#00ffff] text-black text-xs rounded-full font-semibold">
+                                                Default
+                                            </span>
+                                        <% } %>
+
+                                        <div class="mb-3">
+                                            <h4 class="text-white font-semibold flex items-center">
+                                                <span class="mr-2">
+                                                    <% if (address.addressType === 'Home') { %>🏠
+                                                    <% } else if (address.addressType === 'Work') { %>🏢
+                                                    <% } else { %>📍<% } %>
+                                                </span>
+                                                <%= address.addressType %> - <%= address.name %>
+                                            </h4>
+                                            <p class="text-gray-400 text-sm">📞 <%= address.phone %></p>
+                                        </div>
+
+                                        <div class="text-gray-300 text-sm mb-4">
+                                            <p><%= address.address %></p>
+                                            <p><%= address.locality %>, <%= address.city %></p>
+                                            <p><%= address.state %> - <%= address.pincode %></p>
+                                            <% if (address.landMark) { %>
+                                                <p class="text-gray-400">Landmark: <%= address.landMark %></p>
+                                            <% } %>
+                                        </div>
+
+                                        <div class="flex space-x-2">
+                                            <button class="edit-address-btn px-3 py-1 bg-[#00ffff] text-black rounded text-sm hover:bg-[#0088ff] transition"
+                                                    data-address-id="<%= address._id %>">
+                                                ✏️ Edit
+                                            </button>
+                                            <% if (!address.isDefault) { %>
+                                                <button class="set-default-btn px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition"
+                                                        data-address-id="<%= address._id %>">
+                                                    Set Default
+                                                </button>
+                                            <% } %>
+                                            <button class="delete-address-btn px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
+                                                    data-address-id="<%= address._id %>">
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <!-- Empty State -->
+                            <div class="text-center py-12">
+                                <div class="text-6xl mb-4">📍</div>
+                                <h4 class="text-xl font-semibold text-gray-300 mb-2">No Addresses Saved</h4>
+                                <p class="text-gray-400 mb-6">Add your delivery addresses for faster checkout!</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div id="security" class="tab-content hidden">
+                    <div class="bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300">
+                        <h3 class="text-2xl font-bold text-white mb-6">🔒 Security Settings</h3>
+
+                        <div class="space-y-6">
+                            <!-- Change Password -->
+                            <div class="border border-gray-700 rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-white mb-4">🔑 Change Password</h4>
+                                <form id="change-password-form" class="space-y-4">
+                                    <div>
+                                        <label class="block text-gray-300 text-sm font-semibold mb-2">Current Password</label>
+                                        <div class="relative">
+                                            <input type="password" id="currentPassword" name="currentPassword" class="profile-input pr-12" placeholder="Enter current password" required>
+                                            <span class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-[#00ffff] cursor-pointer" data-target="currentPassword">
+                                                <i class="fa fa-eye"></i>
+                                            </span>
+                                        </div>
+                                        <div id="current-password-error" class="text-red-400 text-xs mt-1 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-300 text-sm font-semibold mb-2">New Password</label>
+                                        <div class="relative">
+                                            <input type="password" id="newPassword" name="newPassword" class="profile-input pr-12" placeholder="Enter new password" required>
+                                            <span class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-[#00ffff] cursor-pointer" data-target="newPassword">
+                                                <i class="fa fa-eye"></i>
+                                            </span>
+                                        </div>
+                                        <div class="password-requirements mt-2 text-xs">
+                                            <div class="requirement-item flex items-center gap-2 text-gray-400" data-requirement="length">
+                                                <i class="requirement-icon fa fa-times text-red-500"></i>
+                                                <span>At least 8 characters</span>
+                                            </div>
+                                            <div class="requirement-item flex items-center gap-2 text-gray-400" data-requirement="letters">
+                                                <i class="requirement-icon fa fa-times text-red-500"></i>
+                                                <span>Contains letters and numbers</span>
+                                            </div>
+                                        </div>
+                                        <div id="new-password-error" class="text-red-400 text-xs mt-1 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-300 text-sm font-semibold mb-2">Confirm New Password</label>
+                                        <div class="relative">
+                                            <input type="password" id="confirmPassword" name="confirmPassword" class="profile-input pr-12" placeholder="Confirm new password" required>
+                                            <span class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-[#00ffff] cursor-pointer" data-target="confirmPassword">
+                                                <i class="fa fa-eye"></i>
+                                            </span>
+                                        </div>
+                                        <div class="requirement-item flex items-center gap-2 text-gray-400 mt-2" data-requirement="match">
+                                            <i class="requirement-icon fa fa-times text-red-500"></i>
+                                            <span>Passwords match</span>
+                                        </div>
+                                        <div id="confirm-password-error" class="text-red-400 text-xs mt-1 hidden"></div>
+                                    </div>
+                                    <button type="submit" id="change-password-btn" class="px-6 py-3 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        🔄 Update Password
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Account Security -->
+                            <div class="border border-gray-700 rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-white mb-4">🛡️ Account Security</h4>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-white font-medium">Two-Factor Authentication</p>
+                                            <p class="text-gray-400 text-sm">Add an extra layer of security to your account</p>
+                                        </div>
+                                        <button class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                                            Enable
+                                        </button>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-white font-medium">Login Notifications</p>
+                                            <p class="text-gray-400 text-sm">Get notified when someone logs into your account</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00ffff]"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Profile Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching functionality
+    const navLinks = document.querySelectorAll('.profile-nav-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Remove active class from all nav links and tab contents
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            tabContents.forEach(tab => tab.classList.add('hidden'));
+
+            // Add active class to clicked nav link
+            this.classList.add('active');
+
+            // Show corresponding tab content
+            const targetTab = this.getAttribute('data-tab');
+            document.getElementById(targetTab).classList.remove('hidden');
+
+            // Add animation
+            document.getElementById(targetTab).style.animation = 'fadeInUp 0.5s ease-out forwards';
+        });
+    });
+
+    // Profile is now display-only, editing happens on separate page
+
+    // Create floating particles for profile page
+    createProfileParticles();
+
+    // Add fun interactions
+    addProfileInteractions();
+
+    // Address Management
+    setupAddressManagement();
+
+    // Password Change
+    setupPasswordChange();
+
+    // Order Management
+    setupOrderManagement();
+
+    // Avatar Upload Functionality
+    setupAvatarUpload();
+
+    // Email Change Functionality
+    setupEmailChange();
+
+    // Show welcome message
+    setTimeout(() => {
+        showNotification('Welcome to your profile! 👋', 'info');
+    }, 1000);
+});
+
+// Utility functions
+function createProfileParticles() {
+    const particlesContainer = document.getElementById('profile-particles');
+    if (!particlesContainer) return;
+
+    for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 8 + 's';
+        particle.style.animationDuration = (Math.random() * 4 + 8) + 's';
+        particlesContainer.appendChild(particle);
+    }
+}
+
+function addProfileInteractions() {
+    // Add hover effects to stat cards
+    const statCards = document.querySelectorAll('.bg-gray-700');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.backgroundColor = '#374151';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.backgroundColor = '#374151';
+        });
+    });
+
+    // Add click effect to avatar
+    const avatar = document.querySelector('.w-32.h-32');
+    if (avatar) {
+        avatar.addEventListener('click', function() {
+            this.style.animation = 'heartbeat 1s ease-in-out';
+            setTimeout(() => {
+                this.style.animation = '';
+            }, 1000);
+        });
+    }
+}
+
+function setupAddressManagement() {
+    // Add Address Button
+    const addAddressBtn = document.getElementById('add-address-btn');
+    if (addAddressBtn) {
+        addAddressBtn.addEventListener('click', showAddAddressModal);
+    }
+
+    // Edit Address Buttons
+    document.querySelectorAll('.edit-address-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const addressId = this.getAttribute('data-address-id');
+            editAddress(addressId);
+        });
+    });
+
+    // Delete Address Buttons
+    document.querySelectorAll('.delete-address-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const addressId = this.getAttribute('data-address-id');
+            deleteAddress(addressId);
+        });
+    });
+
+    // Set Default Buttons
+    document.querySelectorAll('.set-default-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const addressId = this.getAttribute('data-address-id');
+            setDefaultAddress(addressId);
+        });
+    });
+}
+
+function setupPasswordChange() {
+    const changePasswordForm = document.getElementById('change-password-form');
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const changePasswordBtn = document.getElementById('change-password-btn');
+
+    if (!changePasswordForm) return;
+
+    // Password show/hide functionality
+    document.querySelectorAll('.toggle-password').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const targetInput = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+
+            if (targetInput.type === 'password') {
+                targetInput.type = 'text';
+                icon.className = 'fa fa-eye-slash';
+            } else {
+                targetInput.type = 'password';
+                icon.className = 'fa fa-eye';
+            }
+        });
+    });
+
+    // Real-time validation
+    currentPasswordInput.addEventListener('input', function() {
+        validateCurrentPassword();
+        validateAllPasswordFields();
+    });
+    newPasswordInput.addEventListener('input', function() {
+        validateNewPassword();
+        validateAllPasswordFields();
+    });
+    confirmPasswordInput.addEventListener('input', function() {
+        validateConfirmPassword();
+        validateAllPasswordFields();
+    });
+
+    // Form submission
+    changePasswordForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (validateAllPasswordFields()) {
+            const currentPassword = currentPasswordInput.value;
+            const newPassword = newPasswordInput.value;
+            changePassword(currentPassword, newPassword);
+        }
+    });
+
+    function validateCurrentPassword() {
+        const value = currentPasswordInput.value.trim();
+        const errorDiv = document.getElementById('current-password-error');
+
+        if (value === '') {
+            showFieldError(errorDiv, 'Current password is required');
+            return false;
+        } else if (value.length < 1) {
+            showFieldError(errorDiv, 'Current password is required');
+            return false;
+        } else {
+            hideFieldError(errorDiv);
+            return true;
+        }
+    }
+
+    function validateNewPassword() {
+        const value = newPasswordInput.value.trim();
+        const errorDiv = document.getElementById('new-password-error');
+        const passPattern = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+
+        // Length validation
+        const lengthValid = value.length >= 8;
+        updateRequirement('length', lengthValid);
+
+        // Letters and numbers validation
+        const lettersValid = passPattern.test(value);
+        updateRequirement('letters', lettersValid);
+
+        if (value === '') {
+            showFieldError(errorDiv, 'New password is required');
+            return false;
+        } else if (!lengthValid) {
+            showFieldError(errorDiv, 'Password must be at least 8 characters');
+            return false;
+        } else if (!lettersValid) {
+            showFieldError(errorDiv, 'Password must contain both letters and numbers');
+            return false;
+        } else {
+            hideFieldError(errorDiv);
+            return true;
+        }
+    }
+
+    function validateConfirmPassword() {
+        const newPassword = newPasswordInput.value.trim();
+        const confirmPassword = confirmPasswordInput.value.trim();
+        const errorDiv = document.getElementById('confirm-password-error');
+
+        const passwordsMatch = newPassword === confirmPassword && confirmPassword !== '';
+        updateRequirement('match', passwordsMatch);
+
+        if (confirmPassword === '') {
+            showFieldError(errorDiv, 'Please confirm your password');
+            return false;
+        } else if (!passwordsMatch) {
+            showFieldError(errorDiv, 'Passwords do not match');
+            return false;
+        } else {
+            hideFieldError(errorDiv);
+            return true;
+        }
+    }
+
+    function validateAllPasswordFields() {
+        const currentValid = validateCurrentPassword();
+        const newValid = validateNewPassword();
+        const confirmValid = validateConfirmPassword();
+        const allValid = currentValid && newValid && confirmValid;
+
+        // Enable/disable submit button
+        if (changePasswordBtn) {
+            changePasswordBtn.disabled = !allValid;
+            if (allValid) {
+                changePasswordBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                changePasswordBtn.classList.add('hover:bg-[#0088ff]');
+            } else {
+                changePasswordBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                changePasswordBtn.classList.remove('hover:bg-[#0088ff]');
+            }
+        }
+
+        return allValid;
+    }
+
+    function updateRequirement(requirement, isValid) {
+        const item = document.querySelector(`[data-requirement="${requirement}"] .requirement-icon`);
+        if (item) {
+            item.className = `requirement-icon fa ${isValid ? 'fa-check text-green-500' : 'fa-times text-red-500'}`;
+        }
+    }
+
+    function showFieldError(errorDiv, message) {
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+    }
+
+    function hideFieldError(errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.classList.add('hidden');
+    }
+
+    // Initial validation check
+    validateAllPasswordFields();
+}
+
+function setupOrderManagement() {
+    // View Order Details Buttons
+    document.querySelectorAll('.view-order-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            viewOrderDetails(orderId);
+        });
+    });
+
+    // Cancel Order Buttons
+    document.querySelectorAll('.cancel-order-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            cancelOrder(orderId);
+        });
+    });
+}
+
+function setupEmailChange() {
+    const changeEmailBtn = document.getElementById('change-email-btn');
+    if (changeEmailBtn) {
+        changeEmailBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showChangeEmailModal();
+        });
+    }
+}
+
+function setupAvatarUpload() {
+    const changeAvatarBtn = document.getElementById('change-avatar-btn');
+    const avatarUpload = document.getElementById('avatar-upload');
+
+    if (changeAvatarBtn && avatarUpload) {
+        changeAvatarBtn.addEventListener('click', function() {
+            avatarUpload.click();
+        });
+
+        avatarUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('Please select an image smaller than 5MB', 'error');
+                    return;
+                }
+
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    showNotification('Please select a valid image file (JPG, PNG, GIF)', 'error');
+                    return;
+                }
+
+                // Upload the image
+                uploadAvatar(file);
+            }
+        });
+    }
+}
+
+function uploadAvatar(file) {
+    // Show loading
+    showNotification('Uploading profile picture...', 'info');
+
+    // Create form data
+    const formData = new FormData();
+    formData.append('profileImage', file);
+    formData.append('name', '<%= (user && user.name) ? user.name : "" %>');
+    formData.append('email', '<%= (user && user.email) ? user.email : "" %>');
+    formData.append('phone', '<%= (user && user.phone) ? user.phone : "" %>');
+    formData.append('dateOfBirth', '<%= (user && user.dateOfBirth) ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "" %>');
+    formData.append('bio', '<%= (user && user.bio) ? user.bio : "" %>');
+
+    // Upload to the main profile route that handles file uploads
+    fetch('/profile', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.redirected) {
+            // Success - follow the redirect
+            showNotification('Profile picture updated successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = response.url;
+            }, 1000);
+        } else {
+            return response.text();
+        }
+    })
+    .catch(error => {
+        console.error('Error uploading avatar:', error);
+        showNotification('Failed to upload profile picture. Please try again.', 'error');
+    });
+}
+
+// Show Notification Function
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(notification => notification.remove());
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+
+    // Set notification style based on type
+    let bgColor, textColor, icon;
+    switch(type) {
+        case 'success':
+            bgColor = 'bg-green-500';
+            textColor = 'text-white';
+            icon = 'fas fa-check-circle';
+            break;
+        case 'error':
+            bgColor = 'bg-red-500';
+            textColor = 'text-white';
+            icon = 'fas fa-exclamation-triangle';
+            break;
+        case 'warning':
+            bgColor = 'bg-yellow-500';
+            textColor = 'text-black';
+            icon = 'fas fa-exclamation-triangle';
+            break;
+        default:
+            bgColor = 'bg-blue-500';
+            textColor = 'text-white';
+            icon = 'fas fa-info-circle';
+    }
+
+    notification.classList.add(bgColor, textColor);
+    notification.innerHTML = `
+        <div class="flex items-center gap-3">
+            <i class="${icon}"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 hover:opacity-70">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+// Address Management Functions
+function setupAddressManagement() {
+    // Add Address Button
+    const addAddressBtn = document.getElementById('add-address-btn');
+    if (addAddressBtn) {
+        addAddressBtn.addEventListener('click', showAddAddressModal);
+    }
+
+    // Edit Address Buttons
+    const editAddressBtns = document.querySelectorAll('.edit-address-btn');
+    editAddressBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const addressId = this.getAttribute('data-address-id');
+            editAddress(addressId);
+        });
+    });
+
+    // Delete Address Buttons
+    const deleteAddressBtns = document.querySelectorAll('.delete-address-btn');
+    deleteAddressBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const addressId = this.getAttribute('data-address-id');
+            deleteAddress(addressId);
+        });
+    });
+
+    // Set Default Address Buttons
+    const setDefaultBtns = document.querySelectorAll('.set-default-btn');
+    setDefaultBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const addressId = this.getAttribute('data-address-id');
+            setDefaultAddress(addressId);
+        });
+    });
+}
+
+function editAddress(addressId) {
+    // Find the address card by looking for the button with the matching data-address-id
+    const editButton = document.querySelector(`.edit-address-btn[data-address-id="${addressId}"]`);
+    if (!editButton) {
+        showNotification('Address not found', 'error');
+        return;
+    }
+
+    // Get the parent address card (the div containing all address info)
+    const addressCard = editButton.closest('.border.border-gray-700');
+    if (!addressCard) {
+        showNotification('Address card not found', 'error');
+        return;
+    }
+
+    try {
+        // Extract address data from the card structure
+        const titleElement = addressCard.querySelector('h4');
+        const phoneElement = addressCard.querySelector('p.text-gray-400');
+        const addressLines = addressCard.querySelectorAll('.text-gray-300 p');
+
+        // Parse title: "🏠 Home - John Doe" or "📍 Other - Jane Smith"
+        const titleText = titleElement.textContent.trim();
+        const titleParts = titleText.split(' - ');
+        const typeAndIcon = titleParts[0].trim();
+        const name = titleParts[1] ? titleParts[1].trim() : '';
+
+        // Extract address type (remove emoji)
+        const addressType = typeAndIcon.replace(/[🏠🏢📍]/g, '').trim();
+
+        // Extract phone (remove 📞 emoji)
+        const phone = phoneElement.textContent.replace('📞 ', '').trim();
+
+        // Extract address lines
+        let address = '';
+        let locality = '';
+        let city = '';
+        let state = '';
+        let pincode = '';
+        let landMark = '';
+
+        if (addressLines.length >= 1) {
+            address = addressLines[0].textContent.trim();
+        }
+        if (addressLines.length >= 2) {
+            const localityCity = addressLines[1].textContent.trim();
+            const parts = localityCity.split(',');
+            locality = parts[0] ? parts[0].trim() : '';
+            city = parts[1] ? parts[1].trim() : '';
+        }
+        if (addressLines.length >= 3) {
+            const statePincode = addressLines[2].textContent.trim();
+            const parts = statePincode.split(' - ');
+            state = parts[0] ? parts[0].trim() : '';
+            pincode = parts[1] ? parts[1].trim() : '';
+        }
+        if (addressLines.length >= 4) {
+            const landmarkText = addressLines[3].textContent.trim();
+            landMark = landmarkText.replace('Landmark: ', '');
+        }
+
+        const addressData = {
+            _id: addressId,
+            name: name,
+            addressType: addressType,
+            phone: phone,
+            address: address,
+            locality: locality,
+            city: city,
+            state: state,
+            pincode: pincode,
+            landMark: landMark
+        };
+
+        console.log('Extracted address data:', addressData); // Debug log
+        showEditAddressModal(addressData);
+
+    } catch (error) {
+        console.error('Error extracting address data:', error);
+        showNotification('Failed to extract address data', 'error');
+    }
+}
+
+function deleteAddress(addressId) {
+    if (confirm('Are you sure you want to delete this address?')) {
+        fetch(`/profile/address/${addressId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Address deleted successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.message || 'Failed to delete address', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting address:', error);
+            showNotification('Failed to delete address', 'error');
+        });
+    }
+}
+
+function updateAddress(addressId, addressData) {
+    // Show loading
+    Swal.fire({
+        title: 'Updating Address...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: '#1f2937',
+        color: '#ffffff',
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    fetch(`/profile/address/${addressId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(addressData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '✅ Address Updated',
+                text: 'Your address has been successfully updated',
+                icon: 'success',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff'
+            }).then(() => {
+                location.reload(); // Refresh to show updated address
+            });
+        } else {
+            throw new Error(data.message || 'Failed to update address');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: '❌ Error',
+            text: error.message || 'Failed to update address',
+            icon: 'error',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    });
+}
+
+function setDefaultAddress(addressId) {
+    fetch(`/profile/address/${addressId}/default`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Default address updated!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message || 'Failed to set default address', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error setting default address:', error);
+        showNotification('Failed to set default address', 'error');
+    });
+}
+
+function showChangeEmailModal() {
+    Swal.fire({
+        title: '<i class="fas fa-envelope mr-2"></i> Change Email Address',
+        html: `
+            <div class="text-left space-y-4">
+                <div class="bg-blue-500/20 border border-blue-500 rounded-lg p-4 mb-4">
+                    <div class="flex items-center gap-2 text-blue-400 mb-2">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="font-semibold">Important Information</span>
+                    </div>
+                    <p class="text-gray-300 text-sm">
+                        • You will receive a verification code on your new email address<br>
+                        • Your current email will remain active until verification is complete<br>
+                        • This process ensures the security of your account
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Current Email</label>
+                    <input type="email" value="<%= (user && user.email) ? user.email : '' %>" class="w-full p-3 border rounded bg-gray-600 text-gray-400 border-gray-500" readonly>
+                </div>
+                <div>
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">New Email Address *</label>
+                    <input type="email" id="newEmail" class="w-full p-3 border rounded bg-gray-700 text-white border-gray-600 focus:border-[#00ffff] focus:outline-none"
+                           placeholder="Enter your new email address" required>
+                    <div class="text-red-400 text-xs mt-1 hidden" id="email-error"></div>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonColor: '#00ffff',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '<i class="fas fa-paper-plane mr-2"></i> Send Verification Code',
+        cancelButtonText: '<i class="fas fa-times mr-2"></i> Cancel',
+        background: '#1f2937',
+        color: '#ffffff',
+        width: '500px',
+        preConfirm: () => {
+            const newEmail = document.getElementById('newEmail').value.trim();
+            const emailError = document.getElementById('email-error');
+
+            // Validation
+            if (!newEmail) {
+                emailError.textContent = 'Please enter a new email address';
+                emailError.classList.remove('hidden');
+                return false;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+                emailError.textContent = 'Please enter a valid email address';
+                emailError.classList.remove('hidden');
+                return false;
+            }
+
+            if (newEmail === '<%= (user && user.email) ? user.email : "" %>') {
+                emailError.textContent = 'New email must be different from current email';
+                emailError.classList.remove('hidden');
+                return false;
+            }
+
+            emailError.classList.add('hidden');
+            return { newEmail };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            changeEmail(result.value.newEmail);
+        }
+    });
+}
+
+function changeEmail(newEmail) {
+    // Show loading
+    Swal.fire({
+        title: '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...',
+        text: 'Sending verification code to your new email address',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: '#1f2937',
+        color: '#ffffff'
+    });
+
+    // Send email change request
+    fetch('/profile/change-email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: newEmail })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '<i class="fas fa-check-circle mr-2"></i> Code Sent!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff'
+            }).then(() => {
+                // Redirect to verification page
+                window.location.href = data.redirectUrl;
+            });
+        } else {
+            throw new Error(data.message || 'Failed to send verification code');
+        }
+    })
+    .catch(error => {
+        console.error('Error changing email:', error);
+        Swal.fire({
+            title: '<i class="fas fa-exclamation-triangle mr-2"></i> Error',
+            text: error.message || 'Failed to send verification code. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    });
+}
+
+function showEditAddressModal(address) {
+    Swal.fire({
+        title: '✏️ Edit Address',
+        html: `
+            <div class="text-left space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Address Type</label>
+                        <select id="editAddressType" class="w-full p-2 border rounded bg-gray-700 text-white">
+                            <option value="Home" ${address.addressType === 'Home' ? 'selected' : ''}>🏠 Home</option>
+                            <option value="Work" ${address.addressType === 'Work' ? 'selected' : ''}>🏢 Work</option>
+                            <option value="Other" ${address.addressType === 'Other' ? 'selected' : ''}>📍 Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Full Name</label>
+                        <input type="text" id="editAddressName" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter full name" value="${address.name}">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Phone Number</label>
+                        <input type="tel" id="editAddressPhone" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter phone number" value="${address.phone}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Pincode</label>
+                        <input type="text" id="editAddressPincode" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter pincode" value="${address.pincode}">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Address</label>
+                    <textarea id="editAddressAddress" class="w-full p-2 border rounded bg-gray-700 text-white" rows="2" placeholder="Enter full address">${address.address}</textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Locality</label>
+                        <input type="text" id="editAddressLocality" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter locality" value="${address.locality}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">City</label>
+                        <input type="text" id="editAddressCity" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter city" value="${address.city}">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">State</label>
+                        <input type="text" id="editAddressState" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter state" value="${address.state}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Landmark (Optional)</label>
+                        <input type="text" id="editAddressLandmark" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter landmark" value="${address.landMark || ''}">
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '💾 Update Address',
+        cancelButtonText: '❌ Cancel',
+        confirmButtonColor: '#00ffff',
+        cancelButtonColor: '#6b7280',
+        background: '#1f2937',
+        color: '#ffffff',
+        width: '600px',
+        preConfirm: () => {
+            const addressType = document.getElementById('editAddressType').value;
+            const name = document.getElementById('editAddressName').value.trim();
+            const phone = document.getElementById('editAddressPhone').value.trim();
+            const pincode = document.getElementById('editAddressPincode').value.trim();
+            const addressText = document.getElementById('editAddressAddress').value.trim();
+            const locality = document.getElementById('editAddressLocality').value.trim();
+            const city = document.getElementById('editAddressCity').value.trim();
+            const state = document.getElementById('editAddressState').value.trim();
+            const landmark = document.getElementById('editAddressLandmark').value.trim();
+
+            // Validation
+            if (!name || !phone || !pincode || !addressText || !locality || !city || !state) {
+                Swal.showValidationMessage('Please fill in all required fields');
+                return false;
+            }
+
+            if (!/^[0-9]{10}$/.test(phone)) {
+                Swal.showValidationMessage('Phone number must be 10 digits');
+                return false;
+            }
+
+            if (!/^[0-9]{6}$/.test(pincode)) {
+                Swal.showValidationMessage('Pincode must be 6 digits');
+                return false;
+            }
+
+            return {
+                addressType,
+                name,
+                phone,
+                pincode,
+                address: addressText,
+                locality,
+                city,
+                state,
+                landMark: landmark
+            };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            updateAddress(address._id, result.value);
+        }
+    });
+}
+
+function showAddAddressModal() {
+    Swal.fire({
+        title: '📍 Add New Address',
+        html: `
+            <div class="text-left space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Address Type</label>
+                        <select id="addressType" class="w-full p-2 border rounded bg-gray-700 text-white">
+                            <option value="Home">🏠 Home</option>
+                            <option value="Work">🏢 Work</option>
+                            <option value="Other">📍 Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Full Name</label>
+                        <input type="text" id="addressName" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter full name">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Phone Number</label>
+                        <input type="tel" id="addressPhone" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter phone number">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Pincode</label>
+                        <input type="text" id="addressPincode" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter pincode">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Address</label>
+                    <textarea id="addressFull" class="w-full p-2 border rounded bg-gray-700 text-white" rows="2" placeholder="House No, Building, Street"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Locality</label>
+                        <input type="text" id="addressLocality" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Area, Colony">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">City</label>
+                        <input type="text" id="addressCity" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter city">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">State</label>
+                        <input type="text" id="addressState" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter state">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Landmark (Optional)</label>
+                        <input type="text" id="addressLandmark" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Near landmark">
+                    </div>
+                </div>
+                <div>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="setAsDefault" class="mr-2">
+                        <span class="text-sm">Set as default address</span>
+                    </label>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '💾 Save Address',
+        cancelButtonText: '❌ Cancel',
+        confirmButtonColor: '#00ffff',
+        background: '#1f2937',
+        color: '#ffffff',
+        width: '600px',
+        preConfirm: () => {
+            const addressData = {
+                addressType: document.getElementById('addressType').value,
+                name: document.getElementById('addressName').value,
+                phone: document.getElementById('addressPhone').value,
+                pincode: document.getElementById('addressPincode').value,
+                address: document.getElementById('addressFull').value,
+                locality: document.getElementById('addressLocality').value,
+                city: document.getElementById('addressCity').value,
+                state: document.getElementById('addressState').value,
+                landMark: document.getElementById('addressLandmark').value,
+                isDefault: document.getElementById('setAsDefault').checked
+            };
+
+            // Validate required fields
+            if (!addressData.name || !addressData.phone || !addressData.pincode ||
+                !addressData.address || !addressData.locality || !addressData.city || !addressData.state) {
+                Swal.showValidationMessage('Please fill all required fields');
+                return false;
+            }
+
+            return addressData;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            saveAddress(result.value);
+        }
+    });
+}
+
+function saveAddress(addressData) {
+    fetch('/profile/address', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(addressData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '✅ Success!',
+                text: 'Address saved successfully!',
+                icon: 'success',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message || 'Failed to save address');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: '❌ Error',
+            text: error.message || 'Failed to save address',
+            icon: 'error',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    });
+}
+
+function deleteAddress(addressId) {
+    Swal.fire({
+        title: '🗑️ Delete Address',
+        text: 'Are you sure you want to delete this address?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete it!',
+        background: '#1f2937',
+        color: '#ffffff'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/profile/address/${addressId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: '✅ Deleted!',
+                        text: 'Address has been deleted.',
+                        icon: 'success',
+                        confirmButtonColor: '#00ffff',
+                        background: '#1f2937',
+                        color: '#ffffff'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to delete address');
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: '❌ Error',
+                    text: error.message || 'Failed to delete address',
+                    icon: 'error',
+                    confirmButtonColor: '#00ffff',
+                    background: '#1f2937',
+                    color: '#ffffff'
+                });
+            });
+        }
+    });
+}
+
+function setDefaultAddress(addressId) {
+    fetch(`/profile/address/${addressId}/default`, {
+        method: 'PUT'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '✅ Success!',
+                text: 'Default address updated!',
+                icon: 'success',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message || 'Failed to set default address');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: '❌ Error',
+            text: error.message || 'Failed to set default address',
+            icon: 'error',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    });
+}
+
+function cancelOrder(orderId) {
+    Swal.fire({
+        title: '❌ Cancel Order',
+        text: 'Are you sure you want to cancel this order?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, cancel it!',
+        background: '#1f2937',
+        color: '#ffffff'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/orders/${orderId}/cancel`, {
+                method: 'PUT'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: '✅ Cancelled!',
+                        text: 'Order has been cancelled.',
+                        icon: 'success',
+                        confirmButtonColor: '#00ffff',
+                        background: '#1f2937',
+                        color: '#ffffff'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to cancel order');
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: '❌ Error',
+                    text: error.message || 'Failed to cancel order',
+                    icon: 'error',
+                    confirmButtonColor: '#00ffff',
+                    background: '#1f2937',
+                    color: '#ffffff'
+                });
+            });
+        }
+    });
+}
+
+function viewOrderDetails(orderId) {
+    // Redirect to order details page
+    window.location.href = `/orders/${orderId}`;
+}
+
+// Password Change Setup Function (removed duplicate - enhanced functionality above)
+
+function changePassword(currentPassword, newPassword) {
+    fetch('/profile/change-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            currentPassword: currentPassword,
+            newPassword: newPassword
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Password changed successfully!', 'success');
+            document.getElementById('change-password-form').reset();
+        } else {
+            showNotification(data.message || 'Failed to change password', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error changing password:', error);
+        showNotification('Failed to change password', 'error');
+    });
+}
+
+// Order Management Setup Function (removed duplicate - functionality merged above)
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300`;
+
+    // Set colors based on type
+    switch(type) {
+        case 'success':
+            notification.classList.add('bg-green-500', 'text-white');
+            break;
+        case 'error':
+            notification.classList.add('bg-red-500', 'text-white');
+            break;
+        case 'info':
+        default:
+            notification.classList.add('bg-[#00ffff]', 'text-black');
+            break;
+    }
+
+    notification.innerHTML = message;
+    document.body.appendChild(notification);
+
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(full)';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+</script>
+
+<!-- Enhanced CSS for Profile Page -->
+<style>
+/* Profile-specific styles */
+.profile-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: #374151;
+    border: 2px solid #4b5563;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.profile-input:focus {
+    outline: none;
+    border-color: #00ffff;
+    box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1);
+}
+
+.profile-input.editing {
+    background: #1f2937;
+    border-color: #00ffff;
+}
+
+.profile-input::placeholder {
+    color: #9ca3af;
+}
+
+.profile-display-field {
+    width: 100%;
+    padding: 12px 16px;
+    background: #374151;
+    border: 2px solid #4b5563;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.profile-nav-link {
+    display: block;
+    padding: 12px 16px;
+    color: #d1d5db;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.profile-nav-link:hover {
+    background: #374151;
+    color: #00ffff;
+    transform: translateX(8px);
+}
+
+.profile-nav-link.active {
+    background: linear-gradient(135deg, #00ffff, #0088ff);
+    color: black;
+    font-weight: bold;
+    border-color: #00ffff;
+    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+}
+
+.tab-content {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.tab-content.hidden {
+    display: none !important;
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    14% { transform: scale(1.1); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.1); }
+    70% { transform: scale(1); }
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(100vh) translateX(0px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Floating particles */
+.floating-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #00ffff;
+    border-radius: 50%;
+    animation: particle-float 8s linear infinite;
+}
+
+.particle:nth-child(2n) {
+    background: #ff0066;
+    animation-duration: 10s;
+}
+
+.particle:nth-child(3n) {
+    background: #ffcc00;
+    animation-duration: 12s;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .animate-glitch {
+        font-size: 4rem;
+    }
+
+    .grid.lg\\:grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .lg\\:col-span-1,
+    .lg\\:col-span-2 {
+        grid-column: span 1;
+    }
+
+    .profile-nav-link {
+        text-align: center;
+    }
+
+    .grid.md\\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #00ffff;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #0088ff;
+}
+
+/* Loading states */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+    animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Enhanced button effects */
+button:active {
+    transform: scale(0.98);
+}
+
+/* Profile avatar glow effect */
+.w-32.h-32 {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+.w-32.h-32:hover {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+}
+</style>
+
+<script>
+// Update wishlist count in header when profile page loads
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updateWishlistCount === 'function') {
+        updateWishlistCount();
+    }
+});
+</script>
+
+<%- include("../../views/user/partials/footer") %>

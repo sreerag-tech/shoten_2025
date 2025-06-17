@@ -1,0 +1,318 @@
+<%- include('partials/header') %>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                <h4 class="mb-sm-0">Return Requests</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/orders">Orders</a></li>
+                        <li class="breadcrumb-item active">Return Requests</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Requests Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Pending Return Requests</h5>
+            <div>
+                <a href="/admin/orders" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Orders
+                </a>
+                <span class="badge bg-warning">Pending: <%= returnRequests.length %></span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Amount</th>
+                            <th>Return Reason</th>
+                            <th>Request Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (returnRequests && returnRequests.length > 0) { %>
+                            <% returnRequests.forEach(request => { %>
+                                <tr>
+                                    <td>
+                                        <a href="/admin/orders/<%= request.order._id %>" class="fw-semibold text-primary">
+                                            #<%= request.order.orderId %>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                <span class="text-white fw-bold">
+                                                    <%= request.order.userId?.name ? request.order.userId.name.charAt(0).toUpperCase() : 'U' %>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium"><%= request.order.userId?.name || 'Unknown' %></div>
+                                                <small class="text-muted"><%= request.order.userId?.email || 'N/A' %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-3">
+                                                <img src="<%= request.item.product?.productImage && request.item.product.productImage.length > 0 ? `/uploads/product-images/${request.item.product.productImage[0]}` : '/images/placeholder.jpg' %>"
+                                                     alt="<%= request.item.product?.productName || 'Product' %>"
+                                                     class="admin-return-image"
+                                                     onerror="this.src='/images/placeholder.jpg'">
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0 text-truncate"><%= request.item.product?.productName || 'Product Not Found' %></h6>
+                                                <small class="text-muted">SKU: #<%= request.item.product?._id.toString().slice(-6) || 'N/A' %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info"><%= request.item.quantity %></span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">₹<%= (request.item.price * request.item.quantity).toLocaleString() %></span>
+                                    </td>
+                                    <td>
+                                        <div class="text-wrap" style="max-width: 200px;">
+                                            <%= request.item.returnReason || 'No reason provided' %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div><%= new Date(request.order.createdOn).toLocaleDateString() %></div>
+                                        <small class="text-muted"><%= new Date(request.order.createdOn).toLocaleTimeString() %></small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-success" 
+                                                    onclick="handleReturnRequest('<%= request.order._id %>', <%= request.itemIndex %>, 'approve')"
+                                                    title="Approve Return">
+                                                <i class="fas fa-check me-1"></i>Approve
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" 
+                                                    onclick="handleReturnRequest('<%= request.order._id %>', <%= request.itemIndex %>, 'reject')"
+                                                    title="Reject Return">
+                                                <i class="fas fa-times me-1"></i>Reject
+                                            </button>
+                                            <a href="/admin/orders/<%= request.order._id %>" class="btn btn-sm btn-outline-primary" title="View Order">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-undo fa-3x mb-3"></i>
+                                        <h5>No Return Requests</h5>
+                                        <p>There are no pending return requests at the moment.</p>
+                                        <a href="/admin/orders" class="btn btn-primary">
+                                            <i class="fas fa-arrow-left me-1"></i>Back to Orders
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <% if (currentPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage - 1 %>">Previous</a>
+                            </li>
+                        <% } %>
+                        
+                        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage + 1 %>">Next</a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Return Request Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar-sm mx-auto mb-3">
+                        <span class="avatar-title bg-warning rounded-circle">
+                            <i class="fas fa-clock font-size-16"></i>
+                        </span>
+                    </div>
+                    <h5 class="font-size-16">Pending Requests</h5>
+                    <h4 class="mb-0"><%= returnRequests.length %></h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar-sm mx-auto mb-3">
+                        <span class="avatar-title bg-success rounded-circle">
+                            <i class="fas fa-check font-size-16"></i>
+                        </span>
+                    </div>
+                    <h5 class="font-size-16">Quick Actions</h5>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-success" onclick="approveAllReturns()" 
+                                <%= returnRequests.length === 0 ? 'disabled' : '' %>>
+                            Approve All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar-sm mx-auto mb-3">
+                        <span class="avatar-title bg-info rounded-circle">
+                            <i class="fas fa-download font-size-16"></i>
+                        </span>
+                    </div>
+                    <h5 class="font-size-16">Export</h5>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-info" onclick="exportReturnRequests()"
+                                <%= returnRequests.length === 0 ? 'disabled' : '' %>>
+                            Export CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Handle return request
+function handleReturnRequest(orderId, itemIndex, action) {
+    const title = action === 'approve' ? 'Approve Return Request?' : 'Reject Return Request?';
+    const text = action === 'approve' ? 
+        'This will approve the return and refund the amount to customer wallet.' : 
+        'This will reject the return request and mark the item as delivered.';
+
+    Swal.fire({
+        title: title,
+        text: text,
+        input: 'textarea',
+        inputLabel: 'Admin Response (Optional)',
+        inputPlaceholder: 'Enter your response...',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: action === 'approve' ? '#28a745' : '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: action === 'approve' ? 'Approve Return' : 'Reject Return'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/orders/${orderId}/items/${itemIndex}/return`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    action: action,
+                    adminResponse: result.value || ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error!', 'Failed to process return request', 'error');
+            });
+        }
+    });
+}
+
+// Approve all returns
+function approveAllReturns() {
+    Swal.fire({
+        title: 'Approve All Return Requests?',
+        text: 'This will approve all pending return requests and refund amounts to customer wallets.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, approve all!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Implementation for bulk approval would go here
+            Swal.fire('Feature Coming Soon!', 'Bulk approval feature will be implemented soon.', 'info');
+        }
+    });
+}
+
+// Export return requests
+function exportReturnRequests() {
+    // Implementation for export would go here
+    Swal.fire('Feature Coming Soon!', 'Export feature will be implemented soon.', 'info');
+}
+</script>
+
+<style>
+/* Admin Return Requests Image Display */
+.admin-return-image {
+    width: 55px;
+    height: 55px;
+    object-fit: cover;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    transition: transform 0.2s ease;
+}
+
+.admin-return-image:hover {
+    transform: scale(1.08);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* Return requests table improvements */
+.return-requests-table td {
+    vertical-align: middle;
+}
+
+.return-product-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+</style>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,389 @@
+<%- include("../../views/user/partials/header") %>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Email Verification Page -->
+<div class="min-h-screen bg-black">
+    <!-- Verification Header -->
+    <div class="relative bg-gradient-to-r from-gray-900 via-black to-gray-900 pt-20 pb-16">
+        <!-- Animated background particles -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="floating-particles" id="verify-particles"></div>
+        </div>
+        
+        <div class="relative max-w-4xl mx-auto px-8">
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up flex items-center justify-center gap-4">
+                    <i class="fas fa-envelope-circle-check"></i> VERIFY EMAIL
+                </h1>
+                <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Please verify your email address to complete registration
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Content -->
+    <div class="max-w-md mx-auto px-8 py-12">
+        <div class="bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 animate-fade-in-up">
+            
+            <!-- Email Info -->
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-[#00ffff] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-envelope text-3xl text-black"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Verify Your Email</h2>
+                <p class="text-gray-400 text-sm">
+                    We've sent a verification code to your email address. Please enter the 6-digit code below.
+                </p>
+            </div>
+
+            <!-- OTP Form -->
+            <form id="verify-email-form" class="space-y-6">
+                <div>
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Verification Code</label>
+                    <input type="text" id="otp-input" name="otp" 
+                           class="w-full p-4 bg-gray-700 border-2 border-gray-600 rounded-lg text-white text-center text-2xl font-bold tracking-widest focus:border-[#00ffff] focus:outline-none"
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                    <div class="error-message text-red-400 text-xs mt-1 hidden" id="otp-error"></div>
+                </div>
+
+                <!-- Timer -->
+                <div class="text-center">
+                    <p class="text-gray-400 text-sm">
+                        Code expires in: <span id="timer" class="text-[#00ffff] font-bold">02:00</span>
+                    </p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-check-circle mr-2"></i> Verify Email
+                </button>
+
+                <!-- Resend OTP -->
+                <div class="text-center">
+                    <p class="text-gray-400 text-sm mb-2">Didn't receive the code?</p>
+                    <button type="button" id="resend-otp" class="text-[#00ffff] hover:text-[#0088ff] font-semibold transition-colors duration-300 disabled:text-gray-500 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-paper-plane mr-2"></i> Resend Code
+                    </button>
+                </div>
+
+                <!-- Cancel -->
+                <div class="text-center pt-4 border-t border-gray-700">
+                    <a href="/signup" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Sign Up
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Email Verification -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize verification
+    initializeEmailVerification();
+    createVerifyParticles();
+    
+    // Show any messages
+    <% if (typeof message !== 'undefined' && message) { %>
+        Swal.fire({
+            title: '<i class="fas fa-exclamation-triangle"></i> Notice',
+            text: '<%= message %>',
+            icon: 'info',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    <% } %>
+});
+
+function initializeEmailVerification() {
+    const otpInput = document.getElementById('otp-input');
+    const verifyForm = document.getElementById('verify-email-form');
+    const resendBtn = document.getElementById('resend-otp');
+    
+    // Start timer
+    startTimer(120); // 2 minutes
+    
+    // OTP input validation
+    otpInput.addEventListener('input', function() {
+        // Only allow numbers
+        this.value = this.value.replace(/[^0-9]/g, '');
+        validateOTP(this.value);
+    });
+    
+    // Form submission
+    verifyForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const otp = otpInput.value.trim();
+        
+        if (!validateOTP(otp)) {
+            return;
+        }
+        
+        verifyEmail(otp);
+    });
+    
+    // Resend OTP
+    resendBtn.addEventListener('click', function() {
+        resendOTP();
+    });
+}
+
+function validateOTP(otp) {
+    const otpError = document.getElementById('otp-error');
+    
+    if (!otp) {
+        showError(otpError, 'Please enter the verification code');
+        return false;
+    }
+    
+    if (otp.length !== 6) {
+        showError(otpError, 'Verification code must be 6 digits');
+        return false;
+    }
+    
+    if (!/^[0-9]{6}$/.test(otp)) {
+        showError(otpError, 'Verification code must contain only numbers');
+        return false;
+    }
+    
+    hideError(otpError);
+    return true;
+}
+
+function verifyEmail(otp) {
+    // Show loading
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verifying...';
+    submitBtn.disabled = true;
+    
+    fetch('/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ otp: otp })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '<i class="fas fa-check-circle"></i> Email Verified!',
+                text: 'Your email has been successfully verified.',
+                icon: 'success',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff'
+            }).then(() => {
+                window.location.href = data.redirectUrl;
+            });
+        } else {
+            throw new Error(data.message || 'Invalid verification code');
+        }
+    })
+    .catch(error => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        Swal.fire({
+            title: '<i class="fas fa-exclamation-triangle"></i> Verification Failed',
+            text: error.message || 'Invalid verification code. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    });
+}
+
+function resendOTP() {
+    const resendBtn = document.getElementById('resend-otp');
+    resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+    resendBtn.disabled = true;
+    
+    fetch('/resend-otp', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: '<i class="fas fa-check-circle"></i> Code Sent!',
+                    text: 'A new verification code has been sent to your email.',
+                    icon: 'success',
+                    confirmButtonColor: '#00ffff',
+                    background: '#1f2937',
+                    color: '#ffffff',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Restart timer
+                startTimer(120);
+            } else {
+                throw new Error(data.message || 'Failed to resend code');
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: '<i class="fas fa-exclamation-triangle"></i> Error',
+                text: error.message || 'Failed to resend verification code',
+                icon: 'error',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff'
+            });
+        })
+        .finally(() => {
+            resendBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Resend Code';
+        });
+}
+
+function startTimer(seconds) {
+    const timerElement = document.getElementById('timer');
+    const resendBtn = document.getElementById('resend-otp');
+    
+    resendBtn.disabled = true;
+    
+    const interval = setInterval(() => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        
+        if (seconds <= 0) {
+            clearInterval(interval);
+            timerElement.textContent = '00:00';
+            resendBtn.disabled = false;
+            
+            Swal.fire({
+                title: '<i class="fas fa-clock"></i> Code Expired',
+                text: 'The verification code has expired. Please request a new one.',
+                icon: 'warning',
+                confirmButtonColor: '#00ffff',
+                background: '#1f2937',
+                color: '#ffffff'
+            });
+        }
+        
+        seconds--;
+    }, 1000);
+}
+
+function showError(errorElement, message) {
+    errorElement.textContent = message;
+    errorElement.classList.remove('hidden');
+    errorElement.parentElement.querySelector('input').style.borderColor = '#ef4444';
+}
+
+function hideError(errorElement) {
+    errorElement.classList.add('hidden');
+    errorElement.parentElement.querySelector('input').style.borderColor = '';
+}
+
+function createVerifyParticles() {
+    const particlesContainer = document.getElementById('verify-particles');
+    if (!particlesContainer) return;
+
+    for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 8 + 's';
+        particle.style.animationDuration = (Math.random() * 4 + 8) + 's';
+        particlesContainer.appendChild(particle);
+    }
+}
+</script>
+
+<!-- Enhanced CSS for Verification Page -->
+<style>
+/* Verification specific styles */
+#otp-input {
+    letter-spacing: 0.5em;
+}
+
+#otp-input:focus {
+    box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1);
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(100vh) translateX(0px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Floating particles */
+.floating-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #00ffff;
+    border-radius: 50%;
+    animation: particle-float 8s linear infinite;
+}
+
+.particle:nth-child(2n) {
+    background: #ff0066;
+    animation-duration: 10s;
+}
+
+.particle:nth-child(3n) {
+    background: #ffcc00;
+    animation-duration: 12s;
+}
+
+/* Timer styling */
+#timer {
+    font-family: 'Courier New', monospace;
+}
+
+/* Button hover effects */
+button:active {
+    transform: scale(0.98);
+}
+</style>
+
+<%- include("../../views/user/partials/footer") %>

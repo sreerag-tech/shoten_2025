@@ -1,0 +1,309 @@
+<%- include("../../views/admin/partials/header", { activePage: 'category' }) %>
+
+<!-- ✅ ADDED: SweetAlert2 CSS for beautiful confirmation dialogs -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="content-main">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Category Management</h1>
+        <p class="page-subtitle">Organize your products with categories</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <form action="/admin/category/" method="get" class="d-flex">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="Search categories..." name="search" value="<%= search %>">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="/admin/category" class="btn btn-outline-secondary">Clear Filter</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Add Category Form -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Add New Category</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/admin/addCategory" onsubmit="return handleFormSubmit(event)">
+                        <div class="mb-3">
+                            <label for="category_name" class="form-label">Category Name</label>
+                            <input type="text" name="name" placeholder="Enter category name" class="form-control" id="category_name" novalidate/>
+                            <div id="name-error" class="error-message text-danger mt-1"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category_description" class="form-label">Description</label>
+                            <textarea placeholder="Enter category description" name="description" class="form-control" id="category_description" rows="4" novalidate></textarea>
+                            <div id="description-error" class="error-message text-danger mt-1"></div>
+                        </div>
+                        <div class="d-grid">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-plus me-2"></i>Create Category
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories List -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">All Categories</h5>
+                    <span class="badge bg-primary">Total: <%= cat.length %></span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% cat.reverse().forEach((category, index) => { %>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="category-icon bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-th-large text-white"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold"><%= category.name %></div>
+                                                <small class="text-muted">ID: #<%= category._id.toString().slice(-6) %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted"><%= category.description %></span>
+                                    </td>
+                                    <td>
+                                        <% if(category.isListed) { %>
+                                            <span class="badge bg-success">Listed</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">Unlisted</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <% if (category.isListed) { %>
+                                                <!-- ✅ CHANGED: Unlist with SweetAlert confirmation -->
+                                                <button type="button" class="btn btn-sm btn-warning"
+                                                        onclick="confirmCategoryAction('<%= category._id %>', '<%= category.name %>', true)">
+                                                    <i class="fas fa-eye-slash me-1"></i>Unlist
+                                                </button>
+                                            <% } else { %>
+                                                <!-- ✅ CHANGED: List with SweetAlert confirmation -->
+                                                <button type="button" class="btn btn-sm btn-success"
+                                                        onclick="confirmCategoryAction('<%= category._id %>', '<%= category.name %>', false)">
+                                                    <i class="fas fa-eye me-1"></i>List
+                                                </button>
+                                            <% } %>
+                                            <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-sm btn-info">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+    <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Category pagination">
+            <ul class="pagination mb-0">
+                <% if (currentPage > 1) { %>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <% } %>
+
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <% if (i === currentPage) { %>
+                    <li class="page-item active">
+                        <span class="page-link"><%= i %></span>
+                    </li>
+                    <% } else { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
+                    </li>
+                    <% } %>
+                <% } %>
+
+                <% if (currentPage < totalPages) { %>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+    <% } %>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<script>
+function handleFormSubmit(event) {
+    event.preventDefault();
+    if (!validateForm()) {
+        return;
+    }
+    const name = document.getElementsByName("name")[0].value;
+    const description = document.getElementById("category_description").value;
+    fetch('/admin/addCategory', {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name, description })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                const errorMessage = err.error || err.message || 'Unknown server error';
+                throw new Error(errorMessage);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Category added successfully!',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            location.reload();
+        });
+    })
+    .catch(error => {
+        console.error("Fetch error:", error);
+        if (typeof Swal === 'undefined') {
+            console.error("SweetAlert2 is not loaded!");
+            alert("Error: " + error.message);
+            return;
+        }
+        if (error.message.toLowerCase().includes("category already exists")) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops',
+                text: "Category already exists"
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops',
+                text: "An error occurred while adding this category: " + error.message
+            });
+        }
+    });
+}
+
+function validateForm() {
+    clearErrorMessages();
+    const name = document.getElementsByName("name")[0].value.trim();
+    const description = document.getElementById("category_description").value.trim();
+    let isValid = true;
+
+    if (name === "") {
+        displayErrorMessage("name-error", "Please enter a name");
+        isValid = false;
+    } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+        displayErrorMessage("name-error", "Category name should contain only alphabetic characters");
+        isValid = false;
+    }
+    if (description === "") {
+        displayErrorMessage("description-error", "Please enter a description");
+        isValid = false;
+    }
+    return isValid;
+}
+
+function displayErrorMessage(elementId, message) {
+    var errorElement = document.getElementById(elementId);
+    errorElement.innerText = message;
+    errorElement.style.display = "block";
+}
+
+function clearErrorMessages() {
+    const errorElements = document.getElementsByClassName("error-message");
+    Array.from(errorElements).forEach((element) => {
+        element.innerText = "";
+        element.style.display = "none";
+    });
+}
+
+// ✅ ADDED: SweetAlert confirmation for listing/unlisting categories
+function confirmCategoryAction(categoryId, categoryName, isListed) {
+    const action = isListed ? 'unlist' : 'list';
+    const title = isListed ? 'Unlist Category?' : 'List Category?';
+    const text = isListed
+        ? `Are you sure you want to unlist "${categoryName}"? This will hide it from users and they won't be able to browse products in this category.`
+        : `Are you sure you want to list "${categoryName}"? This will make it visible to users and they can browse products in this category.`;
+    const confirmButtonText = isListed ? 'Yes, Unlist!' : 'Yes, List!';
+    const icon = 'question';
+
+    Swal.fire({
+        title: title,
+        text: text,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonColor: isListed ? '#ffc107' : '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: confirmButtonText,
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirect to the appropriate URL
+            const url = isListed
+                ? `/admin/listCategory?id=${categoryId}`
+                : `/admin/unlistCategory?id=${categoryId}`;
+            window.location.href = url;
+        }
+    });
+}
+
+window.onload = function() {
+    if (typeof Swal !== 'undefined') {
+        console.log("SweetAlert2 is loaded successfully");
+    } else {
+        console.error("SweetAlert2 failed to load");
+    }
+};
+</script>
+
+<%- include("../../views/admin/partials/footer") %>

@@ -1,0 +1,443 @@
+<%- include("../../views/user/partials/header") %>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Order Detail Page -->
+<div class="min-h-screen bg-black relative">
+    <!-- Order Detail Header -->
+    <div class="relative bg-gradient-to-r from-gray-900 via-black to-gray-900 pt-20 pb-16">
+        <div class="relative max-w-6xl mx-auto px-8">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-4xl font-bold text-[#00ffff] mb-2">
+                        Order #<%= order.orderId %>
+                    </h1>
+                    <p class="text-gray-400">
+                        Placed on <%= new Date(order.createdOn).toLocaleDateString() %>
+                    </p>
+                </div>
+                <div class="flex gap-4">
+                    <a href="/orders" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition">
+                        ← Back to Orders
+                    </a>
+                    <button class="download-invoice-btn px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition"
+                            data-order-id="<%= order._id %>">
+                        📄 Download Invoice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Detail Content -->
+    <div class="max-w-6xl mx-auto px-8 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Order Items -->
+            <div class="lg:col-span-2 sticky-order-items">
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-2xl font-bold text-white mb-6">📦 Order Items</h2>
+                    
+                    <div class="space-y-4">
+                        <% order.orderedItems.forEach((item, index) => { %>
+                            <div class="border border-gray-700 rounded-lg p-4">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-20 h-20 bg-gray-600 rounded-lg flex items-center justify-center">
+                                        <% if (item.product && item.product.productImage && item.product.productImage.length > 0) { %>
+                                            <img src="/uploads/product-images/<%= item.product.productImage[0] %>"
+                                                 alt="<%= item.product.productName || 'Product' %>"
+                                                 class="w-full h-full object-cover rounded-lg"
+                                                 onerror="this.src='/images/placeholder.jpg'">
+                                        <% } else { %>
+                                            <span class="text-3xl">📦</span>
+                                        <% } %>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-white font-semibold text-lg mb-2">
+                                            <%= item.product?.productName || `Product #${index + 1}` %>
+                                        </h3>
+                                        <% if (item.product?.category?.name) { %>
+                                            <p class="text-gray-400 text-sm mb-2">
+                                                Category: <%= item.product.category.name %>
+                                            </p>
+                                        <% } %>
+                                        <div class="grid grid-cols-2 gap-4 text-sm text-gray-400 mb-3">
+                                            <div>
+                                                <span class="font-medium">Quantity:</span> <%= item.quantity %>
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Price:</span> ₹<%= item.price %>
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Total:</span> ₹<%= item.price * item.quantity %>
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Status:</span>
+                                                <span class="px-2 py-1 rounded text-xs font-semibold ml-1
+                                                    <% if (item.status === 'Processing') { %>bg-yellow-500/20 text-yellow-400
+                                                    <% } else if (item.status === 'Shipped') { %>bg-blue-500/20 text-blue-400
+                                                    <% } else if (item.status === 'Delivered') { %>bg-green-500/20 text-green-400
+                                                    <% } else if (item.status === 'Cancelled') { %>bg-red-500/20 text-red-400
+                                                    <% } else if (item.status === 'Return Request') { %>bg-orange-500/20 text-orange-400
+                                                    <% } else if (item.status === 'Returned') { %>bg-purple-500/20 text-purple-400
+                                                    <% } else { %>bg-gray-500/20 text-gray-400<% } %>">
+                                                    <%= item.status %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <% if (item.returnReason) { %>
+                                            <div class="bg-orange-500/10 border border-orange-500/20 rounded p-3 mb-3">
+                                                <p class="text-orange-400 text-sm font-medium">Return Reason:</p>
+                                                <p class="text-orange-300 text-sm"><%= item.returnReason %></p>
+                                            </div>
+                                        <% } %>
+                                        
+                                        <% if (item.adminResponse) { %>
+                                            <div class="bg-blue-500/10 border border-blue-500/20 rounded p-3 mb-3">
+                                                <p class="text-blue-400 text-sm font-medium">Admin Response:</p>
+                                                <p class="text-blue-300 text-sm"><%= item.adminResponse %></p>
+                                            </div>
+                                        <% } %>
+                                        
+                                        <div class="flex gap-2">
+                                            <% if (item.status === 'Processing' || item.status === 'Shipped') { %>
+                                                <button class="cancel-item-btn px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
+                                                        data-order-id="<%= order._id %>" data-item-index="<%= index %>">
+                                                    ❌ Cancel Item
+                                                </button>
+                                            <% } %>
+                                            <% if (item.status === 'Delivered') { %>
+                                                <button class="return-item-btn px-3 py-1 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 transition"
+                                                        data-order-id="<%= order._id %>" data-item-index="<%= index %>">
+                                                    🔄 Return Item
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary & Details -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Order Summary -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-bold text-white mb-4">💰 Order Summary</h2>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Subtotal:</span>
+                            <span class="text-white">₹<%= order.totalPrice %></span>
+                        </div>
+                        <% if (order.discount > 0) { %>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Discount:</span>
+                                <span class="text-green-400">-₹<%= order.discount %></span>
+                            </div>
+                        <% } %>
+                        <% if (order.shippingCharge > 0) { %>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Shipping:</span>
+                                <span class="text-white">₹<%= order.shippingCharge %></span>
+                            </div>
+                        <% } %>
+                        <% if (order.couponApplied && order.couponCode) { %>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Coupon (<%= order.couponCode %>):</span>
+                                <span class="text-green-400">Applied</span>
+                            </div>
+                        <% } %>
+                        <hr class="border-gray-700">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span class="text-white">Total:</span>
+                            <span class="text-[#00ffff]">₹<%= order.finalAmount %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-bold text-white mb-4">💳 Payment Information</h2>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Payment Method:</span>
+                            <span class="text-white capitalize"><%= order.paymentMethod %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Payment Gateway:</span>
+                            <span class="text-white"><%= order.paymentGateway %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Invoice Date:</span>
+                            <span class="text-white"><%= new Date(order.invoiceDate).toLocaleDateString() %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Address -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-bold text-white mb-4">📍 Shipping Address</h2>
+                    
+                    <div class="text-sm text-gray-300 space-y-1">
+                        <p class="font-semibold text-white"><%= order.shippingAddress.fullName %></p>
+                        <p><%= order.shippingAddress.addressType %></p>
+                        <% if (order.shippingAddress.landmark) { %>
+                            <p>Near <%= order.shippingAddress.landmark %></p>
+                        <% } %>
+                        <p><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %></p>
+                        <p>PIN: <%= order.shippingAddress.pincode %></p>
+                        <p>📞 <%= order.shippingAddress.phone %></p>
+                    </div>
+                </div>
+
+                <!-- Order Status Tracker -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-bold text-white mb-4">📦 Order Status</h2>
+
+                    <%
+                    // Determine overall order status
+                    const orderStatuses = order.orderedItems.map(item => item.status);
+                    let overallStatus = order.status;
+
+                    // Status progression
+                    const statusSteps = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+                    const currentStepIndex = statusSteps.indexOf(overallStatus);
+                    %>
+
+                    <div class="space-y-4">
+                        <% statusSteps.forEach((step, index) => { %>
+                            <div class="flex items-center">
+                                <div class="flex items-center justify-center w-8 h-8 rounded-full mr-3
+                                    <% if (index <= currentStepIndex && overallStatus !== 'Cancelled') { %>
+                                        bg-[#00ffff] text-black
+                                    <% } else { %>
+                                        bg-gray-600 text-gray-400
+                                    <% } %>">
+                                    <% if (index <= currentStepIndex && overallStatus !== 'Cancelled') { %>
+                                        ✓
+                                    <% } else { %>
+                                        <%= index + 1 %>
+                                    <% } %>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-white font-medium"><%= step %></p>
+                                    <% if (step === overallStatus) { %>
+                                        <p class="text-[#00ffff] text-sm">Current Status</p>
+                                    <% } %>
+                                </div>
+                                <% if (step === overallStatus && overallStatus !== 'Delivered' && overallStatus !== 'Cancelled') { %>
+                                    <div class="animate-pulse">
+                                        <div class="w-2 h-2 bg-[#00ffff] rounded-full"></div>
+                                    </div>
+                                <% } %>
+                            </div>
+                            <% if (index < statusSteps.length - 1) { %>
+                                <div class="ml-4 w-0.5 h-4
+                                    <% if (index < currentStepIndex && overallStatus !== 'Cancelled') { %>
+                                        bg-[#00ffff]
+                                    <% } else { %>
+                                        bg-gray-600
+                                    <% } %>"></div>
+                            <% } %>
+                        <% }) %>
+
+                        <% if (overallStatus === 'Cancelled') { %>
+                            <div class="flex items-center mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <div class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center mr-3">
+                                    ❌
+                                </div>
+                                <div>
+                                    <p class="text-red-400 font-medium">Order Cancelled</p>
+                                    <p class="text-red-300 text-sm">This order has been cancelled</p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Order Timeline -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-bold text-white mb-4">📅 Order Timeline</h2>
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Order Date:</span>
+                            <span class="text-white"><%= new Date(order.orderDate || order.createdOn).toLocaleDateString() %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Expected Delivery:</span>
+                            <span class="text-white">
+                                <%
+                                const expectedDelivery = new Date(order.deliveryDate || order.createdOn);
+                                expectedDelivery.setDate(expectedDelivery.getDate() + 7); // Add 7 days
+                                %>
+                                <%= expectedDelivery.toLocaleDateString() %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Created On:</span>
+                            <span class="text-white"><%= new Date(order.createdOn).toLocaleDateString() %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Last Updated:</span>
+                            <span class="text-white"><%= new Date(order.updatedAt || order.createdOn).toLocaleDateString() %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Actions -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-bold text-white mb-4">⚡ Quick Actions</h2>
+                    
+                    <div class="space-y-3">
+                        <% 
+                            const canCancelOrder = order.orderedItems.some(item => 
+                                item.status === 'Processing' || item.status === 'Shipped'
+                            );
+                            const canReturnOrder = order.orderedItems.some(item => 
+                                item.status === 'Delivered'
+                            );
+                        %>
+                        <% if (canCancelOrder) { %>
+                            <button class="cancel-order-btn w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                                    data-order-id="<%= order._id %>">
+                                ❌ Cancel Entire Order
+                            </button>
+                        <% } %>
+                        <% if (canReturnOrder) { %>
+                            <button class="return-order-btn w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                                    data-order-id="<%= order._id %>">
+                                🔄 Return Order
+                            </button>
+                        <% } %>
+                        <button class="w-full px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition"
+                                onclick="window.print()">
+                            🖨️ Print Order Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- External JavaScript Files -->
+<script src="/js/order-actions.js"></script>
+
+<!-- Order Detail Specific JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupOrderDetailActions();
+});
+
+function setupOrderDetailActions() {
+    // Download Invoice
+    document.querySelectorAll('.download-invoice-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            downloadInvoice(orderId);
+        });
+    });
+
+    // Cancel Order
+    document.querySelectorAll('.cancel-order-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            showCancelOrderModal(orderId);
+        });
+    });
+
+    // Cancel Item
+    document.querySelectorAll('.cancel-item-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            const itemIndex = this.getAttribute('data-item-index');
+            showCancelItemModal(orderId, itemIndex);
+        });
+    });
+
+    // Return Order
+    document.querySelectorAll('.return-order-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            showReturnOrderModal(orderId);
+        });
+    });
+
+    // Return Item
+    document.querySelectorAll('.return-item-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            const itemIndex = this.getAttribute('data-item-index');
+            showReturnItemModal(orderId, itemIndex);
+        });
+    });
+}
+
+// All functions are now imported from external files
+</script>
+
+<!-- Custom CSS for Sticky Order Items -->
+<style>
+/* Sticky Order Items Box */
+.sticky-order-items {
+    position: sticky;
+    top: 1.5rem; /* 24px */
+    align-self: flex-start;
+    max-height: calc(100vh - 8rem); /* Account for header and padding */
+    overflow-y: auto;
+    z-index: 10;
+}
+
+/* Custom scrollbar for order items */
+.sticky-order-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sticky-order-items::-webkit-scrollbar-track {
+    background: rgba(55, 65, 81, 0.3);
+    border-radius: 3px;
+}
+
+.sticky-order-items::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.5);
+    border-radius: 3px;
+}
+
+.sticky-order-items::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 255, 0.7);
+}
+
+/* Smooth scrolling */
+.sticky-order-items {
+    scroll-behavior: smooth;
+}
+
+/* Ensure proper spacing on mobile */
+@media (max-width: 1024px) {
+    .sticky-order-items {
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+    }
+}
+
+/* Enhanced shadow for sticky effect */
+.sticky-order-items .bg-gray-800 {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.3s ease;
+}
+
+.sticky-order-items:hover .bg-gray-800 {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+</style>
+
+<%- include("../../views/user/partials/footer") %>

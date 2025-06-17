@@ -1,0 +1,312 @@
+<%- include("../../views/user/partials/header") %>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Cart Page -->
+<div class="min-h-screen bg-black">
+    <!-- Cart Header -->
+    <div class="relative bg-gradient-to-r from-gray-900 via-black to-gray-900 pt-20 pb-16">
+        <!-- Animated background particles -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="floating-particles" id="cart-particles"></div>
+        </div>
+        
+        <div class="relative max-w-6xl mx-auto px-8">
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up flex items-center justify-center gap-4">
+                    <i class="fas fa-shopping-cart"></i> SHOPPING CART
+                </h1>
+                <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Review your selected items
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Content -->
+    <div class="max-w-6xl mx-auto px-8 py-12">
+        
+        <% if (cartItems && cartItems.length > 0) { %>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Cart Items -->
+                <div class="lg:col-span-2">
+                    <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-white">Cart Items (<%= totalItems %>)</h2>
+                            <button class="clear-cart-btn text-red-400 hover:text-red-300 transition-colors duration-300 flex items-center gap-2">
+                                <i class="fas fa-trash-alt"></i> Clear Cart
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4" id="cart-items-container">
+                            <% cartItems.forEach((item, index) => { %>
+                                <div class="cart-item border border-gray-700 rounded-lg p-4 hover:border-[#00ffff]/30 transition-all duration-300" 
+                                     data-cart-id="<%= item._id %>" data-product-id="<%= item.productId._id %>">
+                                    <div class="flex items-center gap-4">
+                                        <!-- Product Image -->
+                                        <div class="w-20 h-20 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <% if (item.productId.productImage && item.productId.productImage.length > 0) { %>
+                                                <img src="/uploads/product-images/<%= item.productId.productImage[0] %>"
+                                                     alt="<%= item.productId.productName %>"
+                                                     class="w-full h-full object-cover rounded-lg"
+                                                     onerror="this.src='/images/placeholder.jpg'">
+                                            <% } else { %>
+                                                <i class="fas fa-box text-3xl text-gray-400"></i>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <!-- Product Details -->
+                                        <div class="flex-1">
+                                            <h3 class="text-white font-semibold text-lg mb-1">
+                                                <%= item.productId.productName %>
+                                            </h3>
+                                            <p class="text-gray-400 text-sm mb-2">
+                                                Category: <%= item.productId.category.name %>
+                                            </p>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-[#00ffff] font-bold text-lg">
+                                                    ₹<%= item.productId.salePrice %>
+                                                </span>
+                                                <% if (item.productId.regularPrice > item.productId.salePrice) { %>
+                                                    <span class="text-gray-500 line-through text-sm">
+                                                        ₹<%= item.productId.regularPrice %>
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                            
+                                            <!-- Stock Status -->
+                                            <div class="mt-2">
+                                                <% if (item.productId.quantity <= 0) { %>
+                                                    <span class="text-red-400 text-sm font-semibold">❌ Out of Stock</span>
+                                                <% } else if (item.productId.quantity < 5) { %>
+                                                    <span class="text-yellow-400 text-sm">⚠️ Only <%= item.productId.quantity %> left</span>
+                                                <% } else { %>
+                                                    <span class="text-green-400 text-sm">✅ In Stock</span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Quantity Controls -->
+                                        <div class="flex flex-col items-center gap-3">
+                                            <div class="flex items-center gap-2">
+                                                <button class="quantity-btn decrement-btn w-8 h-8 bg-gray-600 text-white rounded-full hover:bg-gray-500 transition-colors duration-300 flex items-center justify-center"
+                                                        data-cart-id="<%= item._id %>" data-action="decrement"
+                                                        <%= item.productId.quantity <= 0 ? 'disabled' : '' %>>
+                                                    -
+                                                </button>
+                                                <span class="quantity-display w-12 text-center text-white font-semibold">
+                                                    <%= item.quantity %>
+                                                </span>
+                                                <button class="quantity-btn increment-btn w-8 h-8 bg-gray-600 text-white rounded-full hover:bg-gray-500 transition-colors duration-300 flex items-center justify-center"
+                                                        data-cart-id="<%= item._id %>" data-action="increment"
+                                                        <%= item.productId.quantity <= 0 || item.quantity >= 10 || item.quantity >= item.productId.quantity ? 'disabled' : '' %>>
+                                                    +
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Item Total -->
+                                            <div class="text-center">
+                                                <span class="item-total text-[#00ffff] font-bold">
+                                                    ₹<%= item.productId.salePrice * item.quantity %>
+                                                </span>
+                                            </div>
+                                            
+                                            <!-- Remove Button -->
+                                            <button class="remove-item-btn text-red-400 hover:text-red-300 transition-colors duration-300 text-sm flex items-center gap-1"
+                                                    data-cart-id="<%= item._id %>">
+                                                <i class="fas fa-trash-alt"></i> Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Out of Stock Overlay -->
+                                    <% if (item.productId.quantity <= 0) { %>
+                                        <div class="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                                            <span class="text-red-400 font-bold text-lg">OUT OF STOCK</span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Summary -->
+                <div class="lg:col-span-1">
+                    <div class="bg-gray-800 rounded-2xl p-6 shadow-xl sticky top-8">
+                        <h2 class="text-xl font-bold text-white mb-6">Order Summary</h2>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Items (<%= totalItems %>):</span>
+                                <span class="text-white" id="cart-subtotal">₹<%= subtotal %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Shipping:</span>
+                                <span class="text-green-400">FREE</span>
+                            </div>
+                            <hr class="border-gray-700">
+                            <div class="flex justify-between text-lg font-bold">
+                                <span class="text-white">Total:</span>
+                                <span class="text-[#00ffff]" id="cart-total">₹<%= subtotal %></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Checkout Button -->
+                        <% 
+                            const hasOutOfStock = cartItems.some(item => item.productId.quantity <= 0);
+                        %>
+                        <button class="checkout-btn w-full py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 mb-4
+                                <%= hasOutOfStock ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black hover:from-[#0088ff] hover:to-[#00ffff]' %>"
+                                <%= hasOutOfStock ? 'disabled' : '' %>>
+                            <% if (hasOutOfStock) { %>
+                                <i class="fas fa-exclamation-triangle"></i> Cannot Checkout (Out of Stock Items)
+                            <% } else { %>
+                                <i class="fas fa-credit-card"></i> Proceed to Checkout
+                            <% } %>
+                        </button>
+                        
+                        <a href="/shop" class="block w-full py-3 bg-gray-700 text-white text-center rounded-lg hover:bg-gray-600 transition-colors duration-300 flex items-center justify-center gap-2">
+                            <i class="fas fa-store"></i> Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <!-- Empty Cart -->
+            <div class="text-center py-16">
+                <div class="text-8xl mb-6 text-gray-400">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-300 mb-4">Your Cart is Empty</h3>
+                <p class="text-gray-400 mb-8">Add some products to your cart to see them here!</p>
+                <a href="/shop" class="px-8 py-3 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-all duration-300 transform hover:scale-105 font-semibold flex items-center justify-center gap-2 inline-flex">
+                    <i class="fas fa-store"></i> Start Shopping
+                </a>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- External JavaScript Files -->
+<script src="/js/cart.js"></script>
+<script src="/js/cart-actions.js"></script>
+
+<!-- Initialize with server data -->
+<script>
+// Pass server data to JavaScript
+<% if (typeof cartMessage !== 'undefined' && cartMessage) { %>
+    const cartMessage = {
+        type: '<%= cartMessage.type %>',
+        text: '<%= cartMessage.text %>'
+    };
+<% } %>
+</script>
+
+<!-- Enhanced CSS for Cart Page -->
+<style>
+/* Cart specific styles */
+.cart-item {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    transform: translateY(-2px);
+}
+
+.quantity-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.quantity-btn:disabled:hover {
+    background-color: inherit;
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(100vh) translateX(0px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Floating particles */
+.floating-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #00ffff;
+    border-radius: 50%;
+    animation: particle-float 8s linear infinite;
+}
+
+.particle:nth-child(2n) {
+    background: #ff0066;
+    animation-duration: 10s;
+}
+
+.particle:nth-child(3n) {
+    background: #ffcc00;
+    animation-duration: 12s;
+}
+
+/* Button hover effects */
+button:active {
+    transform: scale(0.98);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .cart-item {
+        margin-bottom: 1rem;
+    }
+    
+    .flex.items-center.gap-4 {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+}
+</style>
+
+<%- include("../../views/user/partials/footer") %>

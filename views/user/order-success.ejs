@@ -1,0 +1,424 @@
+<%- include("../../views/user/partials/header") %>
+
+<!-- Order Success Page -->
+<div class="min-h-screen bg-black">
+    <!-- Success Header -->
+    <div class="relative bg-gradient-to-r from-gray-900 via-black to-gray-900 pt-20 pb-16">
+        <!-- Animated background particles -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="floating-particles" id="success-particles"></div>
+        </div>
+        
+        <div class="relative max-w-4xl mx-auto px-8">
+            <div class="text-center mb-8">
+                <div class="success-animation mb-8">
+                    <div class="checkmark-circle">
+                        <div class="checkmark"></div>
+                    </div>
+                </div>
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up flex items-center justify-center gap-4">
+                    <i class="fas fa-check-circle"></i> ORDER PLACED SUCCESSFULLY!
+                </h1>
+                <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Thank you for shopping with Shoten
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Content -->
+    <div class="max-w-4xl mx-auto px-8 py-12">
+        
+        <!-- Thank You Message -->
+        <div class="text-center mb-12">
+            <div class="bg-gray-800 rounded-2xl p-8 shadow-xl">
+                <div class="text-6xl mb-6">🛍️</div>
+                <h2 class="text-3xl font-bold text-white mb-4">Thank You for Your Order!</h2>
+                <p class="text-gray-300 text-lg mb-6">
+                    Your order has been successfully placed and is being processed. 
+                    We'll send you updates about your order status via email.
+                </p>
+                
+                <!-- Order Details Summary -->
+                <div class="bg-gray-700 rounded-xl p-6 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                        <div>
+                            <div class="text-[#00ffff] text-2xl font-bold mb-2">
+                                <%= order.orderId %>
+                            </div>
+                            <div class="text-gray-400 text-sm">Order ID</div>
+                        </div>
+                        <div>
+                            <div class="text-[#00ffff] text-2xl font-bold mb-2">
+                                ₹<%= order.finalAmount.toLocaleString() %>
+                            </div>
+                            <div class="text-gray-400 text-sm">Total Amount</div>
+                        </div>
+                        <div>
+                            <div class="text-[#00ffff] text-2xl font-bold mb-2">
+                                <%= new Date(order.deliveryDate).toLocaleDateString() %>
+                            </div>
+                            <div class="text-gray-400 text-sm">Expected Delivery</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items Preview -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                        <i class="fas fa-box"></i> Your Items
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <% order.orderedItems.slice(0, 6).forEach((item, index) => { %>
+                            <div class="bg-gray-600 rounded-lg p-4">
+                                <div class="w-16 h-16 bg-gray-500 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                                    <% if (item.product && item.product.productImage && item.product.productImage.length > 0) { %>
+                                        <img src="/uploads/product-images/<%= item.product.productImage[0] %>"
+                                             alt="<%= item.product.productName || 'Product' %>"
+                                             class="w-full h-full object-cover rounded-lg"
+                                             onerror="this.src='/images/placeholder.jpg'">
+                                    <% } else { %>
+                                        <i class="fas fa-box text-2xl text-gray-400"></i>
+                                    <% } %>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-white text-sm font-medium mb-1">
+                                        <%= item.product?.productName || `Item #${index + 1}` %>
+                                    </p>
+                                    <p class="text-gray-400 text-xs">Qty: <%= item.quantity %></p>
+                                    <p class="text-[#00ffff] text-sm font-semibold">₹<%= (item.price * item.quantity).toLocaleString() %></p>
+                                </div>
+                            </div>
+                        <% }) %>
+                        <% if (order.orderedItems.length > 6) { %>
+                            <div class="bg-gray-600 rounded-lg p-4 flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="text-2xl mb-2">➕</div>
+                                    <p class="text-white text-sm font-medium">
+                                        +<%= order.orderedItems.length - 6 %> more items
+                                    </p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/orders/<%= order._id %>"
+                       class="px-8 py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fas fa-clipboard-list"></i> View Order Details
+                    </a>
+                    <a href="/shop"
+                       class="px-8 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fas fa-store"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- What's Next -->
+            <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-xl font-bold text-white mb-4">🚀 What's Next?</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-[#00ffff] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-black font-bold text-sm">1</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold">Order Confirmation</h4>
+                            <p class="text-gray-400 text-sm">You'll receive an email confirmation shortly</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-white font-bold text-sm">2</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold">Processing</h4>
+                            <p class="text-gray-400 text-sm">We'll prepare your items for shipping</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-white font-bold text-sm">3</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold">Shipping</h4>
+                            <p class="text-gray-400 text-sm">Your order will be shipped within 2-3 business days</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-white font-bold text-sm">4</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold">Delivery</h4>
+                            <p class="text-gray-400 text-sm">Enjoy your new products!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Support Information -->
+            <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-xl font-bold text-white mb-4">🤝 Need Help?</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📧</span>
+                        <div>
+                            <h4 class="text-white font-semibold">Email Support</h4>
+                            <p class="text-gray-400 text-sm">support@shoten.com</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📞</span>
+                        <div>
+                            <h4 class="text-white font-semibold">Phone Support</h4>
+                            <p class="text-gray-400 text-sm">+91 1800-123-4567</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">💬</span>
+                        <div>
+                            <h4 class="text-white font-semibold">Live Chat</h4>
+                            <p class="text-gray-400 text-sm">Available 24/7 on our website</p>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <a href="/orders" class="text-[#00ffff] hover:text-[#0088ff] transition-colors duration-300 font-semibold flex items-center gap-2">
+                            <i class="fas fa-clipboard-list"></i> Track all your orders →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Success Page -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    createSuccessParticles();
+    animateSuccess();
+});
+
+function createSuccessParticles() {
+    const particlesContainer = document.getElementById('success-particles');
+    if (!particlesContainer) return;
+
+    for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 8 + 's';
+        particle.style.animationDuration = (Math.random() * 4 + 8) + 's';
+        particlesContainer.appendChild(particle);
+    }
+}
+
+function animateSuccess() {
+    // Trigger confetti effect
+    setTimeout(() => {
+        createConfetti();
+    }, 500);
+}
+
+function createConfetti() {
+    const colors = ['#00ffff', '#ff0066', '#ffcc00', '#00ff88', '#ff6600'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'fixed';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.top = '-10px';
+        confetti.style.width = '10px';
+        confetti.style.height = '10px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.borderRadius = '50%';
+        confetti.style.pointerEvents = 'none';
+        confetti.style.zIndex = '9999';
+        confetti.style.animation = `confetti-fall ${Math.random() * 3 + 2}s linear forwards`;
+        
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+            confetti.remove();
+        }, 5000);
+    }
+}
+</script>
+
+<!-- Enhanced CSS for Success Page -->
+<style>
+/* Success Animation Styles */
+.success-animation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.checkmark-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #00ffff, #0088ff);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: pulse-success 2s ease-in-out infinite;
+}
+
+.checkmark {
+    width: 60px;
+    height: 60px;
+    position: relative;
+}
+
+.checkmark::after {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 35px;
+    width: 15px;
+    height: 25px;
+    border: solid #000;
+    border-width: 0 4px 4px 0;
+    transform: rotate(45deg);
+    animation: checkmark-draw 0.8s ease-in-out 0.5s forwards;
+    opacity: 0;
+}
+
+@keyframes pulse-success {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 20px rgba(0, 255, 255, 0);
+    }
+}
+
+@keyframes checkmark-draw {
+    0% {
+        opacity: 0;
+        transform: rotate(45deg) scale(0);
+    }
+    100% {
+        opacity: 1;
+        transform: rotate(45deg) scale(1);
+    }
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(100vh) translateX(0px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Floating particles */
+.floating-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #00ffff;
+    border-radius: 50%;
+    animation: particle-float 8s linear infinite;
+}
+
+.particle:nth-child(2n) {
+    background: #ff0066;
+    animation-duration: 10s;
+}
+
+.particle:nth-child(3n) {
+    background: #ffcc00;
+    animation-duration: 12s;
+}
+
+.particle:nth-child(4n) {
+    background: #00ff88;
+    animation-duration: 9s;
+}
+
+/* Button hover effects */
+a:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .checkmark-circle {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .checkmark {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .checkmark::after {
+        left: 13px;
+        top: 23px;
+        width: 10px;
+        height: 18px;
+        border-width: 0 3px 3px 0;
+    }
+}
+</style>
+
+<%- include("../../views/user/partials/footer") %>

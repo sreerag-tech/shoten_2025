@@ -1,0 +1,211 @@
+<%- include("../../views/admin/partials/header", { activePage: 'customers' }) %>
+
+<!-- ✅ ADDED: SweetAlert2 CSS for beautiful confirmation dialogs -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="content-main">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Customer Management</h1>
+        <p class="page-subtitle">Manage your customers and their account status</p>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <form action="/admin/users/" method="get" class="d-flex">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="Search customers by name or email..." name="search">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="/admin/users" class="btn btn-outline-secondary me-2">Clear Filter</a>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">All Customers</h5>
+            <span class="badge bg-primary">Total: <%= data.length %></span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% for(let i = 0; i < data.length; i++) { %>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <% if (data[i].profileImage) { %>
+                                        <img src="/uploads/profiles/<%= data[i].profileImage %>"
+                                             alt="<%= data[i].name %>"
+                                             class="avatar-sm rounded-circle me-3"
+                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                    <% } %>
+                                    <div>
+                                        <div class="fw-semibold"><%= data[i].name || 'Unknown' %></div>
+                                        <small class="text-muted">ID: #<%= data[i]._id.toString().slice(-6) %></small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-medium"><%= data[i].email %></span>
+                            </td>
+                            <td>
+                                <span class="fw-medium"><%= data[i].phone || 'Not provided' %></span>
+                            </td>
+                            <td>
+                                <% if(data[i].isBlocked === false) { %>
+                                    <span class="badge bg-success">Active</span>
+                                <% } else { %>
+                                    <span class="badge bg-danger">Blocked</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if(data[i].isBlocked === false) { %>
+                                    <!-- ✅ CHANGED: Block with SweetAlert confirmation -->
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="confirmUserAction('<%= data[i]._id %>', '<%= data[i].name %>', false)">
+                                        <i class="fas fa-ban me-1"></i>Block
+                                    </button>
+                                <% } else { %>
+                                    <!-- ✅ CHANGED: Unblock with SweetAlert confirmation -->
+                                    <button type="button" class="btn btn-sm btn-success"
+                                            onclick="confirmUserAction('<%= data[i]._id %>', '<%= data[i].name %>', true)">
+                                        <i class="fas fa-check me-1"></i>Unblock
+                                    </button>
+                                <% } %>
+                                <button class="btn btn-sm btn-info ms-1">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="text-muted">
+            Showing <%= ((currentPage - 1) * 3) + 1 %> to <%= Math.min(currentPage * 3, data.length) %> of <%= data.length %> customers
+        </div>
+        <nav aria-label="Customer pagination">
+            <ul class="pagination mb-0">
+                <% if (currentPage > 1) { %>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<%= currentPage - 1 %>">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <% } %>
+
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <% if (i === currentPage) { %>
+                    <li class="page-item active">
+                        <span class="page-link"><%= i %></span>
+                    </li>
+                    <% } else { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                    </li>
+                    <% } %>
+                <% } %>
+
+                <% if (currentPage < totalPages) { %>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<%= currentPage + 1 %>">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<style>
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        font-size: 0.875rem;
+    }
+
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: 1px solid var(--border-color);
+        color: var(--primary-color);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border-color: var(--primary-color);
+    }
+
+    .pagination .page-link:hover {
+        background-color: rgba(99, 102, 241, 0.1);
+        border-color: var(--primary-color);
+    }
+</style>
+
+<!-- ✅ ADDED: SweetAlert2 JS for beautiful confirmation dialogs -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// ✅ ADDED: SweetAlert confirmation for blocking/unblocking users
+function confirmUserAction(userId, userName, isBlocked) {
+    const action = isBlocked ? 'unblock' : 'block';
+    const title = isBlocked ? 'Unblock User?' : 'Block User?';
+    const text = isBlocked
+        ? `Are you sure you want to unblock "${userName}"? They will regain access to their account and be able to shop again.`
+        : `Are you sure you want to block "${userName}"? They will lose access to their account and won't be able to shop.`;
+    const confirmButtonText = isBlocked ? 'Yes, Unblock!' : 'Yes, Block!';
+    const icon = isBlocked ? 'question' : 'warning';
+
+    Swal.fire({
+        title: title,
+        text: text,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonColor: isBlocked ? '#28a745' : '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: confirmButtonText,
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirect to the appropriate URL
+            const url = isBlocked
+                ? `/admin/unblockCustomer?id=${userId}`
+                : `/admin/blockCustomer?id=${userId}`;
+            window.location.href = url;
+        }
+    });
+}
+</script>
+
+<%- include("../../views/admin/partials/footer") %>

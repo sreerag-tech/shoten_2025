@@ -1,0 +1,364 @@
+<%- include("../../views/user/partials/header") %>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Checkout Page -->
+<div class="min-h-screen bg-black">
+    <!-- Checkout Header -->
+    <div class="relative bg-gradient-to-r from-gray-900 via-black to-gray-900 pt-20 pb-16">
+        <!-- Animated background particles -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="floating-particles" id="checkout-particles"></div>
+        </div>
+        
+        <div class="relative max-w-6xl mx-auto px-8">
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-bold text-[#00ffff] mb-4 animate-fade-in-up flex items-center justify-center gap-4">
+                    <i class="fas fa-credit-card"></i> CHECKOUT
+                </h1>
+                <p class="text-gray-400 text-lg animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Complete your order
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Content -->
+    <div class="max-w-6xl mx-auto px-8 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Checkout Form -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Delivery Address Section -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                            <i class="fas fa-map-marker-alt"></i> Delivery Address
+                        </h2>
+                        <button class="add-address-btn px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-colors duration-300 font-semibold">
+                            + Add New Address
+                        </button>
+                    </div>
+                    
+                    <% if (addresses && addresses.length > 0) { %>
+                        <div class="space-y-4" id="addresses-container">
+                            <% addresses.forEach((address, index) => { %>
+                                <div class="address-card border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50 <%= address.isDefault ? 'border-[#00ffff] bg-[#00ffff]/5' : '' %>"
+                                     data-address-id="<%= address._id %>">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-start gap-3">
+                                            <input type="radio" name="selectedAddress" value="<%= address._id %>" 
+                                                   class="address-radio mt-1" <%= address.isDefault ? 'checked' : '' %>>
+                                            <div>
+                                                <h3 class="text-white font-semibold text-lg mb-1">
+                                                    <%= address.name %>
+                                                    <% if (address.isDefault) { %>
+                                                        <span class="text-[#00ffff] text-sm font-normal">(Default)</span>
+                                                    <% } %>
+                                                </h3>
+                                                <p class="text-gray-300 text-sm mb-1">
+                                                    <%= address.address %>
+                                                    <% if (address.landMark) { %>
+                                                        , Near <%= address.landMark %>
+                                                    <% } %>
+                                                </p>
+                                                <p class="text-gray-300 text-sm mb-1">
+                                                    <%= address.locality %>, <%= address.city %>, <%= address.state %> - <%= address.pincode %>
+                                                </p>
+                                                <p class="text-gray-400 text-sm flex items-center gap-2">
+                                                    <i class="fas fa-phone"></i> <%= address.phone %>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button class="edit-address-btn text-[#00ffff] hover:text-[#0088ff] text-sm transition-colors duration-300"
+                                                    data-address-id="<%= address._id %>">
+                                                ✏️ Edit
+                                            </button>
+                                            <% if (!address.isDefault) { %>
+                                                <button class="set-default-btn text-[#00ffff] hover:text-[#0088ff] text-sm transition-colors duration-300"
+                                                        data-address-id="<%= address._id %>">
+                                                    Set as Default
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-8">
+                            <div class="text-6xl mb-4 text-gray-400">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-300 mb-2">No Addresses Found</h3>
+                            <p class="text-gray-400 mb-4">Please add a delivery address to continue</p>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Payment Method Section -->
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-credit-card"></i> Payment Method
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="payment-option border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50 border-[#00ffff] bg-[#00ffff]/5">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="COD" class="payment-radio" checked>
+                                <div>
+                                    <h3 class="text-white font-semibold text-lg flex items-center gap-2">
+                                        <i class="fas fa-money-bill-wave"></i> Cash on Delivery
+                                    </h3>
+                                    <p class="text-gray-400 text-sm">Pay when your order is delivered</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Future payment methods can be added here -->
+                        <div class="payment-option border border-gray-700 rounded-lg p-4 opacity-50 cursor-not-allowed">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="ONLINE" disabled>
+                                <div>
+                                    <h3 class="text-gray-400 font-semibold text-lg flex items-center gap-2">
+                                        <i class="fas fa-credit-card"></i> Online Payment
+                                    </h3>
+                                    <p class="text-gray-500 text-sm">Coming Soon - UPI, Cards, Net Banking</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl sticky top-8">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-clipboard-list"></i> Order Summary
+                    </h2>
+                    
+                    <!-- Order Items -->
+                    <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                        <% cartItems.forEach((item, index) => { %>
+                            <div class="flex items-center gap-3 p-3 bg-gray-700 rounded-lg">
+                                <div class="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <% if (item.productId.productImage && item.productId.productImage.length > 0) { %>
+                                        <img src="/uploads/product-images/<%= item.productId.productImage[0] %>"
+                                             alt="<%= item.productId.productName %>"
+                                             class="w-full h-full object-cover rounded-lg"
+                                             onerror="this.src='/images/placeholder.jpg'">
+                                    <% } else { %>
+                                        <i class="fas fa-box text-lg text-gray-400"></i>
+                                    <% } %>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-white font-medium text-sm mb-1">
+                                        <%= item.productId.productName %>
+                                    </h4>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-400 text-xs">Qty: <%= item.quantity %></span>
+                                        <span class="text-[#00ffff] font-semibold text-sm">
+                                            ₹<%= (item.productId.salePrice * item.quantity).toLocaleString() %>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                    
+                    <!-- Price Breakdown -->
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Subtotal (<%= totalItems %> items):</span>
+                            <span class="text-white">₹<%= subtotal.toLocaleString() %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Tax (GST <%= (taxRate * 100) %>%):</span>
+                            <span class="text-white">₹<%= taxAmount.toLocaleString() %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Shipping:</span>
+                            <% if (shippingCharge === 0) { %>
+                                <span class="text-green-400">FREE</span>
+                            <% } else { %>
+                                <span class="text-white">₹<%= shippingCharge %></span>
+                            <% } %>
+                        </div>
+                        <% if (discount > 0) { %>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Discount:</span>
+                                <span class="text-green-400">-₹<%= discount.toLocaleString() %></span>
+                            </div>
+                        <% } %>
+                        <hr class="border-gray-700">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span class="text-white">Total:</span>
+                            <span class="text-[#00ffff]">₹<%= finalTotal.toLocaleString() %></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Free Shipping Info -->
+                    <% if (shippingCharge > 0) { %>
+                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-6">
+                            <p class="text-yellow-400 text-sm">
+                                💡 Add ₹<%= (shippingThreshold - subtotal).toLocaleString() %> more for FREE shipping!
+                            </p>
+                        </div>
+                    <% } %>
+                    
+                    <!-- Place Order Button -->
+                    <button class="place-order-btn w-full py-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-lg hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 transform hover:scale-105 mb-4 flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle"></i> Place Order
+                    </button>
+                    
+                    <a href="/cart" class="block w-full py-3 bg-gray-700 text-white text-center rounded-lg hover:bg-gray-600 transition-colors duration-300">
+                        ← Back to Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- External JavaScript Files -->
+<script src="/js/checkout.js"></script>
+<script src="/js/checkout-actions.js"></script>
+
+<!-- Initialize with server data -->
+<script>
+// Pass server data to JavaScript
+<% if (typeof checkoutMessage !== 'undefined' && checkoutMessage) { %>
+    const checkoutMessage = {
+        type: '<%= checkoutMessage.type %>',
+        text: '<%= checkoutMessage.text %>'
+    };
+<% } %>
+</script>
+
+<!-- Enhanced CSS for Checkout Page -->
+<style>
+/* Checkout specific styles */
+.address-card {
+    transition: all 0.3s ease;
+}
+
+.address-card:hover {
+    transform: translateY(-2px);
+}
+
+.payment-option {
+    transition: all 0.3s ease;
+}
+
+.payment-option:hover:not(.opacity-50) {
+    transform: translateY(-2px);
+}
+
+.address-radio, .payment-radio {
+    accent-color: #00ffff;
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(100vh) translateX(0px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Floating particles */
+.floating-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #00ffff;
+    border-radius: 50%;
+    animation: particle-float 8s linear infinite;
+}
+
+.particle:nth-child(2n) {
+    background: #ff0066;
+    animation-duration: 10s;
+}
+
+.particle:nth-child(3n) {
+    background: #ffcc00;
+    animation-duration: 12s;
+}
+
+/* Button hover effects */
+button:active {
+    transform: scale(0.98);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .address-card, .payment-option {
+        margin-bottom: 1rem;
+    }
+
+    .grid.grid-cols-2.gap-4 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* Custom scrollbar for order items */
+.max-h-64::-webkit-scrollbar {
+    width: 6px;
+}
+
+.max-h-64::-webkit-scrollbar-track {
+    background: #374151;
+    border-radius: 3px;
+}
+
+.max-h-64::-webkit-scrollbar-thumb {
+    background: #00ffff;
+    border-radius: 3px;
+}
+
+.max-h-64::-webkit-scrollbar-thumb:hover {
+    background: #0088ff;
+}
+</style>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoten - Anime Merchandise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: black;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            padding-top: 80px; /* Add padding to account for fixed navbar */
+        }
+        
+        @keyframes glitch {
+            0% { text-shadow: 2px 2px #ff0000, -2px -2px #00ffff; }
+            25% { text-shadow: -2px -2px #ff0000, 2px 2px #00ffff; }
+            50% { text-shadow: 2px -2px #ff0000, -2px 2px #00ffff; }
+            75% { text-shadow: -2px 2px #ff0000, 2px -2px #00ffff; }
+            100% { text-shadow: 2px 2px #ff0000, -2px -2px #00ffff; }
+        }
+        
+        .animate-glitch {
+            font-size: 8rem;
+            font-weight: bold;
+            color: #00ffff;
+            animation: glitch 0.2s infinite;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+        }
+        
+        .category-card {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 30px #00ffff;
+        }
+        
+        .category-card img {
+            transition: all 0.5s ease;
+        }
+        
+        .category-card:hover img {
+            transform: scale(1.1);
+        }
+        
+        .header-link {
+            position: relative;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .header-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #00ffff;
+            transition: width 0.3s ease;
+        }
+        
+        .header-link:hover::after {
+            width: 100%;
+        }
+        
+        .search-input {
+            background: transparent;
+            border: 2px solid #00ffff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            outline: none;
+        }
+        
+        .search-input::placeholder {
+            color: #aaa;
+        }
+        
+        .search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #00ffff;
+            cursor: pointer;
+        }
+        
+        .glowing-border {
+            border: 2px solid transparent;
+            border-image: linear-gradient(to right, #00ffff, #0088ff);
+            border-image-slice: 1;
+            animation: border-glow 2s infinite alternate;
+        }
+        
+        @keyframes border-glow {
+            from {
+                box-shadow: 0 0 5px #00ffff;
+            }
+            to {
+                box-shadow: 0 0 20px #00ffff;
+            }
+        }
+
+        .dropdown { 
+            position: relative;
+            display: inline-block;
+            border-radius: 20px;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: aqua;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            right: 0;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .dropdown-content a,
+        .dropdown-content button {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .dropdown-content a:hover,
+        .dropdown-content button:hover {
+            background-color: #f6f6f9;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .header {
+            position: relative;
+            z-index: 500;
+        }
+
+        /* Fixed Navbar Styles */
+        .fixed-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .fixed-navbar:hover {
+            background-color: rgba(0, 0, 0, 0.95);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        /* Ensure content doesn't overlap with fixed navbar */
+        .content-with-fixed-navbar {
+            margin-top: 80px;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+            .content-with-fixed-navbar {
+                margin-top: 70px;
+            }
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Video Hero Section -->
+   
+        
+        <!-- Navigation -->
+        <header class="fixed top-0 w-full flex justify-between items-center px-8 py-4 bg-black bg-opacity-90 backdrop-blur-sm z-50 transition-all duration-300">
+            <div class="flex items-center">
+                <a href="/home" class="text-2xl font-bold text-[#00ffff] mr-12">SHOTEN</h1>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="/home" class="header-link flex items-center gap-2">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/shop" class="header-link flex items-center gap-2">
+                        <i class="fas fa-store"></i> Shop
+                    </a>
+                </nav>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <!-- <input type="text" placeholder="Search anime merch..." class="search-input">
+                    <button class="search-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button> -->
+                </div>
+                <% if (locals.user) { %>
+                <div class="dropdown">
+                    <a href="#" class="sign-in-link flex items-center gap-2">
+                        <i class="fas fa-user-circle"></i> <%= locals.user.name %>
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="/profile" class="flex items-center gap-2">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                        <a href="/orders" class="flex items-center gap-2">
+                            <i class="fas fa-box"></i> My Orders
+                        </a>
+                        <a href="/wallet" class="flex items-center gap-2">
+                            <i class="fas fa-wallet"></i> Wallet
+                        </a>
+                        <form action="/logout" method="POST">
+                            <button type="submit" class="flex items-center gap-2">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <% } else { %>
+                <a href="/login" class="header-link flex items-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                <a href="/signup" class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition flex items-center gap-2">
+                    <i class="fas fa-user-plus"></i> Sign Up
+                </a>
+                <% } %>
+                <% if (locals.user) { %>
+                <a href="/wishlist" class="relative wishlist-link hover:text-[#00ffff] transition-colors duration-300 mr-4" title="My Wishlist">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span class="wishlist-count absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" style="display: none;">0</span>
+                </a>
+                <a href="/wallet" class="relative wallet-link hover:text-[#00ffff] transition-colors duration-300 mr-4" title="My Wallet">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span class="wallet-balance absolute -top-2 -right-2 bg-[#00ffff] text-black text-xs font-bold rounded-full px-1 min-w-[20px] h-5 flex items-center justify-center" style="display: none;">₹0</span>
+                </a>
+                <% } %>
+                <a href="/cart" class="relative cart-link hover:text-[#00ffff] transition-colors duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span class="cart-count absolute -top-2 -right-2 bg-[#00ffff] text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" style="display: none;">0</span>
+                </a>
+            </div>
+        </header>
+    </div>
+
+    <!-- Cart Count Initialization -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update cart count on page load
+        updateCartCount();
+        // Update wishlist count on page load
+        updateWishlistCount();
+    });
+
+    function updateCartCount() {
+        fetch('/cart/count')
+            .then(response => response.json())
+            .then(data => {
+                const cartCountElements = document.querySelectorAll('.cart-count');
+                cartCountElements.forEach(element => {
+                    element.textContent = data.count || 0;
+
+                    // Show/hide cart count badge
+                    if (data.count > 0) {
+                        element.style.display = 'flex';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error updating cart count:', error);
+            });
+    }
+
+    function updateWishlistCount() {
+        fetch('/api/wishlist/count')
+            .then(response => response.json())
+            .then(data => {
+                const wishlistCountElements = document.querySelectorAll('.wishlist-count');
+                wishlistCountElements.forEach(element => {
+                    element.textContent = data.count || 0;
+
+                    // Show/hide wishlist count badge
+                    if (data.count > 0) {
+                        element.style.display = 'flex';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error updating wishlist count:', error);
+            });
+    }
+
+    // Make functions globally available
+    window.updateCartCount = updateCartCount;
+    window.updateWishlistCount = updateWishlistCount;
+    </script>
+</body>
+</html>

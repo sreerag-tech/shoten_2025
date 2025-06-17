@@ -1,0 +1,1465 @@
+<%- include("../../views/user/partials/header") %>
+
+
+<section class="bg-black py-12 px-8">
+    
+  <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumbs -->
+     <div class="py-4 ">
+<nav class="bg-gray-900 py-5 px-8">
+    <div class="max-w-7xl mx-auto">
+        <ol class="flex items-center text-sm">
+            <li>
+                <a href="/" class="text-gray-400 hover:text-[#00ffff]">Home</a>
+            </li>
+            <li class="mx-2 text-gray-600">/</li>
+            <li>
+                <a  href="/shop" class="text-gray-400 hover:text-[#00ffff]">Shop</a>
+            </li>
+            
+                
+                <li class="mx-2 text-gray-600">/</li>
+                <li class="text-[#00ffff] truncate max-w-[200px]"><%= product.name %></li>
+           
+        </ol>
+    </div>
+  </nav>
+</div>
+<!-- end of breadcrumps -->
+      <% if (!product || product.isBlocked || product.status !== "Available") { %>
+          <!-- Product Unavailable Message -->
+          <div class="bg-gray-800 rounded-xl p-8 text-center mb-8">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h2 class="text-2xl font-bold mb-2">Product Unavailable</h2>
+              <p class="text-gray-400 mb-6">
+                  <% if (!product) { %>
+                      This product does not exist or has been removed.
+                  <% } else if (product.isBlocked) { %>
+                      This product has been blocked by the admin.
+                  <% } else { %>
+                      This product is currently unavailable (Status: <%= product.status %>).
+                  <% } %>
+              </p>
+              <a href="/shop" class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition">
+                  Return to Collection
+              </a>
+          </div>
+          
+          <script>
+              // Redirect to shop page after 5 seconds
+              setTimeout(() => {
+                  window.location.href = '/shop';
+              }, 5000);
+          </script>
+        <% } else { %>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <!-- Product Images -->
+                <div>
+                    <!-- Main Image with Zoom -->
+                    <div class="relative rounded-2xl overflow-hidden bg-gray-800 mb-6 group">
+                        <div class="product-zoom-container aspect-square" id="productZoomContainer">
+                            <img
+                                id="mainProductImage"
+                                src="<%= product.image %>"
+                                alt="<%= product.name %>"
+                                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            >
+                        </div>
+
+                        <!-- Status badges -->
+                        <div class="absolute top-4 left-4 flex flex-col gap-2">
+                            <% if (product.discount > 0) { %>
+                                <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                                    -<%= product.discount %>% OFF
+                                </div>
+                            <% } %>
+                            <% if (product.isNew) { %>
+                                <div class="bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+                                    NEW
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <!-- Zoom indicator -->
+                        <div class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Image Gallery -->
+                    <div class="grid grid-cols-4 gap-3">
+                        <!-- Main image thumbnail -->
+                        <div
+                            class="gallery-thumb rounded-xl overflow-hidden border-2 border-[#00ffff] cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-[#00ffff]/30"
+                            onclick="changeMainImage('<%= product.image %>')"
+                        >
+                            <img
+                                src="<%= product.image %>"
+                                alt="<%= product.name %> - Main"
+                                class="w-full h-20 object-cover"
+                            >
+                        </div>
+
+                        <!-- Additional gallery images -->
+                        <% if (product.gallery && product.gallery.length > 0) { %>
+                            <% product.gallery.forEach((image, index) => { %>
+                                <div
+                                    class="gallery-thumb rounded-xl overflow-hidden border-2 border-gray-600 hover:border-[#00ffff] transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-[#00ffff]/30"
+                                    onclick="changeMainImage('<%= image %>')"
+                                >
+                                    <img
+                                        src="<%= image %>"
+                                        alt="<%= product.name %> - Gallery <%= index + 1 %>"
+                                        class="w-full h-20 object-cover"
+                                    >
+                                </div>
+                            <% }); %>
+                        <% } %>
+
+                        <!-- Placeholder thumbnails if less than 4 images -->
+                        <%
+                            const totalImages = 1 + (product.gallery ? product.gallery.length : 0);
+                            const placeholderCount = Math.max(0, 4 - totalImages);
+                        %>
+                        <% for (let i = 0; i < placeholderCount; i++) { %>
+                            <div class="rounded-xl bg-gray-700 border-2 border-gray-600 h-20 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="space-y-6">
+                    <!-- Product Title and Category -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-sm text-[#00ffff] bg-[#00ffff]/10 px-3 py-1 rounded-full font-medium">
+                                <%= product.category %>
+                            </span>
+                        </div>
+                        <h1 class="text-4xl font-bold mb-3 leading-tight"><%= product.name %></h1>
+                    </div>
+
+                    <!-- Ratings -->
+                    <div class="flex items-center gap-4 p-4 bg-gray-800/50 rounded-xl">
+                        <div class="flex items-center gap-2">
+                            <div class="flex">
+                                <% for(let i = 1; i <= 5; i++) { %>
+                                    <% if (i <= Math.floor(product.rating)) { %>
+                                        <!-- Full Star -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                    <% } else if (i - 0.5 <= product.rating) { %>
+                                        <!-- Half Star -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <defs>
+                                                <linearGradient id="halfGradient">
+                                                    <stop offset="50%" stop-color="#FACC15" />
+                                                    <stop offset="50%" stop-color="#374151" />
+                                                </linearGradient>
+                                            </defs>
+                                            <path fill="url(#halfGradient)" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                    <% } else { %>
+                                        <!-- Empty Star -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                    <% } %>
+                                <% } %>
+                            </div>
+                            <span class="text-lg font-semibold"><%= product.rating.toFixed(1) %></span>
+                        </div>
+                        <div class="h-6 w-px bg-gray-600"></div>
+                        <span class="text-gray-400">(<%= product.reviewCount %> reviews)</span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="p-6 bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-2xl border border-gray-700">
+                        <div class="flex items-baseline gap-4 mb-2">
+                            <span class="text-4xl font-bold text-[#00ffff]">₹<%= product.price.toLocaleString() %></span>
+                            <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                <span class="text-gray-400 line-through text-xl">₹<%= product.originalPrice.toLocaleString() %></span>
+                            <% } %>
+                        </div>
+
+                        <% if (product.discount > 0) { %>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                                    <%= product.discount %>% OFF
+                                </span>
+                                <span class="text-green-400 text-sm font-medium">
+                                    You save ₹<%= (product.originalPrice - product.price).toLocaleString() %>
+                                </span>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Stock Status -->
+                    <div class="mb-6">
+                        <% if (product.stock > 10) { %>
+                            <div class="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30 backdrop-blur-sm animate-pulse-glow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="font-semibold">✅ In Stock (<%= product.stock %> available)</span>
+                            </div>
+                        <% } else if (product.stock > 0) { %>
+                            <div class="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30 backdrop-blur-sm animate-pulse">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span class="font-semibold">⚠️ Only <%= product.stock %> left in stock - Order soon!</span>
+                            </div>
+                        <% } else { %>
+                            <div class="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-400 border border-red-500/30 backdrop-blur-sm animate-pulse">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span class="font-semibold">❌ Out of Stock - Check back later</span>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold mb-2">Description</h3>
+                        <p class="text-gray-400 leading-relaxed"><%= product.description %></p>
+                    </div>
+                    
+                    <!-- Active Coupons -->
+                    <% if (product.coupons && product.coupons.length > 0) { %>
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold mb-2">Available Coupons</h3>
+                            <div class="space-y-2">
+                                <% product.coupons.forEach(coupon => { %>
+                                    <div class="flex items-center bg-gray-800 p-3 rounded-lg border border-dashed border-[#00ffff]">
+                                        <div class="mr-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#00ffff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-bold"><%= coupon.code %></h4>
+                                            <p class="text-sm text-gray-400"><%= coupon.description %></p>
+                                        </div>
+                                        <button 
+                                            class="text-[#00ffff] text-sm border border-[#00ffff] px-3 py-1 rounded hover:bg-[#00ffff] hover:text-black transition"
+                                            onclick="copyCouponCode('<%= coupon.code %>')"
+                                        >
+                                            Copy Code
+                                        </button>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <!-- Add to Cart -->
+                    <div class="flex flex-wrap space-y-4 md:space-y-0 md:space-x-4 mb-8">
+                        <div class="w-full md:w-auto flex items-center bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl border border-gray-600 overflow-hidden shadow-lg">
+                            <button
+                                class="px-5 py-4 text-white hover:bg-[#00ffff] hover:text-black transition-all duration-300 transform hover:scale-110 group"
+                                onclick="decrementQuantity()"
+                                <%= product.stock <= 0 ? 'disabled' : '' %>
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-300 group-hover:scale-125" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4" />
+                                </svg>
+                            </button>
+
+                            <div class="relative">
+                                <input
+                                    type="number"
+                                    id="quantity"
+                                    name="quantity"
+                                    value="1"
+                                    min="1"
+                                    max="<%= product.stock %>"
+                                    class="w-16 py-4 text-center bg-transparent text-white text-lg font-bold focus:outline-none focus:bg-gray-700 transition-colors duration-300"
+                                    <%= product.stock <= 0 ? 'disabled' : '' %>
+                                >
+                                <!-- Quantity indicator -->
+                                <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-[#00ffff] rounded-full"></div>
+                            </div>
+
+                            <button
+                                class="px-5 py-4 text-white hover:bg-[#00ffff] hover:text-black transition-all duration-300 transform hover:scale-110 group"
+                                onclick="incrementQuantity(<%= product.stock %>)"
+                                <%= product.stock <= 0 ? 'disabled' : '' %>
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-300 group-hover:scale-125" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <button
+                            id="addToCartBtn"
+                            class="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black font-bold rounded-xl hover:from-[#0088ff] hover:to-[#00ffff] flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-[#00ffff]/30 relative overflow-hidden group"
+                            onclick="addToCart('<%= product._id %>')"
+                            <%= product.stock <= 0 ? 'disabled' : '' %>
+                        >
+                            <!-- Animated background -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                            <!-- Button content -->
+                            <div class="relative flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span class="text-lg">
+                                    <%= product.stock <= 0 ? '❌ Out of Stock' : '🛒 Add to Cart' %>
+                                </span>
+                            </div>
+                        </button>
+                        
+                        <button
+                            class="w-full md:w-auto px-6 py-4 border-2 border-[#00ffff] text-[#00ffff] font-bold rounded-xl hover:bg-[#00ffff] hover:text-black transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-[#00ffff]/30 group relative overflow-hidden"
+                            onclick="addToWishlist('<%= product._id %>')"
+                        >
+                            <!-- Animated background -->
+                            <div class="absolute inset-0 bg-[#00ffff] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+
+                            <!-- Heart icon with animation -->
+                            <div class="relative flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-all duration-300 group-hover:scale-110 group-hover:animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <span class="ml-2 hidden md:inline">Wishlist</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Product Highlights -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold mb-2">Product Highlights</h3>
+                        <ul class="space-y-2">
+                            <% if (product.highlights && product.highlights.length > 0) { %>
+                                <% product.highlights.forEach(highlight => { %>
+                                    <li class="flex items-start">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#00ffff] mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        <span class="text-gray-300"><%= highlight %></span>
+                                    </li>
+                                <% }); %>
+                            <% } else { %>
+                                <li class="text-gray-400">No highlights available for this product.</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                    
+                    <!-- Specifications -->
+                    <% if (product.specifications && Object.keys(product.specifications).length > 0) { %>
+                        <div class="p-4 bg-gray-800 rounded-lg mb-6">
+                            <h3 class="text-lg font-bold mb-4">Specifications</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <% Object.entries(product.specifications).forEach(([key, value]) => { %>
+                                    <div>
+                                        <h4 class="text-sm text-gray-400"><%= key %></h4>
+                                        <p class="text-white"><%= value %></p>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <!-- Shipping & Returns -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="flex items-start p-4 bg-gray-800 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#00ffff] mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                            </svg>
+                            <div>
+                                <h4 class="font-bold">Free Shipping</h4>
+                                <p class="text-sm text-gray-400">On orders over ₹2,000. Delivery in 3-5 business days.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start p-4 bg-gray-800 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#00ffff] mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                            </svg>
+                            <div>
+                                <h4 class="font-bold">Easy Returns</h4>
+                                <p class="text-sm text-gray-400">30-day return policy. See return policy for details.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabs: Description, Specs, Reviews -->
+            <div class="mt-16">
+                <div class="border-b border-gray-800">
+                    <div class="flex overflow-x-auto">
+                        <button
+                            class="tab-button px-6 py-3 font-bold border-b-2 border-[#00ffff] text-[#00ffff]"
+                            data-tab="description"
+                        >
+                            Description
+                        </button>
+                        <button
+                            class="tab-button px-6 py-3 font-bold border-b-2 border-transparent text-gray-400 hover:text-white"
+                            data-tab="reviews"
+                        >
+                            Reviews (<%= product.reviewCount %>)
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="py-8">
+                    <!-- Description Tab -->
+                    <div id="description-tab" class="tab-content block">
+                        <div class="prose prose-lg max-w-none text-gray-300">
+                            <% if (product.longDescription) { %>
+                                <%= product.longDescription %>
+                            <% } else { %>
+                                <p><%= product.description %></p>
+                                
+                                <h3 class="text-xl font-bold mt-6 mb-3 text-white">Product Features</h3>
+                                <p>This premium anime collectible is meticulously crafted with attention to detail, capturing the essence of the character with stunning accuracy. Made from high-quality materials, this collectible is designed to be a centerpiece in any fan's collection.</p>
+                                
+                                <h3 class="text-xl font-bold mt-6 mb-3 text-white">Premium Quality</h3>
+                                <p>Each piece is hand-finished to ensure the highest quality. The vibrant colors and precise detailing make this collectible a must-have for dedicated fans and collectors alike.</p>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <!-- Reviews Tab -->
+                    <div id="reviews-tab" class="tab-content hidden">
+                        <!-- Review Summary -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                            <div class="md:col-span-1 bg-gray-800 p-6 rounded-lg">
+                                <h3 class="text-xl font-bold mb-4">Customer Reviews</h3>
+                                
+                                <div class="flex items-center mb-4">
+                                    <div class="flex mr-2">
+                                        <% for(let i = 1; i <= 5; i++) { %>
+                                            <% if (i <= Math.floor(product.rating)) { %>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                </svg>
+                                            <% } else if (i - 0.5 <= product.rating) { %>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <defs>
+                                                        <linearGradient id="halfGradient2">
+                                                            <stop offset="50%" stop-color="#FACC15" />
+                                                            <stop offset="50%" stop-color="#374151" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <path fill="url(#halfGradient2)" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 1 0 0.951-.69l1.07-3.292z" />
+                                                </svg>
+                                            <% } else { %>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                </svg>
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                    <span class="text-2xl font-bold"><%= product.rating.toFixed(1) %></span>
+                                </div>
+                                
+                                <p class="text-gray-400 mb-4"><%= product.reviewCount %> reviews</p>
+                                
+                                <!-- Rating Breakdown -->
+                                <div class="space-y-2">
+                                    <% const ratings = [5, 4, 3, 2, 1]; %>
+                                    <% ratings.forEach(rating => { %>
+                                        <div class="flex items-center">
+                                            <span class="w-8 text-gray-400"><%= rating %> ★</span>
+                                            <div class="flex-1 mx-2 h-2 bg-gray-700 rounded-full overflow-hidden">
+                                                <% 
+                                                    // Calculate percentage for this rating
+                                                    const percentage = product.ratingDistribution ? 
+                                                        (product.ratingDistribution[rating] || 0) / product.reviewCount * 100 : 
+                                                        (rating === 5 ? 60 : rating === 4 ? 25 : rating === 3 ? 10 : rating === 2 ? 3 : 2); 
+                                                %>
+                                                <div class="h-full bg-yellow-400" style="width: <%= percentage %>%"></div>
+                                            </div>
+                                            <span class="w-10 text-right text-gray-400"><%= Math.round(percentage) %>%</span>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                                
+                                <!-- Write Review Button -->
+                                <button class="mt-6 w-full px-4 py-2 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition">
+                                    Write a Review
+                                </button>
+                            </div>
+                            
+                            <!-- Review List -->
+                            <div class="md:col-span-2">
+                                <% if (product.reviews && product.reviews.length > 0) { %>
+                                    <div class="space-y-6">
+                                        <% product.reviews.forEach(review => { %>
+                                            <div class="p-4 bg-gray-800 rounded-lg">
+                                                <div class="flex justify-between mb-2">
+                                                    <h4 class="font-bold"><%= review.title %></h4>
+                                                    <div class="flex">
+                                                        <% for(let i = 1; i <= 5; i++) { %>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 <%= i <= review.rating ? 'text-yellow-400' : 'text-gray-600' %>" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                            </svg>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                                
+                                                <p class="text-gray-300 mb-2"><%= review.content %></p>
+                                                
+                                                <div class="flex justify-between text-sm text-gray-400">
+                                                    <span><%= review.user %></span>
+                                                    <span><%= new Date(review.date).toLocaleDateString() %></span>
+                                                </div>
+                                                
+                                                <% if (review.images && review.images.length > 0) { %>
+                                                    <div class="mt-3 flex space-x-2">
+                                                        <% review.images.forEach(image => { %>
+                                                            <img src="<%= image %>" alt="Review image" class="w-16 h-16 object-cover rounded">
+                                                        <% }); %>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                    
+                                    <!-- Pagination -->
+                                    <div class="mt-6 flex justify-center">
+                                        <a href="#" class="px-4 py-2 mx-1 bg-gray-800 rounded text-gray-400 hover:bg-gray-700">«</a>
+                                        <a href="#" class="px-4 py-2 mx-1 bg-[#00ffff] rounded text-black font-bold">1</a>
+                                        <a href="#" class="px-4 py-2 mx-1 bg-gray-800 rounded text-gray-400 hover:bg-gray-700">2</a>
+                                        <a href="#" class="px-4 py-2 mx-1 bg-gray-800 rounded text-gray-400 hover:bg-gray-700">3</a>
+                                        <a href="#" class="px-4 py-2 mx-1 bg-gray-800 rounded text-gray-400 hover:bg-gray-700">»</a>
+                                    </div>
+                                <% } else { %>
+                                    <div class="p-8 bg-gray-800 rounded-lg text-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                        </svg>
+                                        <h3 class="text-lg font-bold mb-2">No Reviews Yet</h3>
+                                        <p class="text-gray-400 mb-4">Be the first to review this product!</p>
+                                        <button class="px-6 py-2 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition">
+                                            Write a Review
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Products -->
+            <div class="mt-16">
+                <h2 class="text-2xl font-bold mb-6">You May Also Like</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <% if (relatedProducts && relatedProducts.length > 0) { %>
+                        <% relatedProducts.forEach(relatedProduct => { %>
+                            <div class="bg-gray-800 rounded-xl overflow-hidden transition transform hover:-translate-y-1">
+                                <a href="/shop/product/<%= relatedProduct._id %>" class="block relative">
+                                    <img 
+                                        src="<%= relatedProduct.image %>" 
+                                        alt="<%= relatedProduct.name %>" 
+                                        class="w-full h-48 object-cover"
+                                    >
+                                    
+                                    <% if (relatedProduct.discount > 0) { %>
+                                        <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                            -<%= relatedProduct.discount %>% OFF
+                                        </div>
+                                    <% } %>
+                                    
+                                    <% if (relatedProduct.isNew) { %>
+                                        <div class="absolute top-2 right-2 bg-[#00ffff] text-black text-xs font-bold px-2 py-1 rounded-full">
+                                            NEW
+                                        </div>
+                                    <% } %>
+                                </a>
+                                
+                                <div class="p-4">
+                                    <a href="/product/<%= relatedProduct._id %>" class="block">
+                                        <h3 class="text-lg font-bold mb-1 hover:text-[#00ffff] truncate"><%= relatedProduct.name %></h3>
+                                    </a>
+                                    
+                                    <div class="flex items-center mb-2">
+                                        <div class="flex mr-1">
+                                            <% for(let i = 1; i <= 5; i++) { %>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 <%= i <= Math.round(relatedProduct.rating) ? 'text-yellow-400' : 'text-gray-600' %>" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                </svg>
+                                            <% } %>
+                                        </div>
+                                        <span class="text-xs text-gray-400">(<%= relatedProduct.reviewCount %>)</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <% if (relatedProduct.originalPrice && relatedProduct.originalPrice > relatedProduct.price) { %>
+                                                <span class="text-gray-400 line-through text-sm mr-1">₹<%= relatedProduct.originalPrice.toLocaleString() %></span>
+                                            <% } %>
+                                            <span class="text-lg font-bold text-[#00ffff]">₹<%= relatedProduct.price.toLocaleString() %></span>
+                                        </div>
+                                        
+                                        <button 
+                                            class="p-2 rounded-full bg-gray-700 hover:bg-[#00ffff] hover:text-black transition"
+                                            onclick="quickAddToCart('<%= relatedProduct._id %>')"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <p class="text-gray-400 col-span-4 text-center py-6">No related products found.</p>
+                    <% } %>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</section>
+<%- include("../../views/user/partials/footer") %>
+<!-- Image Zoom JS -->
+<script>
+        // Back to top button
+        const backToTopButton = document.querySelector('button.fixed');
+          backToTopButton.addEventListener('click', function() {
+            window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+    // Image zoom functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const zoomContainer = document.getElementById('productZoomContainer');
+        const mainImage = document.getElementById('mainProductImage');
+        
+        if (zoomContainer && mainImage) {
+            let isZoomed = false;
+            let zoomLevel = 2; // How much to zoom in
+            
+            
+            zoomContainer.addEventListener('click', function() {
+                isZoomed = !isZoomed;
+                if (isZoomed) {
+                    zoomContainer.style.overflow = 'hidden';
+                    mainImage.style.transform = `scale(${zoomLevel})`;
+                    mainImage.style.transformOrigin = 'center';
+                    mainImage.style.transition = 'transform 0.3s ease';
+                    mainImage.style.cursor = 'zoom-out';
+                } else {
+                    mainImage.style.transform = 'scale(1)';
+                    mainImage.style.cursor = 'zoom-in';
+                }
+            });
+            
+            zoomContainer.addEventListener('mousemove', function(e) {
+                if (isZoomed) {
+                    // Calculate relative position within container
+                    const rect = zoomContainer.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    // Calculate percentage of position
+                    const xPercent = x / rect.width * 100;
+                    const yPercent = y / rect.height * 100;
+                    
+                    // Set transform origin based on mouse position
+                    mainImage.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+                }
+            });
+            
+            // Set initial state
+            mainImage.style.cursor = 'zoom-in';
+        }
+    });
+    
+    // Function to change main product image
+    function changeMainImage(imageUrl) {
+        const mainImage = document.getElementById('mainProductImage');
+        if (mainImage) {
+            mainImage.src = imageUrl;
+        }
+    }
+    
+    // Function to copy coupon code
+    function copyCouponCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            // Show copied notification
+            const notification = document.createElement('div');
+            notification.innerHTML = `<div class="fixed bottom-4 right-4 bg-[#00ffff] text-black px-4 py-2 rounded-lg shadow-lg">
+                Coupon code copied to clipboard!
+            </div>`;
+            document.body.appendChild(notification);
+            
+            // Remove notification after 2 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        });
+    }
+    
+    // Function to increment quantity
+    function incrementQuantity(maxStock) {
+        const quantityInput = document.getElementById('quantity');
+        const currentValue = parseInt(quantityInput.value);
+        
+        if (currentValue < maxStock) {
+            quantityInput.value = currentValue + 1;
+        }
+    }
+    
+    // Function to decrement quantity
+    function decrementQuantity() {
+        const quantityInput = document.getElementById('quantity');
+        const currentValue = parseInt(quantityInput.value);
+        
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+        }
+    }
+    
+    // Tab functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                // Reset all tabs
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('border-[#00ffff]', 'text-[#00ffff]');
+                    btn.classList.add('border-transparent', 'text-gray-400');
+                });
+                
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Activate selected tab
+                button.classList.remove('border-transparent', 'text-gray-400');
+                button.classList.add('border-[#00ffff]', 'text-[#00ffff]');
+                
+                document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+            });
+        });
+    });
+    
+    // Add to cart functionality
+    function addToCart(productId) {
+        const quantity = document.getElementById('quantity').value;
+        
+        // Show loading state
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const originalBtnText = addToCartBtn.innerHTML;
+        addToCartBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+        
+        // Make AJAX request to add to cart
+        fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ productId, quantity }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button state
+            addToCartBtn.innerHTML = originalBtnText;
+            
+            if (data.success) {
+                showNotification('🛒 Item added to cart successfully!', 'success');
+
+                // Update cart count in header if it exists
+                if (window.updateCartCount) {
+                    window.updateCartCount();
+                }
+
+                // Add success animation to button
+                addToCartBtn.classList.add('animate-pulse');
+                setTimeout(() => addToCartBtn.classList.remove('animate-pulse'), 1000);
+            } else {
+                showNotification(data.message || '❌ Failed to add item to cart', 'error');
+                
+                // If product is no longer available, redirect to shop
+                if (data.redirect) {
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 2000);
+                }
+            }
+        })
+        .catch(error => {
+            // Reset button state
+            addToCartBtn.innerHTML = originalBtnText;
+            showNotification('❌ Network error. Please try again.', 'error');
+            console.error('Error:', error);
+        });
+    }
+    
+    // Quick add to cart for related products
+    function quickAddToCart(productId) {
+        fetch('/api/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ productId, quantity: 1 }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const notification = document.createElement('div');
+                notification.innerHTML = `<div class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+                    Item added to cart!
+                </div>`;
+                document.body.appendChild(notification);
+                
+                // Update cart count in header if it exists
+                if (window.updateCartCount) {
+                    window.updateCartCount(data.cartCount);
+                }
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 2000);
+            } else {
+                // Show error message and redirect if needed
+                const notification = document.createElement('div');
+                notification.innerHTML = `<div class="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+                    ${data.message || 'Failed to add item to cart'}
+                </div>`;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    }
+                }, 2000);
+            }
+        });
+    }
+    
+
+    
+    // Enhanced add to wishlist functionality
+    function addToWishlist(productId) {
+        // Add loading animation to wishlist button
+        const wishlistBtn = event.target.closest('button');
+        const originalContent = wishlistBtn.innerHTML;
+        wishlistBtn.disabled = true;
+        wishlistBtn.innerHTML = `
+            <div class="relative flex items-center justify-center">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-2"></div>
+                <span class="hidden md:inline">Adding...</span>
+            </div>
+        `;
+
+        fetch('/api/wishlist/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ productId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button
+            wishlistBtn.disabled = false;
+            wishlistBtn.innerHTML = originalContent;
+
+            if (data.success) {
+                showNotification('💖 Item added to wishlist!', 'success');
+
+                // Add heart animation
+                wishlistBtn.classList.add('animate-pulse');
+                setTimeout(() => wishlistBtn.classList.remove('animate-pulse'), 1000);
+            } else {
+                showNotification(data.message || '❌ Failed to add item to wishlist', 'error');
+            }
+        })
+        .catch(error => {
+            // Reset button
+            wishlistBtn.disabled = false;
+            wishlistBtn.innerHTML = originalContent;
+            showNotification('❌ Network error. Please try again.', 'error');
+            console.error('Error:', error);
+        });
+    }
+
+    // Enhanced loading animation for add to cart
+    function showLoadingAnimation(button) {
+        const originalContent = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = `
+            <div class="flex items-center justify-center">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+                Adding...
+            </div>
+        `;
+
+        return () => {
+            button.disabled = false;
+            button.innerHTML = originalContent;
+        };
+    }
+
+    // Enhanced notification system
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300';
+
+        const bgColor = type === 'success' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500';
+        const icon = type === 'success' ?
+            '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>' :
+            '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>';
+
+        notification.innerHTML = `
+            <div class="${bgColor} text-white px-6 py-4 rounded-xl shadow-2xl backdrop-blur-sm border border-white/20 flex items-center gap-3 min-w-[300px]">
+                <div class="flex-shrink-0">
+                    ${icon}
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold">${message}</p>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
+    }
+
+    // Enhanced page load animations with fun effects
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add entrance animations
+        addEntranceAnimations();
+
+        // Add fun interactions
+        addFunInteractions();
+
+        // Add confetti on successful actions
+        setupConfettiEffects();
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in-up');
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Enhanced gallery thumbnails with fun effects
+        document.querySelectorAll('.gallery-thumb').forEach((thumb, index) => {
+            thumb.style.animationDelay = (index * 0.1) + 's';
+            thumb.classList.add('stagger-animation');
+
+            thumb.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1) rotate(2deg)';
+                this.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+
+                // Add sparkle effect
+                createSparkles(this);
+            });
+
+            thumb.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1) rotate(0deg)';
+            });
+
+            thumb.addEventListener('click', function() {
+                this.classList.add('image-zoom-effect');
+                setTimeout(() => {
+                    this.classList.remove('image-zoom-effect');
+                }, 300);
+            });
+        });
+
+        // Enhanced ripple effect for buttons
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                // Original ripple effect
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('ripple');
+
+                this.appendChild(ripple);
+
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+
+                // Add button-specific animations
+                if (this.id === 'addToCartBtn') {
+                    this.classList.add('cart-success');
+                    setTimeout(() => {
+                        this.classList.remove('cart-success');
+                    }, 500);
+                } else if (this.onclick && this.onclick.toString().includes('addToWishlist')) {
+                    this.classList.add('wishlist-heart');
+                    setTimeout(() => {
+                        this.classList.remove('wishlist-heart');
+                    }, 600);
+                }
+            });
+        });
+
+        function addEntranceAnimations() {
+            // Main product container
+            const productContainer = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-2');
+            if (productContainer) {
+                productContainer.classList.add('product-entrance');
+            }
+
+            // Product info sections
+            const infoSections = document.querySelectorAll('.space-y-6 > div');
+            infoSections.forEach((section, index) => {
+                section.style.animationDelay = (index * 0.2) + 's';
+                section.classList.add('stagger-animation');
+            });
+        }
+
+        function addFunInteractions() {
+            // Quantity selector enhancements
+            const quantityInput = document.getElementById('quantity');
+            if (quantityInput) {
+                quantityInput.addEventListener('focus', function() {
+                    this.parentElement.classList.add('quantity-glow');
+                });
+
+                quantityInput.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('quantity-glow');
+                });
+
+                quantityInput.addEventListener('change', function() {
+                    // Add bounce effect when quantity changes
+                    this.style.animation = 'bounceSubtle 0.5s ease-in-out';
+                    setTimeout(() => {
+                        this.style.animation = '';
+                    }, 500);
+                });
+            }
+
+            // Main product image hover effect
+            const mainImage = document.getElementById('mainProductImage');
+            if (mainImage) {
+                mainImage.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+
+                mainImage.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+
+                mainImage.addEventListener('click', function() {
+                    this.classList.add('image-zoom-effect');
+                    setTimeout(() => {
+                        this.classList.remove('image-zoom-effect');
+                    }, 300);
+                });
+            }
+        }
+
+        function setupConfettiEffects() {
+            // Override the original addToCart function to add confetti
+            const originalAddToCart = window.addToCart;
+            window.addToCart = function(productId) {
+                originalAddToCart(productId);
+                // Add confetti after successful cart addition
+                setTimeout(() => {
+                    createConfetti();
+                }, 500);
+            };
+
+            // Override the original addToWishlist function
+            const originalAddToWishlist = window.addToWishlist;
+            window.addToWishlist = function(productId) {
+                originalAddToWishlist(productId);
+                // Add heart confetti
+                setTimeout(() => {
+                    createHeartConfetti();
+                }, 300);
+            };
+        }
+
+        function createSparkles(element) {
+            for (let i = 0; i < 3; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.innerHTML = '✨';
+                sparkle.style.position = 'absolute';
+                sparkle.style.pointerEvents = 'none';
+                sparkle.style.fontSize = '1rem';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animation = 'fadeIn 0.5s ease-out forwards';
+                sparkle.style.zIndex = '10';
+
+                element.style.position = 'relative';
+                element.appendChild(sparkle);
+
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 500);
+            }
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-piece';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '100vh';
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+
+                document.body.appendChild(confetti);
+
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3000);
+            }
+        }
+
+        function createHeartConfetti() {
+            for (let i = 0; i < 15; i++) {
+                const heart = document.createElement('div');
+                heart.innerHTML = '💖';
+                heart.style.position = 'fixed';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.top = '100vh';
+                heart.style.fontSize = '1.5rem';
+                heart.style.pointerEvents = 'none';
+                heart.style.zIndex = '9999';
+                heart.style.animation = 'confetti 2s linear forwards';
+                heart.style.animationDelay = Math.random() * 0.3 + 's';
+
+                document.body.appendChild(heart);
+
+                setTimeout(() => {
+                    heart.remove();
+                }, 2000);
+            }
+        }
+    });
+
+</script>
+
+<!-- Enhanced CSS Animations -->
+<style>
+    /* Custom Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes starTwinkle {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
+        50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.6); }
+    }
+
+    @keyframes gradientX {
+        0%, 100% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+    }
+
+    @keyframes priceGlow {
+        0%, 100% { text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+        50% { text-shadow: 0 0 20px rgba(0, 255, 255, 0.8); }
+    }
+
+    @keyframes bounceSubtle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2px); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Animation Classes */
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .animate-slide-in-left {
+        animation: slideInLeft 0.6s ease-out forwards;
+    }
+
+    .animate-slide-in-right {
+        animation: slideInRight 0.6s ease-out forwards;
+    }
+
+    .animate-star-twinkle {
+        animation: starTwinkle 2s ease-in-out infinite;
+    }
+
+    .animate-pulse-glow {
+        animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    .animate-gradient-x {
+        animation: gradientX 3s ease-in-out infinite;
+    }
+
+    .animate-price-glow {
+        animation: priceGlow 3s ease-in-out infinite;
+    }
+
+    .animate-bounce-subtle {
+        animation: bounceSubtle 2s ease-in-out infinite;
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out forwards;
+    }
+
+    /* Ripple Effect */
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(0);
+        animation: ripple-animation 0.6s linear;
+        pointer-events: none;
+    }
+
+    @keyframes ripple-animation {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+
+    /* Enhanced Hover Effects */
+    .hover-lift {
+        transition: all 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Smooth Transitions */
+    * {
+        transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #00ffff;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Glassmorphism Effect */
+    .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Text Gradient */
+    .text-gradient {
+        background: linear-gradient(45deg, #00ffff, #0088ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Neon Glow */
+    .neon-glow {
+        box-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff;
+    }
+
+    /* Parallax Effect */
+    .parallax {
+        transform-style: preserve-3d;
+    }
+
+    .parallax:hover {
+        transform: rotateX(5deg) rotateY(5deg);
+    }
+
+    /* Fun Product Detail Animations */
+    @keyframes productEntrance {
+        0% {
+            opacity: 0;
+            transform: translateY(50px) scale(0.9);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes imageZoom {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes cartSuccess {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2) rotate(5deg); }
+        100% { transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes wishlistHeart {
+        0% { transform: scale(1); }
+        25% { transform: scale(1.3); }
+        50% { transform: scale(1.1); }
+        75% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes confetti {
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+
+    .product-entrance {
+        animation: productEntrance 0.8s ease-out forwards;
+    }
+
+    .image-zoom-effect:hover {
+        animation: imageZoom 0.3s ease-in-out;
+    }
+
+    .cart-success {
+        animation: cartSuccess 0.5s ease-in-out;
+    }
+
+    .wishlist-heart {
+        animation: wishlistHeart 0.6s ease-in-out;
+    }
+
+    .confetti-piece {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: #00ffff;
+        animation: confetti 3s linear forwards;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    .confetti-piece:nth-child(2n) { background: #ff0066; }
+    .confetti-piece:nth-child(3n) { background: #ffcc00; }
+    .confetti-piece:nth-child(4n) { background: #00ff88; }
+    .confetti-piece:nth-child(5n) { background: #8800ff; }
+
+    /* Enhanced quantity selector */
+    .quantity-glow {
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    /* Product card entrance stagger */
+    .stagger-animation {
+        opacity: 0;
+        animation: productEntrance 0.6s ease-out forwards;
+    }
+
+    .stagger-animation:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-animation:nth-child(2) { animation-delay: 0.2s; }
+    .stagger-animation:nth-child(3) { animation-delay: 0.3s; }
+    .stagger-animation:nth-child(4) { animation-delay: 0.4s; }
+</style>
+

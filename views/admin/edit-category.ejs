@@ -1,0 +1,139 @@
+<%- include("../../views/admin/partials/header", { activePage: 'edit-category' }) %>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 mt-60">
+            <% if (typeof error !== 'undefined') { %>
+            <div class="alert alert-danger"><%= error %></div>
+            <% } %>
+            <form id="editCategoryForm" method="post" action="/admin/editCategory/<%=category._id%>" onsubmit="return handleFormSubmit(event)">
+                <div class="d-grid text-end mt-30 col-md-5">
+                    <button class="btn btn-primary" type="submit">Update category</button>
+                </div>
+                <div class="mb-4 mt-30">
+                    <label for="product_name" class="form-label">Name</label>
+                    <input type="text" name="categoryName" value="<%=category.name%>" class="form-control border" id="category_name" novalidate/>
+                    <div id="name-error" class="error-message"></div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-control border" id="descriptionId" novalidate><%=category.description%></textarea>
+                    <div id="description-error" class="error-message"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+<script>
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    if (!await validateForm()) {
+        return false;
+    }
+    
+    const form = document.getElementById('editCategoryForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || 'Failed to update category');
+            });
+        }
+        return response.json();
+    })
+    .then(result => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: result.message || 'Category updated successfully',
+            showConfirmButton: false,
+            timer: 1500
+        }).then(() => {
+            window.location.href = '/admin/category';
+        });
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: error.message || 'Something went wrong while updating the category',
+        });
+    });
+}
+
+async function validateForm() {
+    clearErrorMessages();
+    const name = document.getElementsByName("categoryName")[0].value.trim();
+    const description = document.getElementById("descriptionId").value.trim();
+    const originalCategoryId = '<%= category._id %>';
+    let isValid = true;
+
+    if (name === "") {
+        displayErrorMessage("name-error", "Please enter a name");
+        isValid = false;
+    } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+        displayErrorMessage("name-error", "Category name should contain only alphabetic characters");
+        isValid = false;
+    // } else {
+    //     try {
+    //         const response = await fetch(`/admin/checkCategory?name=${encodeURIComponent(name)}&id=${originalCategoryId}`, {
+    //             method: 'GET',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             }
+    //         });
+    //         const result = await response.json();
+    //         if (result.exists) {
+    //             displayErrorMessage("name-error", "Category already exists");
+    //             isValid = false;
+    //         }
+    //     } catch (error) {
+    //         console.error("Error checking category:", error);
+    //         displayErrorMessage("name-error", "Error checking category name");
+    //         isValid = false;
+    //     }
+    }
+
+    if (description === "") {
+        displayErrorMessage("description-error", "Please enter a description");
+        isValid = false;
+    }
+    return isValid;
+}
+
+function displayErrorMessage(elementId, message) {
+    var errorElement = document.getElementById(elementId);
+    errorElement.innerText = message;
+    errorElement.style.display = "block";
+}
+
+function clearErrorMessages() {
+    const errorElements = document.getElementsByClassName("error-message");
+    Array.from(errorElements).forEach((element) => {
+        element.innerText = "";
+        element.style.display = "none";
+    });
+}
+
+window.onload = function() {
+    if (typeof Swal !== 'undefined') {
+        console.log("SweetAlert2 is loaded successfully");
+    } else {
+        console.error("SweetAlert2 failed to load");
+    }
+};
+</script>
+
+<%- include("../../views/admin/partials/footer", { activePage: 'edit-category' }) %>
