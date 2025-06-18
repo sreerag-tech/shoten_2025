@@ -146,4 +146,4 @@ module.exports={
     loadDashboard,
     pageerror,
     logout,
-}
+} 

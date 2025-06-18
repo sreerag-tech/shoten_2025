@@ -437,7 +437,167 @@ function showLowStockAlert() {
 
 // Bulk stock update
 function bulkStockUpdate() {
-    Swal.fire('Feature Coming Soon!', 'Bulk stock update feature will be implemented soon.', 'info');
+    // Get all visible products
+    const productRows = document.querySelectorAll('tbody tr');
+
+    if (productRows.length === 0) {
+        Swal.fire('No Products', 'No products available for bulk update.', 'info');
+        return;
+    }
+
+    // Create bulk update form HTML
+    let formHTML = `
+        <div class="bulk-update-container">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Select Action:</label>
+                <select id="bulkAction" class="form-select">
+                    <option value="set">Set Stock To</option>
+                    <option value="add">Add Stock</option>
+                    <option value="subtract">Subtract Stock</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Quantity:</label>
+                <input type="number" id="bulkQuantity" class="form-control" min="0" placeholder="Enter quantity">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Select Products:</label>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                    <label class="form-check-label fw-bold" for="selectAll">
+                        Select All Products
+                    </label>
+                </div>
+                <div class="product-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+    `;
+
+    // Add each product as a checkbox
+    productRows.forEach((row, index) => {
+        const productName = row.querySelector('td:nth-child(1').textContent.trim();
+        const currentStock = row.querySelector('td:nth-child(3)').textContent.trim();
+        const productId = row.querySelector('.btn-outline-primary').getAttribute('onclick').match(/'([^']+)'/)[1];
+
+        formHTML += `
+            <div class="form-check mb-1">
+                <input class="form-check-input product-checkbox" type="checkbox" value="${productId}" id="product_${index}">
+                <label class="form-check-label" for="product_${index}">
+                    <strong>${productName}</strong> (Current: ${currentStock})
+                </label>
+            </div>
+        `;
+    });
+
+    formHTML += `
+                </div>
+            </div>
+        </div>
+    `;
+
+    Swal.fire({
+        title: 'Bulk Stock Update',
+        html: formHTML,
+        width: '600px',
+        showCancelButton: true,
+        confirmButtonText: 'Update Stock',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        didOpen: () => {
+            // Handle select all functionality
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const productCheckboxes = document.querySelectorAll('.product-checkbox');
+
+            selectAllCheckbox.addEventListener('change', function() {
+                productCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+
+            // Update select all when individual checkboxes change
+            productCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const allChecked = Array.from(productCheckboxes).every(cb => cb.checked);
+                    const someChecked = Array.from(productCheckboxes).some(cb => cb.checked);
+                    selectAllCheckbox.checked = allChecked;
+                    selectAllCheckbox.indeterminate = someChecked && !allChecked;
+                });
+            });
+        },
+        preConfirm: () => {
+            const action = document.getElementById('bulkAction').value;
+            const quantity = document.getElementById('bulkQuantity').value;
+            const selectedProducts = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => cb.value);
+
+            if (!quantity || quantity < 0) {
+                Swal.showValidationMessage('Please enter a valid quantity');
+                return false;
+            }
+
+            if (selectedProducts.length === 0) {
+                Swal.showValidationMessage('Please select at least one product');
+                return false;
+            }
+
+            return { action, quantity: parseInt(quantity), selectedProducts };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            performBulkUpdate(result.value);
+        }
+    });
+}
+
+// Perform the actual bulk update
+function performBulkUpdate(data) {
+    const { action, quantity, selectedProducts } = data;
+
+    // Prepare updates array
+    const updates = selectedProducts.map(productId => ({
+        productId: productId,
+        quantity: quantity,
+        action: action
+    }));
+
+    // Show loading
+    Swal.fire({
+        title: 'Updating Stock...',
+        text: 'Please wait while we update the stock levels.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Send bulk update request
+    fetch('/admin/inventory/bulk-update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ updates: updates })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#28a745'
+            }).then(() => {
+                // Reload the page to show updated stock levels
+                window.location.reload();
+            });
+        } else {
+            Swal.fire('Error!', data.message || 'Failed to update stock', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error!', 'Failed to update stock. Please try again.', 'error');
+    });
 }
 </script>
 
@@ -482,6 +642,79 @@ function bulkStockUpdate() {
     justify-content: center;
     color: #6c757d;
     font-size: 12px;
+}
+
+/* Bulk Update Styling */
+.bulk-update-container {
+    text-align: left;
+}
+
+.bulk-update-container .form-label {
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.bulk-update-container .form-select,
+.bulk-update-container .form-control {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.bulk-update-container .form-select:focus,
+.bulk-update-container .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.bulk-update-container .product-list {
+    background: #f8f9fa;
+}
+
+.bulk-update-container .form-check {
+    padding: 8px 12px;
+    margin: 0;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.bulk-update-container .form-check:hover {
+    background-color: #e9ecef;
+}
+
+.bulk-update-container .form-check-input:checked + .form-check-label {
+    color: #007bff;
+    font-weight: 500;
+}
+
+.bulk-update-container .form-check-label {
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+/* SweetAlert2 custom styling for bulk update */
+.swal2-popup.swal2-modal {
+    border-radius: 10px;
+}
+
+.swal2-title {
+    color: #495057;
+    font-weight: 600;
+}
+
+.swal2-confirm {
+    border-radius: 6px !important;
+    padding: 10px 20px !important;
+    font-weight: 500 !important;
+}
+
+.swal2-cancel {
+    border-radius: 6px !important;
+    padding: 10px 20px !important;
+    font-weight: 500 !important;
 }
 </style>
 

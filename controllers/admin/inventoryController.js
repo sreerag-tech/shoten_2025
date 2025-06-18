@@ -147,49 +147,135 @@ const bulkUpdateStock = async (req, res) => {
   try {
     const { updates } = req.body; // Array of {productId, quantity, action}
 
+    // Validate input
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No updates provided'
+      });
+    }
+
     const results = [];
+    let successCount = 0;
+    let failCount = 0;
+
     for (const update of updates) {
       try {
-        const product = await Product.findById(update.productId);
+        const { productId, quantity, action } = update;
+
+        // Validate update data
+        if (!productId || quantity === undefined || !action) {
+          results.push({
+            productId: productId || 'unknown',
+            success: false,
+            message: 'Invalid update data - missing required fields'
+          });
+          failCount++;
+          continue;
+        }
+
+        // Validate quantity
+        const qty = parseInt(quantity);
+        if (isNaN(qty) || qty < 0) {
+          results.push({
+            productId,
+            success: false,
+            message: 'Invalid quantity - must be a non-negative number'
+          });
+          failCount++;
+          continue;
+        }
+
+        // Find product
+        const product = await Product.findById(productId);
         if (!product) {
-          results.push({ productId: update.productId, success: false, message: 'Product not found' });
+          results.push({
+            productId,
+            success: false,
+            message: 'Product not found'
+          });
+          failCount++;
           continue;
         }
 
+        // Calculate new quantity
         let newQuantity;
-        if (update.action === 'set') {
-          newQuantity = parseInt(update.quantity);
-        } else if (update.action === 'add') {
-          newQuantity = product.quantity + parseInt(update.quantity);
-        } else if (update.action === 'subtract') {
-          newQuantity = product.quantity - parseInt(update.quantity);
+        const oldQuantity = product.quantity;
+
+        switch (action) {
+          case 'set':
+            newQuantity = qty;
+            break;
+          case 'add':
+            newQuantity = oldQuantity + qty;
+            break;
+          case 'subtract':
+            newQuantity = Math.max(0, oldQuantity - qty); // Prevent negative stock
+            break;
+          default:
+            results.push({
+              productId,
+              success: false,
+              message: 'Invalid action - must be set, add, or subtract'
+            });
+            failCount++;
+            continue;
         }
 
-        if (newQuantity < 0) {
-          results.push({ productId: update.productId, success: false, message: 'Stock cannot be negative' });
-          continue;
-        }
-
+        // Update product
         product.quantity = newQuantity;
+        product.updatedAt = new Date();
         await product.save();
 
-        results.push({ productId: update.productId, success: true, newQuantity: newQuantity });
+        results.push({
+          productId,
+          productName: product.productName,
+          success: true,
+          oldQuantity,
+          newQuantity,
+          action,
+          message: `Stock updated from ${oldQuantity} to ${newQuantity}`
+        });
+        successCount++;
+
       } catch (error) {
-        results.push({ productId: update.productId, success: false, message: 'Update failed' });
+        console.error(`Error updating product ${update.productId}:`, error);
+        results.push({
+          productId: update.productId || 'unknown',
+          success: false,
+          message: error.message || 'Update failed due to server error'
+        });
+        failCount++;
       }
     }
 
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
+    // Prepare response
+    let message;
+    if (successCount > 0 && failCount === 0) {
+      message = `Successfully updated stock for ${successCount} product${successCount > 1 ? 's' : ''}`;
+    } else if (successCount > 0 && failCount > 0) {
+      message = `Bulk update completed: ${successCount} successful, ${failCount} failed`;
+    } else {
+      message = `Bulk update failed: All ${failCount} product${failCount > 1 ? 's' : ''} failed to update`;
+    }
 
-    res.json({ 
-      success: true, 
-      message: `Bulk update completed: ${successCount} successful, ${failCount} failed`,
-      results: results
+    res.json({
+      success: successCount > 0,
+      message,
+      stats: {
+        total: updates.length,
+        successful: successCount,
+        failed: failCount
+      },
+      results
     });
+
   } catch (error) {
     console.error('Error in bulk stock update:', error);
-    res.json({ success: false, message: 'Bulk update failed' });
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during bulk update'
+    });
   }
 };
 

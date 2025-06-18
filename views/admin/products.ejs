@@ -144,10 +144,10 @@
                                             </form>
                                             <!-- ✅ CHANGED: Delete with SweetAlert confirmation -->
                                             <form action="/admin/delete-product/<%= product._id %>" method="POST" style="display:inline;" class="delete-form">
-                                                <button type="button" class="btn btn-sm btn-danger"
+                                                <!-- <button type="button" class="btn btn-sm btn-danger"
                                                         onclick="confirmDeleteAction('<%= product._id %>', '<%= product.productName %>')">
                                                     <i class="fas fa-trash"></i>
-                                                </button>
+                                                </button> -->
                                             </form>
                                         </div>
                                     </td>
@@ -295,7 +295,7 @@ function confirmBlockAction(productId, productName, isBlocked) {
     });
 }
 
-// ✅ ADDED: SweetAlert confirmation for deleting products
+//
 function confirmDeleteAction(productId, productName) {
     Swal.fire({
         title: 'Delete Product?',
