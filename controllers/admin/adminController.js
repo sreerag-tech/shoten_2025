@@ -25,6 +25,7 @@ const loadLogin=(req,res)=>{
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+   
 
     // Find admin user
     const admin = await User.findOne({ email, isAdmin: true });

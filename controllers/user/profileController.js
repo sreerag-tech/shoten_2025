@@ -5,60 +5,73 @@ const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
+const loadProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId);
 
-
-const loadProfile=async(req,res)=>{
-  try{
-    const userId=req.session.user;
-    const userData=await User.findById(userId);
-
-    console.log('User data for profile:', {
+    console.log("User data for profile:", {
       name: userData.name,
       email: userData.email,
       phone: userData.phone,
       dateOfBirth: userData.dateOfBirth,
       bio: userData.bio,
-      profileImage: userData.profileImage
+      profileImage: userData.profileImage,
     });
 
     // Get user addresses
-    const addresses = await Address.find({userId: userId}).sort({isDefault: -1, createdAt: -1});
+    const addresses = await Address.find({ userId: userId }).sort({
+      isDefault: -1,
+      createdAt: -1,
+    });
 
     // Get user orders
-    const orders = await Order.find({userId: userId}).sort({createdOn: -1}).limit(10);
+    const orders = await Order.find({ userId: userId })
+      .sort({ createdOn: -1 })
+      .limit(10);
 
     // Get user wishlist items
-    const mongoose = require('mongoose');
-    const Wishlist = mongoose.models.Wishlist || require("../../models/wishListSchema");
+    const mongoose = require("mongoose");
+    const Wishlist =
+      mongoose.models.Wishlist || require("../../models/wishListSchema");
 
     const wishlistItems = await Wishlist.find({ userId: userId })
       .populate({
-        path: 'products.productId',
+        path: "products.productId",
         populate: {
-          path: 'category',
-          model: 'Category'
-        }
+          path: "category",
+          model: "Category",
+        },
       })
-      .sort({ 'products.addedOn': -1 });
+      .sort({ "products.addedOn": -1 });
 
     // Extract wishlist products (limit to 6 for profile preview)
     let wishlistProducts = [];
     if (wishlistItems.length > 0) {
       wishlistProducts = wishlistItems[0].products
-        .filter(item => item.productId && !item.productId.isDeleted && !item.productId.isBlocked)
+        .filter(
+          (item) =>
+            item.productId &&
+            !item.productId.isDeleted &&
+            !item.productId.isBlocked
+        )
         .slice(0, 6) // Limit to 6 items for profile preview
-        .map(item => ({
+        .map((item) => ({
           _id: item.productId._id,
           name: item.productId.productName,
           price: item.productId.salePrice,
           originalPrice: item.productId.regularPrice,
-          image: item.productId.productImage && item.productId.productImage.length > 0
-            ? `/uploads/product-images/${item.productId.productImage[0]}`
-            : '/images/placeholder.jpg',
-          category: item.productId.category ? item.productId.category.name : 'Unknown',
+          image:
+            item.productId.productImage &&
+            item.productId.productImage.length > 0
+              ? `/uploads/product-images/${item.productId.productImage[0]}`
+              : "/images/placeholder.jpg",
+          category: item.productId.category
+            ? item.productId.category.name
+            : "Unknown",
           isAvailable: item.productId.quantity > 0,
           discount: item.productId.offerPercentage || 0,
-          addedOn: item.addedOn
+          addedOn: item.addedOn,
         }));
     }
 
@@ -66,38 +79,38 @@ const loadProfile=async(req,res)=>{
     const profileMessage = req.session.profileMessage || null;
     req.session.profileMessage = null;
 
-    res.render("profile",{
+    res.render("profile", {
       user: userData,
       addresses: addresses,
       orders: orders,
       wishlistItems: wishlistProducts,
       wishlistCount: wishlistProducts.length,
-      profileMessage: profileMessage
-    })
-  }catch(error){
-    console.error('Error loading profile:', error);
-    res.status(500).send('Internal Server Error');
-}
+      profileMessage: profileMessage,
+    });
+  } catch (error) {
+    console.error("Error loading profile:", error);
+    res.status(500).send("Internal Server Error");
+  }
 };
 
-const loadEditProfile=async(req,res)=>{
-  try{
-    const userId=req.session.user;
-    const userData=await User.findById(userId);
+const loadEditProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId);
 
-    console.log('User data for edit profile:', {
+    console.log("User data for edit profile:", {
       name: userData.name,
       email: userData.email,
       phone: userData.phone,
       dateOfBirth: userData.dateOfBirth,
       bio: userData.bio,
-      profileImage: userData.profileImage
+      profileImage: userData.profileImage,
     });
 
-    res.render("edit-profile",{user: userData})
-  }catch(error){
-    console.error('Error loading edit profile:', error);
-    res.status(500).send('Internal Server Error');
+    res.render("edit-profile", { user: userData });
+  } catch (error) {
+    console.error("Error loading edit profile:", error);
+    res.status(500).send("Internal Server Error");
   }
 };
 
@@ -106,24 +119,28 @@ function validateProfileData(data) {
   const errors = [];
 
   // Name validation
-  if (!data.name || data.name.trim().length < 2 || data.name.trim().length > 50) {
-    errors.push('Name must be between 2 and 50 characters');
+  if (
+    !data.name ||
+    data.name.trim().length < 2 ||
+    data.name.trim().length > 50
+  ) {
+    errors.push("Name must be between 2 and 50 characters");
   }
 
   if (!/^[A-Za-z\s]+$/.test(data.name)) {
-    errors.push('Name should contain only letters and spaces');
+    errors.push("Name should contain only letters and spaces");
   }
 
   // Email validation
   if (!data.email) {
-    errors.push('Email is required');
+    errors.push("Email is required");
   } else if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(data.email)) {
-    errors.push('Please enter a valid email address');
+    errors.push("Please enter a valid email address");
   }
 
   // Phone validation (optional)
   if (data.phone && !/^[0-9]{10}$/.test(data.phone)) {
-    errors.push('Phone number must be exactly 10 digits');
+    errors.push("Phone number must be exactly 10 digits");
   }
 
   // Date of birth validation (optional)
@@ -133,17 +150,17 @@ function validateProfileData(data) {
     const age = today.getFullYear() - birthDate.getFullYear();
 
     if (age < 13) {
-      errors.push('You must be at least 13 years old');
+      errors.push("You must be at least 13 years old");
     }
 
     if (birthDate > today) {
-      errors.push('Date of birth cannot be in the future');
+      errors.push("Date of birth cannot be in the future");
     }
   }
 
   // Bio validation (optional)
   if (data.bio && data.bio.length > 500) {
-    errors.push('Bio cannot exceed 500 characters');
+    errors.push("Bio cannot exceed 500 characters");
   }
 
   return errors;
@@ -159,18 +176,18 @@ async function sendVerificationEmail(email, otp) {
   try {
     // Create transporter
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.NODEMAILER_EMAIL,
-        pass: process.env.NODEMAILER_PASSWORD
-      }
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
     });
 
     // Email content
     const mailOptions = {
       from: process.env.NODEMAILER_EMAIL,
       to: email,
-      subject: 'Shoten - Email Verification Code',
+      subject: "Shoten - Email Verification Code",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1f2937; color: #ffffff;">
           <div style="text-align: center; margin-bottom: 30px;">
@@ -205,45 +222,64 @@ async function sendVerificationEmail(email, otp) {
             </p>
           </div>
         </div>
-      `
+      `,
     };
 
     // Send email
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    console.error("Error sending verification email:", error);
     return false;
   }
 }
 
-const updateProfile=async(req,res)=>{
+const updateProfile = async (req, res) => {
   try {
     const userId = req.session.user;
-    const {name, email, phone, dateOfBirth, bio} = req.body;
+    const { name, email, phone, dateOfBirth, bio } = req.body;
     const profileImage = req.file?.filename;
 
-    console.log('Update Profile Data:', { name, email, phone, dateOfBirth, bio, profileImage });
+    console.log("Update Profile Data:", {
+      name,
+      email,
+      phone,
+      dateOfBirth,
+      bio,
+      profileImage,
+    });
 
     // Server-side validation
-    const validationErrors = validateProfileData({ name, email, phone, dateOfBirth, bio });
+    const validationErrors = validateProfileData({
+      name,
+      email,
+      phone,
+      dateOfBirth,
+      bio,
+    });
 
     if (validationErrors.length > 0) {
       req.session.profileMessage = {
-        type: 'error',
-        text: 'Validation errors: ' + validationErrors.join(', ')
+        type: "error",
+        text: "Validation errors: " + validationErrors.join(", "),
       };
-      return res.redirect('/profile/edit');
+      return res.redirect("/profile/edit");
     }
 
     // Check if email is being changed and handle verification
     const currentUser = await User.findById(userId);
     if (email && email !== currentUser.email) {
       // Check if new email already exists
-      const existingUser = await User.findOne({ email: email, _id: { $ne: userId } });
+      const existingUser = await User.findOne({
+        email: email,
+        _id: { $ne: userId },
+      });
       if (existingUser) {
-        req.session.profileMessage = { type: 'error', text: 'Email already exists!' };
-        return res.redirect('/profile/edit');
+        req.session.profileMessage = {
+          type: "error",
+          text: "Email already exists!",
+        };
+        return res.redirect("/profile/edit");
       }
 
       // Generate OTP for email verification
@@ -251,8 +287,11 @@ const updateProfile=async(req,res)=>{
       const emailSent = await sendVerificationEmail(email, otp);
 
       if (!emailSent) {
-        req.session.profileMessage = { type: 'error', text: 'Failed to send verification email!' };
-        return res.redirect('/profile/edit');
+        req.session.profileMessage = {
+          type: "error",
+          text: "Failed to send verification email!",
+        };
+        return res.redirect("/profile/edit");
       }
 
       // Store pending update data in session
@@ -262,7 +301,7 @@ const updateProfile=async(req,res)=>{
         phone: phone ? phone.trim() : null,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
         bio: bio ? bio.trim() : null,
-        profileImage: profileImage || null
+        profileImage: profileImage || null,
       };
       req.session.emailVerificationOtp = otp;
       req.session.otpTimestamp = Date.now();
@@ -270,45 +309,46 @@ const updateProfile=async(req,res)=>{
 
       // Redirect to email verification page
       req.session.verifyMessage = {
-        type: 'info',
-        text: `Verification code sent to ${email}. Please check your email.`
+        type: "info",
+        text: `Verification code sent to ${email}. Please check your email.`,
       };
-      return res.redirect('/profile/verify-email');
+      return res.redirect("/profile/verify-email");
     }
 
     // Build update data object
     const updateData = {
       name: name.trim(),
-      email: email.trim()
+      email: email.trim(),
     };
 
-    if(phone && phone.trim()) updateData.phone = phone.trim();
-    if(dateOfBirth) updateData.dateOfBirth = new Date(dateOfBirth);
-    if(bio) updateData.bio = bio.trim();
-    if(profileImage) updateData.profileImage = profileImage;
+    if (phone && phone.trim()) updateData.phone = phone.trim();
+    if (dateOfBirth) updateData.dateOfBirth = new Date(dateOfBirth);
+    if (bio) updateData.bio = bio.trim();
+    if (profileImage) updateData.profileImage = profileImage;
 
-    console.log('Update Data Object:', updateData);
+    console.log("Update Data Object:", updateData);
 
     // Update user in database
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {new: true});
-    console.log('Updated User:', updatedUser);
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
+    console.log("Updated User:", updatedUser);
 
     // Set success message in session and redirect
-    req.session.profileMessage = { type: 'success', text: 'Profile updated successfully!' };
-    res.redirect('/profile');
+    req.session.profileMessage = {
+      type: "success",
+      text: "Profile updated successfully!",
+    };
+    res.redirect("/profile");
   } catch (error) {
-    console.error('Error updating profile:', error);
-    req.session.profileMessage = { type: 'error', text: 'Failed to update profile. Please try again.' };
-    res.redirect('/profile/edit');
+    console.error("Error updating profile:", error);
+    req.session.profileMessage = {
+      type: "error",
+      text: "Failed to update profile. Please try again.",
+    };
+    res.redirect("/profile/edit");
   }
 };
-
-
-
-
-
-
-
 
 // Address Management Functions
 const addAddress = async (req, res) => {
@@ -326,15 +366,15 @@ const addAddress = async (req, res) => {
 
     const newAddress = new Address({
       userId: userId,
-      ...addressData
+      ...addressData,
     });
 
     await newAddress.save();
 
-    res.json({ success: true, message: 'Address added successfully' });
+    res.json({ success: true, message: "Address added successfully" });
   } catch (error) {
-    console.error('Error adding address:', error);
-    res.json({ success: false, message: 'Failed to add address' });
+    console.error("Error adding address:", error);
+    res.json({ success: false, message: "Failed to add address" });
   }
 };
 
@@ -346,13 +386,13 @@ const getAddress = async (req, res) => {
     const address = await Address.findOne({ _id: addressId, userId: userId });
 
     if (!address) {
-      return res.json({ success: false, message: 'Address not found' });
+      return res.json({ success: false, message: "Address not found" });
     }
 
     res.json({ success: true, address: address });
   } catch (error) {
-    console.error('Error fetching address:', error);
-    res.json({ success: false, message: 'Failed to fetch address' });
+    console.error("Error fetching address:", error);
+    res.json({ success: false, message: "Failed to fetch address" });
   }
 };
 
@@ -360,7 +400,18 @@ const editAddress = async (req, res) => {
   try {
     const addressId = req.params.id;
     const userId = req.session.user;
-    const { name, phone, pincode, address, locality, city, state, landMark, addressType, isDefault } = req.body;
+    const {
+      name,
+      phone,
+      pincode,
+      address,
+      locality,
+      city,
+      state,
+      landMark,
+      addressType,
+      isDefault,
+    } = req.body;
 
     // Find and update the address
     const updatedAddress = await Address.findOneAndUpdate(
@@ -373,14 +424,14 @@ const editAddress = async (req, res) => {
         locality: locality.trim(),
         city: city.trim(),
         state: state.trim(),
-        landMark: landMark ? landMark.trim() : '',
-        addressType: addressType
+        landMark: landMark ? landMark.trim() : "",
+        addressType: addressType,
       },
       { new: true }
     );
 
     if (!updatedAddress) {
-      return res.json({ success: false, message: 'Address not found' });
+      return res.json({ success: false, message: "Address not found" });
     }
 
     // If setting as default, update other addresses
@@ -393,10 +444,10 @@ const editAddress = async (req, res) => {
       await updatedAddress.save();
     }
 
-    res.json({ success: true, message: 'Address updated successfully' });
+    res.json({ success: true, message: "Address updated successfully" });
   } catch (error) {
-    console.error('Error updating address:', error);
-    res.json({ success: false, message: 'Failed to update address' });
+    console.error("Error updating address:", error);
+    res.json({ success: false, message: "Failed to update address" });
   }
 };
 
@@ -407,15 +458,15 @@ const deleteAddress = async (req, res) => {
 
     const address = await Address.findOne({ _id: addressId, userId: userId });
     if (!address) {
-      return res.json({ success: false, message: 'Address not found' });
+      return res.json({ success: false, message: "Address not found" });
     }
 
     await Address.findByIdAndDelete(addressId);
 
-    res.json({ success: true, message: 'Address deleted successfully' });
+    res.json({ success: true, message: "Address deleted successfully" });
   } catch (error) {
-    console.error('Error deleting address:', error);
-    res.json({ success: false, message: 'Failed to delete address' });
+    console.error("Error deleting address:", error);
+    res.json({ success: false, message: "Failed to delete address" });
   }
 };
 
@@ -433,10 +484,10 @@ const setDefaultAddress = async (req, res) => {
     // Set the selected address as default
     await Address.findByIdAndUpdate(addressId, { isDefault: true });
 
-    res.json({ success: true, message: 'Default address updated' });
+    res.json({ success: true, message: "Default address updated" });
   } catch (error) {
-    console.error('Error setting default address:', error);
-    res.json({ success: false, message: 'Failed to set default address' });
+    console.error("Error setting default address:", error);
+    res.json({ success: false, message: "Failed to set default address" });
   }
 };
 
@@ -448,18 +499,27 @@ const changePassword = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.json({ success: false, message: 'User not found' });
+      return res.json({ success: false, message: "User not found" });
     }
 
     // Check if user has a password (Google users might not have one)
     if (!user.password) {
-      return res.json({ success: false, message: 'Cannot change password for Google account' });
+      return res.json({
+        success: false,
+        message: "Cannot change password for Google account",
+      });
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
     if (!isCurrentPasswordValid) {
-      return res.json({ success: false, message: 'Current password is incorrect' });
+      return res.json({
+        success: false,
+        message: "Current password is incorrect",
+      });
     }
 
     // Hash new password
@@ -468,10 +528,10 @@ const changePassword = async (req, res) => {
     // Update password
     await User.findByIdAndUpdate(userId, { password: hashedNewPassword });
 
-    res.json({ success: true, message: 'Password changed successfully' });
+    res.json({ success: true, message: "Password changed successfully" });
   } catch (error) {
-    console.error('Error changing password:', error);
-    res.json({ success: false, message: 'Failed to change password' });
+    console.error("Error changing password:", error);
+    res.json({ success: false, message: "Failed to change password" });
   }
 };
 
@@ -483,39 +543,45 @@ const cancelOrder = async (req, res) => {
 
     const order = await Order.findOne({ _id: orderId, userId: userId });
     if (!order) {
-      return res.json({ success: false, message: 'Order not found' });
+      return res.json({ success: false, message: "Order not found" });
     }
 
     // Check if order can be cancelled
-    const canCancel = order.orderedItems.some(item =>
-      item.status === 'Processing' || item.status === 'Shipped'
+    const canCancel = order.orderedItems.some(
+      (item) => item.status === "Processing" || item.status === "Shipped"
     );
 
     if (!canCancel) {
-      return res.json({ success: false, message: 'Order cannot be cancelled' });
+      return res.json({ success: false, message: "Order cannot be cancelled" });
     }
 
     // Update order status to cancelled
     await Order.findByIdAndUpdate(orderId, {
       $set: {
-        'orderedItems.$[].status': 'Cancelled',
-        'cancellation_reason': 'Cancelled by user'
-      }
+        "orderedItems.$[].status": "Cancelled",
+        cancellation_reason: "Cancelled by user",
+      },
     });
 
-    res.json({ success: true, message: 'Order cancelled successfully' });
+    res.json({ success: true, message: "Order cancelled successfully" });
   } catch (error) {
-    console.error('Error cancelling order:', error);
-    res.json({ success: false, message: 'Failed to cancel order' });
+    console.error("Error cancelling order:", error);
+    res.json({ success: false, message: "Failed to cancel order" });
   }
 };
 
 // Load Email Verification Page
 const loadEmailVerification = async (req, res) => {
   try {
-    if (!req.session.pendingProfileUpdate || !req.session.emailVerificationOtp) {
-      req.session.profileMessage = { type: 'error', text: 'No pending email verification found.' };
-      return res.redirect('/profile/edit');
+    if (
+      !req.session.pendingProfileUpdate ||
+      !req.session.emailVerificationOtp
+    ) {
+      req.session.profileMessage = {
+        type: "error",
+        text: "No pending email verification found.",
+      };
+      return res.redirect("/profile/edit");
     }
 
     // Get verification message from session
@@ -524,8 +590,8 @@ const loadEmailVerification = async (req, res) => {
 
     res.render("verify-email", { verifyMessage });
   } catch (error) {
-    console.error('Error loading email verification:', error);
-    res.status(500).send('Internal Server Error');
+    console.error("Error loading email verification:", error);
+    res.status(500).send("Internal Server Error");
   }
 };
 
@@ -535,8 +601,14 @@ const verifyEmailOTP = async (req, res) => {
     const { otp } = req.body;
     const userId = req.session.user;
 
-    if (!req.session.pendingProfileUpdate || !req.session.emailVerificationOtp) {
-      return res.json({ success: false, message: 'No pending email verification found.' });
+    if (
+      !req.session.pendingProfileUpdate ||
+      !req.session.emailVerificationOtp
+    ) {
+      return res.json({
+        success: false,
+        message: "No pending email verification found.",
+      });
     }
 
     // Check OTP expiry (5 minutes)
@@ -548,12 +620,18 @@ const verifyEmailOTP = async (req, res) => {
       delete req.session.otpTimestamp;
       delete req.session.newEmail;
 
-      return res.json({ success: false, message: 'Verification code has expired. Please try again.' });
+      return res.json({
+        success: false,
+        message: "Verification code has expired. Please try again.",
+      });
     }
 
     // Verify OTP
     if (otp !== req.session.emailVerificationOtp) {
-      return res.json({ success: false, message: 'Invalid verification code. Please try again.' });
+      return res.json({
+        success: false,
+        message: "Invalid verification code. Please try again.",
+      });
     }
 
     // Update profile with pending data
@@ -568,14 +646,17 @@ const verifyEmailOTP = async (req, res) => {
 
     // Set success message
     req.session.profileMessage = {
-      type: 'success',
-      text: 'Email verified and profile updated successfully!'
+      type: "success",
+      text: "Email verified and profile updated successfully!",
     };
 
-    res.json({ success: true, message: 'Email verified successfully!' });
+    res.json({ success: true, message: "Email verified successfully!" });
   } catch (error) {
-    console.error('Error verifying email OTP:', error);
-    res.json({ success: false, message: 'Failed to verify email. Please try again.' });
+    console.error("Error verifying email OTP:", error);
+    res.json({
+      success: false,
+      message: "Failed to verify email. Please try again.",
+    });
   }
 };
 
@@ -583,7 +664,10 @@ const verifyEmailOTP = async (req, res) => {
 const resendEmailOTP = async (req, res) => {
   try {
     if (!req.session.pendingProfileUpdate || !req.session.newEmail) {
-      return res.json({ success: false, message: 'No pending email verification found.' });
+      return res.json({
+        success: false,
+        message: "No pending email verification found.",
+      });
     }
 
     // Generate new OTP
@@ -591,17 +675,26 @@ const resendEmailOTP = async (req, res) => {
     const emailSent = await sendVerificationEmail(req.session.newEmail, otp);
 
     if (!emailSent) {
-      return res.json({ success: false, message: 'Failed to send verification email!' });
+      return res.json({
+        success: false,
+        message: "Failed to send verification email!",
+      });
     }
 
     // Update session with new OTP
     req.session.emailVerificationOtp = otp;
     req.session.otpTimestamp = Date.now();
 
-    res.json({ success: true, message: 'Verification code sent successfully!' });
+    res.json({
+      success: true,
+      message: "Verification code sent successfully!",
+    });
   } catch (error) {
-    console.error('Error resending email OTP:', error);
-    res.json({ success: false, message: 'Failed to resend verification code.' });
+    console.error("Error resending email OTP:", error);
+    res.json({
+      success: false,
+      message: "Failed to resend verification code.",
+    });
   }
 };
 
@@ -614,10 +707,10 @@ const updateBasicProfile = async (req, res) => {
     // Basic validation for required fields (excluding email)
     if (!name || name.trim().length === 0) {
       req.session.profileMessage = {
-        type: 'error',
-        text: 'Name is required'
+        type: "error",
+        text: "Name is required",
       };
-      return res.redirect('/profile');
+      return res.redirect("/profile");
     }
 
     // Prepare update data (excluding email)
@@ -625,20 +718,28 @@ const updateBasicProfile = async (req, res) => {
       name: name.trim(),
       phone: phone ? phone.trim() : null,
       dateOfBirth: dateOfBirth || null,
-      bio: bio ? bio.trim() : null
+      bio: bio ? bio.trim() : null,
     };
 
     // Update user in database
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {new: true});
-    console.log('Updated User:', updatedUser);
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
+    console.log("Updated User:", updatedUser);
 
     // Set success message in session and redirect
-    req.session.profileMessage = { type: 'success', text: 'Profile updated successfully!' };
-    res.redirect('/profile');
+    req.session.profileMessage = {
+      type: "success",
+      text: "Profile updated successfully!",
+    };
+    res.redirect("/profile");
   } catch (error) {
-    console.error('Error updating basic profile:', error);
-    req.session.profileMessage = { type: 'error', text: 'Failed to update profile. Please try again.' };
-    res.redirect('/profile');
+    console.error("Error updating basic profile:", error);
+    req.session.profileMessage = {
+      type: "error",
+      text: "Failed to update profile. Please try again.",
+    };
+    res.redirect("/profile");
   }
 };
 
@@ -649,25 +750,34 @@ const changeEmail = async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.json({ success: false, message: 'Email is required' });
+      return res.json({ success: false, message: "Email is required" });
     }
 
     // Validate email format
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
-      return res.json({ success: false, message: 'Please enter a valid email address' });
+      return res.json({
+        success: false,
+        message: "Please enter a valid email address",
+      });
     }
 
     // Get current user
     const currentUser = await User.findById(userId);
     if (email === currentUser.email) {
-      return res.json({ success: false, message: 'New email must be different from current email' });
+      return res.json({
+        success: false,
+        message: "New email must be different from current email",
+      });
     }
 
     // Check if new email already exists
-    const existingUser = await User.findOne({ email: email, _id: { $ne: userId } });
+    const existingUser = await User.findOne({
+      email: email,
+      _id: { $ne: userId },
+    });
     if (existingUser) {
-      return res.json({ success: false, message: 'Email already exists!' });
+      return res.json({ success: false, message: "Email already exists!" });
     }
 
     // Generate OTP for email verification
@@ -675,7 +785,10 @@ const changeEmail = async (req, res) => {
     const emailSent = await sendVerificationEmail(email, otp);
 
     if (!emailSent) {
-      return res.json({ success: false, message: 'Failed to send verification email!' });
+      return res.json({
+        success: false,
+        message: "Failed to send verification email!",
+      });
     }
 
     // Store pending update data in session
@@ -684,7 +797,7 @@ const changeEmail = async (req, res) => {
       email: email.trim(),
       phone: currentUser.phone,
       dateOfBirth: currentUser.dateOfBirth,
-      bio: currentUser.bio
+      bio: currentUser.bio,
     };
 
     req.session.emailVerificationOtp = otp;
@@ -694,16 +807,19 @@ const changeEmail = async (req, res) => {
     // Return success response
     res.json({
       success: true,
-      message: 'Verification code sent successfully!',
-      redirectUrl: '/profile/verify-email'
+      message: "Verification code sent successfully!",
+      redirectUrl: "/profile/verify-email",
     });
   } catch (error) {
-    console.error('Error changing email:', error);
-    res.json({ success: false, message: 'Failed to send verification email. Please try again.' });
+    console.error("Error changing email:", error);
+    res.json({
+      success: false,
+      message: "Failed to send verification email. Please try again.",
+    });
   }
 };
 
-module.exports={
+module.exports = {
   loadProfile,
   loadEditProfile,
   updateProfile,
@@ -718,5 +834,5 @@ module.exports={
   cancelOrder,
   loadEmailVerification,
   verifyEmailOTP,
-  resendEmailOTP
-}
+  resendEmailOTP,
+};

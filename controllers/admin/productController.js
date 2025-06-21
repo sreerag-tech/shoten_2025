@@ -267,15 +267,15 @@ const editProduct = async (req, res) => {
 
         newImages[i] = "resized_" + file.filename;
 
-        // ✅ IMPROVED: Safely delete original uploaded file using helper function
+        
         safeDeleteFile(originalImagePath).catch(err =>
           console.warn(`Could not delete original image: ${err.message}`)
         );
 
-        // ✅ IMPROVED: Safely delete old image if it exists and is not empty
+        
         if (existingImages[i] && existingImages[i].trim() !== '') {
           const oldImagePath = path.join("public", "uploads", "product-images", existingImages[i]);
-          // ✅ IMPROVED: Only delete if the old image file actually exists
+       
           if (fs.existsSync(oldImagePath)) {
             safeDeleteFile(oldImagePath).catch(err =>
               console.warn(`Could not delete old image: ${err.message}`)
@@ -285,7 +285,6 @@ const editProduct = async (req, res) => {
       }
     }
 
-    // ✅ ADDED: Build the final image array, handling sparse arrays properly
     const finalImages = [];
     for (let i = 0; i < Math.max(existingImages.length, newImages.length, 4); i++) {
       if (newImages[i]) {
