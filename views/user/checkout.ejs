@@ -170,34 +170,117 @@
                         <% }) %>
                     </div>
                     
+                    <!-- Coupon Section -->
+                    <div class="mb-6">
+                        <% if (appliedCoupon) { %>
+                            <!-- Applied Coupon -->
+                            <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h4 class="text-green-400 font-semibold flex items-center gap-2">
+                                            <i class="fas fa-tag"></i> Coupon Applied
+                                        </h4>
+                                        <p class="text-green-300 text-sm">
+                                            Code: <span class="font-mono font-bold"><%= appliedCoupon.code %></span>
+                                        </p>
+                                        <p class="text-green-300 text-sm">
+                                            You saved ₹<%= appliedCoupon.discount.toLocaleString() %>
+                                        </p>
+                                    </div>
+                                    <button type="button" id="removeCouponBtn" class="text-red-400 hover:text-red-300 transition-colors">
+                                        <i class="fas fa-times text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <!-- Apply Coupon -->
+                            <div class="bg-gray-700/50 border border-gray-600 rounded-lg p-4">
+                                <h4 class="text-white font-semibold mb-3 flex items-center gap-2">
+                                    <i class="fas fa-tag"></i> Have a Coupon?
+                                </h4>
+
+                                <!-- Coupon Input -->
+                                <div class="flex gap-2 mb-3">
+                                    <input type="text" id="couponCode" placeholder="Enter coupon code"
+                                           class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-[#00ffff] focus:outline-none">
+                                    <button type="button" id="applyCouponBtn"
+                                            class="px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition-colors font-semibold">
+                                        Apply
+                                    </button>
+                                </div>
+
+                                <!-- Available Coupons -->
+                                <% if (availableCoupons && availableCoupons.length > 0) { %>
+                                    <div class="mt-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h5 class="text-sm font-medium text-gray-300">Available Coupons</h5>
+                                            <button type="button" id="toggleCoupons" class="text-[#00ffff] text-xs hover:underline">
+                                                Show All
+                                            </button>
+                                        </div>
+                                        <div id="availableCouponsContainer" class="space-y-2 max-h-0 overflow-hidden transition-all duration-300">
+                                            <% availableCoupons.forEach(coupon => { %>
+                                                <div class="bg-gray-800/50 border border-gray-600 rounded-lg p-3 cursor-pointer hover:border-[#00ffff] transition-colors coupon-item"
+                                                     data-coupon-code="<%= coupon.code %>">
+                                                    <div class="flex justify-between items-start">
+                                                        <div class="flex-1">
+                                                            <div class="flex items-center gap-2 mb-1">
+                                                                <span class="font-mono font-bold text-[#00ffff] text-sm"><%= coupon.code %></span>
+                                                                <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">
+                                                                    Save ₹<%= coupon.offerPrice %>
+                                                                </span>
+                                                            </div>
+                                                            <% if (coupon.description) { %>
+                                                                <p class="text-gray-400 text-xs mb-1"><%= coupon.description %></p>
+                                                            <% } %>
+                                                            <p class="text-gray-500 text-xs">
+                                                                Min order: ₹<%= coupon.minimumPrice %>
+                                                            </p>
+                                                        </div>
+                                                        <button type="button" class="apply-coupon-btn text-[#00ffff] text-xs hover:underline ml-2"
+                                                                data-coupon-code="<%= coupon.code %>">
+                                                            Apply
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            <% }) %>
+                                        </div>
+                                    </div>
+                                <% } %>
+
+                                <p class="text-gray-400 text-xs mt-2">
+                                    <i class="fas fa-info-circle"></i> Enter your coupon code or select from available coupons
+                                </p>
+                            </div>
+                        <% } %>
+                    </div>
+
                     <!-- Price Breakdown -->
-                    <div class="space-y-3 mb-6">
+                    <div class="space-y-3 mb-6" id="priceBreakdown">
                         <div class="flex justify-between">
                             <span class="text-gray-400">Subtotal (<%= totalItems %> items):</span>
-                            <span class="text-white">₹<%= subtotal.toLocaleString() %></span>
+                            <span class="text-white" id="subtotalAmount">₹<%= subtotal.toLocaleString() %></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400">Tax (GST <%= (taxRate * 100) %>%):</span>
-                            <span class="text-white">₹<%= taxAmount.toLocaleString() %></span>
+                            <span class="text-white" id="taxAmount">₹<%= taxAmount.toLocaleString() %></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400">Shipping:</span>
                             <% if (shippingCharge === 0) { %>
-                                <span class="text-green-400">FREE</span>
+                                <span class="text-green-400" id="shippingAmount">FREE</span>
                             <% } else { %>
-                                <span class="text-white">₹<%= shippingCharge %></span>
+                                <span class="text-white" id="shippingAmount">₹<%= shippingCharge %></span>
                             <% } %>
                         </div>
-                        <% if (discount > 0) { %>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Discount:</span>
-                                <span class="text-green-400">-₹<%= discount.toLocaleString() %></span>
-                            </div>
-                        <% } %>
+                        <div class="flex justify-between" id="discountRow" style="<%= discount > 0 ? '' : 'display: none;' %>">
+                            <span class="text-gray-400">Coupon Discount:</span>
+                            <span class="text-green-400" id="discountAmount">-₹<%= discount.toLocaleString() %></span>
+                        </div>
                         <hr class="border-gray-700">
                         <div class="flex justify-between text-lg font-bold">
                             <span class="text-white">Total:</span>
-                            <span class="text-[#00ffff]">₹<%= finalTotal.toLocaleString() %></span>
+                            <span class="text-[#00ffff]" id="finalTotal">₹<%= finalTotal.toLocaleString() %></span>
                         </div>
                     </div>
                     
@@ -237,6 +320,189 @@
         text: '<%= checkoutMessage.text %>'
     };
 <% } %>
+
+// Coupon functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply Coupon
+    const applyCouponBtn = document.getElementById('applyCouponBtn');
+    const couponCodeInput = document.getElementById('couponCode');
+    const removeCouponBtn = document.getElementById('removeCouponBtn');
+    const toggleCouponsBtn = document.getElementById('toggleCoupons');
+    const couponsContainer = document.getElementById('availableCouponsContainer');
+
+    // Toggle available coupons display
+    if (toggleCouponsBtn && couponsContainer) {
+        toggleCouponsBtn.addEventListener('click', function() {
+            const isExpanded = couponsContainer.style.maxHeight !== '0px' && couponsContainer.style.maxHeight !== '';
+
+            if (isExpanded) {
+                couponsContainer.style.maxHeight = '0px';
+                toggleCouponsBtn.textContent = 'Show All';
+            } else {
+                couponsContainer.style.maxHeight = couponsContainer.scrollHeight + 'px';
+                toggleCouponsBtn.textContent = 'Hide';
+            }
+        });
+    }
+
+    // Apply coupon from available coupons
+    document.querySelectorAll('.apply-coupon-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const couponCode = this.getAttribute('data-coupon-code');
+            if (couponCodeInput) {
+                couponCodeInput.value = couponCode;
+                applyCouponBtn.click();
+            }
+        });
+    });
+
+    // Click on coupon item to select
+    document.querySelectorAll('.coupon-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const couponCode = this.getAttribute('data-coupon-code');
+            if (couponCodeInput) {
+                couponCodeInput.value = couponCode;
+                // Highlight selected coupon
+                document.querySelectorAll('.coupon-item').forEach(c => c.classList.remove('border-[#00ffff]'));
+                this.classList.add('border-[#00ffff]');
+            }
+        });
+    });
+
+    // Apply coupon function
+    function applyCoupon(couponCode) {
+        if (!couponCode) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'Please enter a coupon code',
+                icon: 'error',
+                confirmButtonColor: '#00ffff'
+            });
+            return;
+        }
+
+        // Show loading
+        if (applyCouponBtn) {
+            applyCouponBtn.disabled = true;
+            applyCouponBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Applying...';
+        }
+
+        fetch('/checkout/apply-coupon', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ couponCode: couponCode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#00ffff'
+                }).then(() => {
+                    // Reload page to show updated UI
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message,
+                    icon: 'error',
+                    confirmButtonColor: '#00ffff'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to apply coupon. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#00ffff'
+            });
+        })
+        .finally(() => {
+            if (applyCouponBtn) {
+                applyCouponBtn.disabled = false;
+                applyCouponBtn.innerHTML = 'Apply';
+            }
+        });
+    }
+
+    if (applyCouponBtn && couponCodeInput) {
+        applyCouponBtn.addEventListener('click', function() {
+            const couponCode = couponCodeInput.value.trim();
+            applyCoupon(couponCode);
+        });
+
+        // Allow Enter key to apply coupon
+        couponCodeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const couponCode = this.value.trim();
+                applyCoupon(couponCode);
+            }
+        });
+    }
+
+    // Remove Coupon
+    if (removeCouponBtn) {
+        removeCouponBtn.addEventListener('click', function() {
+            Swal.fire({
+                title: 'Remove Coupon?',
+                text: 'Are you sure you want to remove the applied coupon?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#00ffff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Remove',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/checkout/remove-coupon', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Removed!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonColor: '#00ffff'
+                            }).then(() => {
+                                // Reload page to show updated UI
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message,
+                                icon: 'error',
+                                confirmButtonColor: '#00ffff'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to remove coupon. Please try again.',
+                            icon: 'error',
+                            confirmButtonColor: '#00ffff'
+                        });
+                    });
+                }
+            });
+        });
+    }
+});
 </script>
 
 <!-- Enhanced CSS for Checkout Page -->
@@ -260,6 +526,101 @@
 
 .address-radio, .payment-radio {
     accent-color: #00ffff;
+}
+
+/* Coupon Section Styling */
+#couponCode {
+    transition: all 0.3s ease;
+}
+
+#couponCode:focus {
+    box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+#applyCouponBtn {
+    transition: all 0.3s ease;
+    min-width: 80px;
+}
+
+#applyCouponBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+}
+
+#applyCouponBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#removeCouponBtn {
+    transition: all 0.3s ease;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+#removeCouponBtn:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    transform: scale(1.1);
+}
+
+/* Price breakdown animations */
+#priceBreakdown > div {
+    transition: all 0.3s ease;
+}
+
+#discountRow {
+    animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Available Coupons Styling */
+.coupon-item {
+    transition: all 0.3s ease;
+    border: 1px solid #4b5563;
+}
+
+.coupon-item:hover {
+    border-color: #00ffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
+}
+
+.coupon-item.border-\[#00ffff\] {
+    border-color: #00ffff !important;
+    background-color: rgba(0, 255, 255, 0.05);
+}
+
+#availableCouponsContainer {
+    transition: max-height 0.3s ease-in-out;
+}
+
+#toggleCoupons {
+    transition: all 0.3s ease;
+}
+
+#toggleCoupons:hover {
+    color: #0088ff;
+}
+
+.apply-coupon-btn {
+    transition: all 0.3s ease;
+}
+
+.apply-coupon-btn:hover {
+    color: #0088ff;
+    transform: scale(1.05);
 }
 
 /* Enhanced animations */

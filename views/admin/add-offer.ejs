@@ -1,0 +1,263 @@
+<%- include('partials/header') %>
+
+<!-- Add Offer Page -->
+<div class="container-fluid p-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-plus me-2"></i>Add New Offer
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="/admin/offers" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Offers
+                    </a>
+                </div>
+            </div>
+
+            <!-- Add Offer Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Offer Details</h5>
+                </div>
+                <div class="card-body">
+                    <form id="addOfferForm">
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="offerName" class="form-label">Offer Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="offerName" name="offerName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="offerType" class="form-label">Offer Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="offerType" name="offerType" required>
+                                        <option value="">Select Offer Type</option>
+                                        <option value="product">Product Offer</option>
+                                        <option value="category">Category Offer</option>
+                                        <option value="referral">Referral Offer</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+
+                        <!-- Discount Information -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="discountType" class="form-label">Discount Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="discountType" name="discountType" required>
+                                        <option value="">Select Type</option>
+                                        <option value="percentage">Percentage</option>
+                                        <option value="fixed">Fixed Amount</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="discountValue" class="form-label">Discount Value <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="discountValue" name="discountValue" 
+                                           min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="maxDiscountAmount" class="form-label">Max Discount Amount</label>
+                                    <input type="number" class="form-control" id="maxDiscountAmount" name="maxDiscountAmount" 
+                                           min="0" step="0.01" placeholder="For percentage discounts">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="minimumPurchaseAmount" class="form-label">Minimum Purchase Amount</label>
+                            <input type="number" class="form-control" id="minimumPurchaseAmount" name="minimumPurchaseAmount" 
+                                   min="0" step="0.01" value="0">
+                        </div>
+
+                        <!-- Applicable Items -->
+                        <div id="productSelection" style="display: none;">
+                            <div class="mb-3">
+                                <label for="applicableProducts" class="form-label">Select Products <span class="text-danger">*</span></label>
+                                <select class="form-select" id="applicableProducts" name="applicableProducts" multiple size="8">
+                                    <% products.forEach(product => { %>
+                                        <option value="<%= product._id %>">
+                                            <%= product.productName %> - <%= product.category.name %>
+                                        </option>
+                                    <% }) %>
+                                </select>
+                                <div class="form-text">Hold Ctrl/Cmd to select multiple products</div>
+                            </div>
+                        </div>
+
+                        <div id="categorySelection" style="display: none;">
+                            <div class="mb-3">
+                                <label for="applicableCategories" class="form-label">Select Categories <span class="text-danger">*</span></label>
+                                <select class="form-select" id="applicableCategories" name="applicableCategories" multiple size="6">
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category._id %>"><%= category.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="form-text">Hold Ctrl/Cmd to select multiple categories</div>
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="startDate" name="startDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="endDate" name="endDate" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Usage Limits -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="usageLimit" class="form-label">Total Usage Limit</label>
+                                    <input type="number" class="form-control" id="usageLimit" name="usageLimit" 
+                                           min="1" placeholder="Leave empty for unlimited">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="userUsageLimit" class="form-label">Per User Usage Limit</label>
+                                    <input type="number" class="form-control" id="userUsageLimit" name="userUsageLimit" 
+                                           min="1" value="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="/admin/offers" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Create Offer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const offerTypeSelect = document.getElementById('offerType');
+    const productSelection = document.getElementById('productSelection');
+    const categorySelection = document.getElementById('categorySelection');
+    const discountTypeSelect = document.getElementById('discountType');
+    const maxDiscountField = document.getElementById('maxDiscountAmount').parentElement;
+    
+    // Show/hide applicable items based on offer type
+    offerTypeSelect.addEventListener('change', function() {
+        const offerType = this.value;
+        
+        productSelection.style.display = offerType === 'product' ? 'block' : 'none';
+        categorySelection.style.display = offerType === 'category' ? 'block' : 'none';
+        
+        // Clear selections when switching types
+        if (offerType !== 'product') {
+            document.getElementById('applicableProducts').selectedIndex = -1;
+        }
+        if (offerType !== 'category') {
+            document.getElementById('applicableCategories').selectedIndex = -1;
+        }
+    });
+    
+    // Show/hide max discount field based on discount type
+    discountTypeSelect.addEventListener('change', function() {
+        const discountType = this.value;
+        maxDiscountField.style.display = discountType === 'percentage' ? 'block' : 'none';
+    });
+    
+    // Set minimum start date to today
+    const now = new Date();
+    const today = now.toISOString().slice(0, 16);
+    document.getElementById('startDate').min = today;
+    
+    // Update end date minimum when start date changes
+    document.getElementById('startDate').addEventListener('change', function() {
+        document.getElementById('endDate').min = this.value;
+    });
+    
+    // Form submission
+    document.getElementById('addOfferForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Handle multiple selections
+        const selectedProducts = Array.from(document.getElementById('applicableProducts').selectedOptions).map(option => option.value);
+        const selectedCategories = Array.from(document.getElementById('applicableCategories').selectedOptions).map(option => option.value);
+        
+        if (data.offerType === 'product') {
+            data.applicableProducts = selectedProducts;
+        }
+        if (data.offerType === 'category') {
+            data.applicableCategories = selectedCategories;
+        }
+        
+        // Validation
+        if (data.offerType === 'product' && selectedProducts.length === 0) {
+            Swal.fire('Error!', 'Please select at least one product', 'error');
+            return;
+        }
+        
+        if (data.offerType === 'category' && selectedCategories.length === 0) {
+            Swal.fire('Error!', 'Please select at least one category', 'error');
+            return;
+        }
+        
+        // Show loading
+        Swal.fire({
+            title: 'Creating Offer...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        fetch('/admin/offers/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success'
+                }).then(() => {
+                    window.location.href = '/admin/offers';
+                });
+            } else {
+                Swal.fire('Error!', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('Error!', 'Failed to create offer. Please try again.', 'error');
+        });
+    });
+});
+</script>
+
+<%- include('partials/footer') %>

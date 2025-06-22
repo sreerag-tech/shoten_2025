@@ -1,0 +1,316 @@
+<%- include('partials/header') %>
+
+<!-- Offers Management Page -->
+<div class="container-fluid p-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-tags me-2"></i>Offer Management
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="/admin/offers/add" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add New Offer
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary"><%= stats.total %></h5>
+                            <p class="card-text">Total Offers</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success"><%= stats.active %></h5>
+                            <p class="card-text">Active</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning"><%= stats.inactive %></h5>
+                            <p class="card-text">Inactive</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info"><%= stats.product %></h5>
+                            <p class="card-text">Product Offers</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info"><%= stats.category %></h5>
+                            <p class="card-text">Category Offers</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info"><%= stats.referral %></h5>
+                            <p class="card-text">Referral Offers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" action="/admin/offers" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="<%= search %>" placeholder="Search offers...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="offerType" class="form-label">Offer Type</label>
+                            <select class="form-select" id="offerType" name="offerType">
+                                <option value="">All Types</option>
+                                <option value="product" <%= offerType === 'product' ? 'selected' : '' %>>Product</option>
+                                <option value="category" <%= offerType === 'category' ? 'selected' : '' %>>Category</option>
+                                <option value="referral" <%= offerType === 'referral' ? 'selected' : '' %>>Referral</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Status</option>
+                                <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+                                <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search me-1"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Offers Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Offers List</h5>
+                </div>
+                <div class="card-body">
+                    <% if (offers.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Offer Name</th>
+                                        <th>Type</th>
+                                        <th>Discount</th>
+                                        <th>Applicable To</th>
+                                        <th>Valid Period</th>
+                                        <th>Usage</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% offers.forEach(offer => { %>
+                                        <tr>
+                                            <td>
+                                                <strong><%= offer.offerName %></strong>
+                                                <br>
+                                                <small class="text-muted"><%= offer.description %></small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<%= offer.offerType === 'product' ? 'primary' : offer.offerType === 'category' ? 'info' : 'warning' %>">
+                                                    <%= offer.offerType.charAt(0).toUpperCase() + offer.offerType.slice(1) %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <% if (offer.discountType === 'percentage') { %>
+                                                    <strong><%= offer.discountValue %>%</strong>
+                                                    <% if (offer.maxDiscountAmount) { %>
+                                                        <br><small class="text-muted">Max: ₹<%= offer.maxDiscountAmount %></small>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    <strong>₹<%= offer.discountValue %></strong>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (offer.offerType === 'product') { %>
+                                                    <small><%= offer.applicableProducts.length %> Products</small>
+                                                <% } else if (offer.offerType === 'category') { %>
+                                                    <small><%= offer.applicableCategories.length %> Categories</small>
+                                                <% } else { %>
+                                                    <small>All Users</small>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    <%= new Date(offer.startDate).toLocaleDateString() %><br>
+                                                    to <%= new Date(offer.endDate).toLocaleDateString() %>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    <%= offer.usedCount %>
+                                                    <% if (offer.usageLimit) { %>
+                                                        / <%= offer.usageLimit %>
+                                                    <% } %>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <% if (offer.isActive) { %>
+                                                    <span class="badge bg-success">Active</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="/admin/offers/edit/<%= offer._id %>" class="btn btn-sm btn-outline-primary" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-outline-<%= offer.isActive ? 'warning' : 'success' %>" 
+                                                            onclick="toggleOfferStatus('<%= offer._id %>', <%= offer.isActive %>)" 
+                                                            title="<%= offer.isActive ? 'Deactivate' : 'Activate' %>">
+                                                        <i class="fas fa-<%= offer.isActive ? 'pause' : 'play' %>"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deleteOffer('<%= offer._id %>')" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <% if (totalPages > 1) { %>
+                            <nav aria-label="Offers pagination">
+                                <ul class="pagination justify-content-center">
+                                    <% if (currentPage > 1) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>&offerType=<%= offerType %>&status=<%= status %>">Previous</a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <% for (let i = 1; i <= totalPages; i++) { %>
+                                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                            <a class="page-link" href="?page=<%= i %>&search=<%= search %>&offerType=<%= offerType %>&status=<%= status %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <% if (currentPage < totalPages) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>&offerType=<%= offerType %>&status=<%= status %>">Next</a>
+                                        </li>
+                                    <% } %>
+                                </ul>
+                            </nav>
+                        <% } %>
+                    <% } else { %>
+                        <div class="text-center py-5">
+                            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No offers found</h5>
+                            <p class="text-muted">Create your first offer to get started.</p>
+                            <a href="/admin/offers/add" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Add New Offer
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+</div>
+
+<script>
+// Toggle offer status
+function toggleOfferStatus(offerId, currentStatus) {
+    const action = currentStatus ? 'deactivate' : 'activate';
+    
+    Swal.fire({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Offer?`,
+        text: `Are you sure you want to ${action} this offer?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: `Yes, ${action}!`
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/offers/${offerId}/toggle-status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success').then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error!', 'Failed to update offer status', 'error');
+            });
+        }
+    });
+}
+
+// Delete offer
+function deleteOffer(offerId) {
+    Swal.fire({
+        title: 'Delete Offer?',
+        text: 'This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/offers/${offerId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success').then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error!', 'Failed to delete offer', 'error');
+            });
+        }
+    });
+}
+</script>
+
+<%- include('partials/footer') %>

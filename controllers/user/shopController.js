@@ -2,6 +2,7 @@ const User = require("../../models/userSchema");
 const Product = require('../../models/productSchema');
 const Category = require('../../models/categorySchema');
 const mongoose = require('mongoose');
+const offerService = require('../../services/offerService');
 
 //  Shop and product browsing functions from userController.js
 
@@ -90,26 +91,72 @@ const loadShop = async (req, res) => {
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / perPage);
 
-    const productData = products.map(product => ({
-      _id: product._id,  // Added _id for product details link
-      name: product.productName,
-      image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
-      category: product.category?.name || 'Uncategorized',
-      price: product.salePrice,
-      originalPrice: product.regularPrice,
-      discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
-      isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+    // Calculate offers for products
+    const productData = await Promise.all(products.map(async (product) => {
+      const offerResult = await offerService.calculateBestOfferForProduct(product._id, userId);
+
+      let finalPrice = product.salePrice;
+      let discount = 0;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        discount = offerResult.discountPercentage;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount
+        };
+      }
+
+      return {
+        _id: product._id,
+        name: product.productName,
+        image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
+        category: product.category?.name || 'Uncategorized',
+        price: finalPrice,
+        originalPrice: product.salePrice,
+        discount: discount,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo,
+        isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+      };
     }));
 
-    const recommendedProductData = recommendedProducts.map(product => ({
-      _id: product._id,  // Added _id for product details link
-      name: product.productName,
-      image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
-      category: product.category?.name || 'Uncategorized',
-      price: product.salePrice,
-      originalPrice: product.regularPrice,
-      discount: product.offerPercentage > 0 ? product.offerPercentage : 0,
-      isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+    // Calculate offers for recommended products
+    const recommendedProductData = await Promise.all(recommendedProducts.map(async (product) => {
+      const offerResult = await offerService.calculateBestOfferForProduct(product._id, userId);
+
+      let finalPrice = product.salePrice;
+      let discount = 0;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        discount = offerResult.discountPercentage;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount
+        };
+      }
+
+      return {
+        _id: product._id,
+        name: product.productName,
+        image: product.productImage && product.productImage.length > 0 ? `/uploads/product-images/${product.productImage[0]}` : '/images/placeholder.jpg',
+        category: product.category?.name || 'Uncategorized',
+        price: finalPrice,
+        originalPrice: product.salePrice,
+        discount: discount,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo,
+        isNew: (Date.now() - new Date(product.createdAt)) < (7 * 24 * 60 * 60 * 1000)
+      };
     }));
 
     res.render("shop", {

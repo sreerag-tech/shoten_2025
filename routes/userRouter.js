@@ -110,6 +110,8 @@ router.get('/checkout', userAuth, userController.loadCheckout);
 router.post('/checkout/place-order', userAuth, userController.placeOrder);
 router.post('/checkout/add-address', userAuth, userController.addCheckoutAddress);
 router.put('/checkout/set-default-address', userAuth, userController.setDefaultCheckoutAddress);
+router.post('/checkout/apply-coupon', userAuth, userController.applyCoupon);
+router.post('/checkout/remove-coupon', userAuth, userController.removeCoupon);
 router.get('/order-success/:orderId', userAuth, userController.loadOrderSuccess);
 
 

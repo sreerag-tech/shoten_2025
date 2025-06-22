@@ -8,6 +8,7 @@ const categoryController = require("../controllers/admin/categoryController");
 const productController = require("../controllers/admin/productController");
 const orderController = require("../controllers/admin/orderController");
 const inventoryController = require("../controllers/admin/inventoryController");
+const offerController = require("../controllers/admin/offerController");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 
 router.get("/pageerror", adminController.pageerror);
@@ -57,5 +58,15 @@ router.put("/inventory/:id/stock", adminAuth, inventoryController.updateStock);
 router.post("/inventory/bulk-update", adminAuth, inventoryController.bulkUpdateStock);
 router.get("/inventory/low-stock", adminAuth, inventoryController.getLowStockAlert);
 router.get("/inventory/export", adminAuth, inventoryController.exportInventoryReport);
+
+// Offer Management Routes
+router.get("/offers", adminAuth, offerController.loadOffers);
+router.get("/offers/add", adminAuth, offerController.loadAddOffer);
+router.post("/offers/add", adminAuth, offerController.addOffer);
+router.get("/offers/edit/:id", adminAuth, offerController.loadEditOffer);
+router.put("/offers/edit/:id", adminAuth, offerController.updateOffer);
+router.patch("/offers/:id/toggle-status", adminAuth, offerController.toggleOfferStatus);
+router.delete("/offers/:id", adminAuth, offerController.deleteOffer);
+router.get("/offers/:id/details", adminAuth, offerController.getOfferDetails);
 
 module.exports = router;

@@ -123,7 +123,9 @@ const {
 // Checkout functions
 const {
   loadCheckout,
-  loadOrderSuccess
+  loadOrderSuccess,
+  applyCoupon,
+  removeCoupon
 } = checkoutController;
 
 // Checkout action functions
@@ -219,5 +221,7 @@ module.exports = {
   loadOrderSuccess,
   placeOrder,
   addCheckoutAddress,
-  setDefaultCheckoutAddress
+  setDefaultCheckoutAddress,
+  applyCoupon,
+  removeCoupon
 };

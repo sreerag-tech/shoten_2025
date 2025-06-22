@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema");
 const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
+const Coupon = require("../../models/couponSchema");
 const { v4: uuidv4 } = require('uuid');
 
 // Place Order
@@ -78,7 +79,46 @@ const placeOrder = async (req, res) => {
     const taxRate = 0.18;
     const taxAmount = Math.round(subtotal * taxRate);
     const shippingCharge = subtotal >= 500 ? 0 : 50;
-    const discount = 0;
+
+    // Handle coupon discount
+    let discount = 0;
+    let couponCode = null;
+    let couponApplied = false;
+
+    if (req.session.appliedCoupon) {
+      // Verify coupon is still valid
+      const coupon = await Coupon.findOne({
+        code: req.session.appliedCoupon.code,
+        isListed: true,
+        isDeleted: false,
+        startOn: { $lte: new Date() },
+        expireOn: { $gte: new Date() }
+      });
+
+      if (coupon && subtotal >= coupon.minimumPrice) {
+        // Check if user has already used this coupon
+        const userUsage = coupon.userUses.find(usage => usage.userId.toString() === userId.toString());
+
+        if (!userUsage || userUsage.count === 0) {
+          discount = coupon.offerPrice;
+          couponCode = coupon.code;
+          couponApplied = true;
+
+          // Update coupon usage
+          if (userUsage) {
+            userUsage.count += 1;
+          } else {
+            coupon.userUses.push({ userId: userId, count: 1 });
+          }
+          coupon.usesCount += 1;
+          await coupon.save();
+        }
+      }
+
+      // Clear coupon from session after processing
+      req.session.appliedCoupon = null;
+    }
+
     const finalTotal = subtotal + taxAmount + shippingCharge - discount;
     
     // Generate unique order ID
@@ -108,6 +148,8 @@ const placeOrder = async (req, res) => {
       invoiceDate: new Date(),
       shippingCharge: shippingCharge,
       taxAmount: taxAmount,
+      couponApplied: couponApplied,
+      couponCode: couponCode,
       status: 'Processing'
     });
     
