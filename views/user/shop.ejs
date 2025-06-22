@@ -233,6 +233,22 @@
                         </a>
                     </div>
                 <% } else { %>
+                    <!-- Offer Legend -->
+                    <div class="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mb-6">
+                        <div class="flex items-center gap-4 text-sm flex-wrap">
+                            <span class="text-gray-300 font-medium">Offers:</span>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">% OFF</span>
+                                <span class="text-green-400 text-xs">Special Offers</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">% OFF</span>
+                                <span class="text-red-400 text-xs">Regular Discounts</span>
+                            </div>
+                            <span class="text-gray-400 text-xs">🎉 Best offers applied automatically!</span>
+                        </div>
+                    </div>
+
                     <!-- Products Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                         <% if (locals.products) { %>
@@ -252,7 +268,11 @@
                                                         NEW
                                                     </div>
                                                 <% } %>
-                                                <% if (product.discount > 0) { %>
+                                                <% if (product.hasOffer && product.discount > 0) { %>
+                                                    <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                                                        -<%= product.discount %>% OFF
+                                                    </div>
+                                                <% } else if (product.discount > 0) { %>
                                                     <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
                                                         -<%= product.discount %>% OFF
                                                     </div>
@@ -292,6 +312,23 @@
                                                     <span class="text-[#00ffff] font-bold text-lg">₹<%= product.price.toLocaleString() %></span>
                                                     <% if (product.originalPrice && product.originalPrice > product.price) { %>
                                                         <span class="text-gray-500 text-sm line-through">₹<%= product.originalPrice.toLocaleString() %></span>
+                                                    <% } %>
+                                                    <% if (product.hasOffer && product.discount > 0) { %>
+                                                        <div class="flex items-center gap-1 mt-1">
+                                                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                                                <%= product.discount %>% OFF
+                                                            </span>
+                                                            <% if (product.offerInfo) { %>
+                                                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                                                    <%= product.offerInfo.type.charAt(0).toUpperCase() + product.offerInfo.type.slice(1) %> Offer
+                                                                </span>
+                                                            <% } %>
+                                                        </div>
+                                                        <% if (product.offerInfo && product.offerInfo.name) { %>
+                                                            <div class="text-green-400 text-xs mt-1 font-medium">
+                                                                🎉 <%= product.offerInfo.name %>
+                                                            </div>
+                                                        <% } %>
                                                     <% } %>
                                                 </div>
 
@@ -399,7 +436,11 @@
                                             NEW
                                         </div>
                                     <% } %>
-                                    <% if (product.discount > 0) { %>
+                                    <% if (product.hasOffer && product.discount > 0) { %>
+                                        <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                                            -<%= product.discount %>% OFF
+                                        </div>
+                                    <% } else if (product.discount > 0) { %>
                                         <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
                                             -<%= product.discount %>% OFF
                                         </div>
@@ -429,6 +470,23 @@
                                         <span class="text-[#00ffff] font-bold text-lg">₹<%= product.price.toLocaleString() %></span>
                                         <% if (product.originalPrice && product.originalPrice > product.price) { %>
                                             <span class="text-gray-500 text-sm line-through">₹<%= product.originalPrice.toLocaleString() %></span>
+                                        <% } %>
+                                        <% if (product.hasOffer && product.discount > 0) { %>
+                                            <div class="flex items-center gap-1 mt-1">
+                                                <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                                    <%= product.discount %>% OFF
+                                                </span>
+                                                <% if (product.offerInfo) { %>
+                                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                                        <%= product.offerInfo.type.charAt(0).toUpperCase() + product.offerInfo.type.slice(1) %> Offer
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                            <% if (product.offerInfo && product.offerInfo.name) { %>
+                                                <div class="text-green-400 text-xs mt-1 font-medium">
+                                                    🎉 <%= product.offerInfo.name %>
+                                                </div>
+                                            <% } %>
                                         <% } %>
                                     </div>
 

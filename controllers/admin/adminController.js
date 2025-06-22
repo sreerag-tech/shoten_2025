@@ -43,6 +43,7 @@ const login = async (req, res) => {
     if (passwordMatch) {
       // Successful login
       req.session.admin = true;
+      req.session.adminId = admin._id;
       return res.redirect('/admin/dashboard');
     } else {
       // Render admin login page with error message if password doesn't match

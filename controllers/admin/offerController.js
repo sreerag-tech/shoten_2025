@@ -158,7 +158,7 @@ const addOffer = async (req, res) => {
       endDate: new Date(endDate),
       usageLimit: usageLimit ? parseInt(usageLimit) : null,
       userUsageLimit: userUsageLimit ? parseInt(userUsageLimit) : 1,
-      createdBy: req.session.admin
+      createdBy: req.session.adminId
     };
     
     // Add applicable items based on offer type

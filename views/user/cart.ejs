@@ -67,11 +67,16 @@
                                             </p>
                                             <div class="flex items-center gap-4">
                                                 <span class="text-[#00ffff] font-bold text-lg">
-                                                    ₹<%= item.productId.salePrice %>
+                                                    ₹<%= item.finalPrice || item.productId.salePrice %>
                                                 </span>
-                                                <% if (item.productId.regularPrice > item.productId.salePrice) { %>
+                                                <% if (item.originalPrice && item.originalPrice > (item.finalPrice || item.productId.salePrice)) { %>
                                                     <span class="text-gray-500 line-through text-sm">
-                                                        ₹<%= item.productId.regularPrice %>
+                                                        ₹<%= item.originalPrice %>
+                                                    </span>
+                                                <% } %>
+                                                <% if (item.hasOffer && item.discount > 0) { %>
+                                                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                                        <%= item.discount %>% OFF
                                                     </span>
                                                 <% } %>
                                             </div>
@@ -109,8 +114,13 @@
                                             <!-- Item Total -->
                                             <div class="text-center">
                                                 <span class="item-total text-[#00ffff] font-bold">
-                                                    ₹<%= item.productId.salePrice * item.quantity %>
+                                                    ₹<%= item.itemTotal || (item.finalPrice || item.productId.salePrice) * item.quantity %>
                                                 </span>
+                                                <% if (item.hasOffer && item.offerInfo) { %>
+                                                    <div class="text-green-400 text-xs mt-1">
+                                                        <%= item.offerInfo.type.charAt(0).toUpperCase() + item.offerInfo.type.slice(1) %> Offer Applied
+                                                    </div>
+                                                <% } %>
                                             </div>
                                             
                                             <!-- Remove Button -->

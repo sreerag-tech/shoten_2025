@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema");
 const Category = require("../../models/categorySchema");
 const Cart = require("../../models/cartSchema");
 const Wishlist = require("../../models/wishlistSchema");
+const offerService = require("../../services/offerService");
 
 // Load Cart Page
 const loadCart = async (req, res) => {
@@ -40,15 +41,44 @@ const loadCart = async (req, res) => {
       });
     }
     
-    // Calculate cart totals
+    // Calculate cart totals with offers
     let subtotal = 0;
     let totalItems = 0;
-    
-    validCartItems.forEach(item => {
-      const itemTotal = item.productId.salePrice * item.quantity;
+
+    // Calculate offers for each cart item
+    const cartItemsWithOffers = await Promise.all(validCartItems.map(async (item) => {
+      const offerResult = await offerService.calculateBestOfferForProduct(item.productId._id, userId);
+
+      let finalPrice = item.productId.salePrice;
+      let discount = 0;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        discount = offerResult.discountPercentage;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount
+        };
+      }
+
+      const itemTotal = finalPrice * item.quantity;
       subtotal += itemTotal;
       totalItems += item.quantity;
-    });
+
+      return {
+        ...item.toObject(),
+        finalPrice: finalPrice,
+        originalPrice: item.productId.salePrice,
+        discount: discount,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo,
+        itemTotal: itemTotal
+      };
+    }));
     
     // Get cart message from session
     const cartMessage = req.session.cartMessage || null;
@@ -56,7 +86,7 @@ const loadCart = async (req, res) => {
     
     res.render("cart", {
       user: userData,
-      cartItems: validCartItems,
+      cartItems: cartItemsWithOffers,
       subtotal: subtotal,
       totalItems: totalItems,
       cartMessage: cartMessage
