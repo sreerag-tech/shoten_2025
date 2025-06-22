@@ -5,6 +5,7 @@ const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const Coupon = require("../../models/couponSchema");
+const offerService = require("../../services/offerService");
 
 // Load Checkout Page
 const loadCheckout = async (req, res) => {
@@ -55,15 +56,44 @@ const loadCheckout = async (req, res) => {
     // Get user addresses
     const addresses = await Address.find({ userId: userId }).sort({ isDefault: -1, createdAt: -1 });
     
-    // Calculate order totals
+    // Calculate order totals with offers
     let subtotal = 0;
     let totalItems = 0;
-    
-    validCartItems.forEach(item => {
-      const itemTotal = item.productId.salePrice * item.quantity;
+
+    // Calculate offers for each cart item
+    const cartItemsWithOffers = await Promise.all(validCartItems.map(async (item) => {
+      const offerResult = await offerService.calculateBestOfferForProduct(item.productId._id, userId);
+
+      let finalPrice = item.productId.salePrice;
+      let discount = 0;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        discount = offerResult.discountPercentage;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount
+        };
+      }
+
+      const itemTotal = finalPrice * item.quantity;
       subtotal += itemTotal;
       totalItems += item.quantity;
-    });
+
+      return {
+        ...item.toObject(),
+        finalPrice: finalPrice,
+        originalPrice: item.productId.salePrice,
+        discount: discount,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo,
+        itemTotal: itemTotal
+      };
+    }));
     
     // Calculate taxes (18% GST)
     const taxRate = 0.18;
@@ -124,7 +154,7 @@ const loadCheckout = async (req, res) => {
     
     res.render("checkout", {
       user: userData,
-      cartItems: validCartItems,
+      cartItems: cartItemsWithOffers,
       addresses: addresses,
       subtotal: subtotal,
       totalItems: totalItems,

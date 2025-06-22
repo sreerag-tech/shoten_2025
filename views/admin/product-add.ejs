@@ -50,27 +50,18 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Regular Price</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input placeholder="0.00" name="regularPrice" type="text" class="form-control">
-                                    </div>
-                                    <div id="regularPrice-error" class="error-message text-danger mt-1"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Sale Price</label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">₹</span>
                                         <input placeholder="0.00" name="salePrice" type="text" class="form-control">
                                     </div>
                                     <div id="salePrice-error" class="error-message text-danger mt-1"></div>
+                                    <small class="text-muted">Use offers to provide discounts instead of regular price</small>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Quantity</label>
                                     <input placeholder="0" name="quantity" type="text" class="form-control">
@@ -328,7 +319,6 @@
     function validateForm() {
         const productName = document.querySelector('input[name="productName"]');
         const description = document.querySelector('textarea[name="description"]');
-        const regularPrice = document.querySelector('input[name="regularPrice"]');
         const salePrice = document.querySelector('input[name="salePrice"]');
         const quantity = document.querySelector('input[name="quantity"]');
         const category = document.querySelector('select[name="category"]');
@@ -342,7 +332,6 @@
         const errorElements = {
             productName: document.getElementById('productName-error'),
             description: document.getElementById('description-error'),
-            regularPrice: document.getElementById('regularPrice-error'),
             salePrice: document.getElementById('salePrice-error'),
             quantity: document.getElementById('quantity-error'),
             category: document.getElementById('category-error'),
@@ -375,13 +364,7 @@
             isValid = false;
         }
 
-        if (!regularPrice.value.trim()) {
-            errorElements.regularPrice.textContent = 'Regular price is required';
-            isValid = false;
-        } else if (isNaN(regularPrice.value) || Number(regularPrice.value) <= 0) {
-            errorElements.regularPrice.textContent = 'Please enter a valid non-negative number greater than 0';
-            isValid = false;
-        }
+
 
         if (!salePrice.value.trim()) {
             errorElements.salePrice.textContent = 'Sale price is required';

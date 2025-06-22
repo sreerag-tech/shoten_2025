@@ -98,7 +98,7 @@ if (req.files && req.files.length > 0) {
         productName: products.productName,
         description: products.description,
         category: categoryId._id,
-        regularPrice: products.regularPrice,
+        regularPrice: products.salePrice, // Set regular price same as sale price, use offers for discounts
         salePrice: products.salePrice,
         createdOn: new Date(),
         quantity: products.quantity,
@@ -307,7 +307,7 @@ const editProduct = async (req, res) => {
     product.productName = products.productName;
     product.description = products.description;
     product.category = categoryId._id;
-    product.regularPrice = products.regularPrice;
+    product.regularPrice = products.salePrice; // Set regular price same as sale price, use offers for discounts
     product.salePrice = products.salePrice;
     product.quantity = products.quantity;
 

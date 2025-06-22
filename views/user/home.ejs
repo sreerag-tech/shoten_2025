@@ -37,9 +37,9 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         <% products.forEach(product => { %>
             <a href="/shop/product/<%= product._id %>" class="block group">
-                <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 transform group-hover:-translate-y-2">
+                <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 transform group-hover:-translate-y-2 h-full flex flex-col">
                     <div class="relative overflow-hidden">
-                        <img src="/uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110">
+                        <img src="/uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
 
                         <!-- Gradient overlay for better text readability -->
                         <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -78,9 +78,21 @@
 
                         <div class="flex justify-between items-center">
                             <div class="flex flex-col">
-                                <span class="text-[#00ffff] font-bold text-lg">₹<%= product.salePrice.toLocaleString() %></span>
-                                <% if (product.regularPrice > product.salePrice) { %>
-                                    <span class="text-gray-500 text-sm line-through">₹<%= product.regularPrice.toLocaleString() %></span>
+                                <span class="text-[#00ffff] font-bold text-lg">₹<%= product.price.toLocaleString() %></span>
+                                <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                    <span class="text-gray-500 text-sm line-through">₹<%= product.originalPrice.toLocaleString() %></span>
+                                <% } %>
+                                <% if (product.hasOffer && product.discount > 0) { %>
+                                    <div class="flex items-center gap-1 mt-1">
+                                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                            <%= product.discount %>% OFF
+                                        </span>
+                                        <% if (product.offerInfo) { %>
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                                <%= product.offerInfo.type.charAt(0).toUpperCase() + product.offerInfo.type.slice(1) %> Offer
+                                            </span>
+                                        <% } %>
+                                    </div>
                                 <% } %>
                             </div>
 
