@@ -155,6 +155,24 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if SweetAlert is loaded
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 is not loaded!');
+        // Fallback to regular alerts
+        window.Swal = {
+            fire: function(title, text, icon) {
+                if (typeof title === 'object') {
+                    alert(title.title + (title.text ? '\n' + title.text : ''));
+                } else {
+                    alert(title + (text ? '\n' + text : ''));
+                }
+                return Promise.resolve({ isConfirmed: true });
+            },
+            showLoading: function() {},
+        };
+    } else {
+        console.log('SweetAlert2 loaded successfully in add-offer page');
+    }
     const offerTypeSelect = document.getElementById('offerType');
     const productSelection = document.getElementById('productSelection');
     const categorySelection = document.getElementById('categorySelection');
@@ -213,12 +231,24 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Validation
         if (data.offerType === 'product' && selectedProducts.length === 0) {
-            Swal.fire('Error!', 'Please select at least one product', 'error');
+            Swal.fire({
+                title: 'Validation Error!',
+                text: 'Please select at least one product for this offer',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+                confirmButtonText: 'OK'
+            });
             return;
         }
-        
+
         if (data.offerType === 'category' && selectedCategories.length === 0) {
-            Swal.fire('Error!', 'Please select at least one category', 'error');
+            Swal.fire({
+                title: 'Validation Error!',
+                text: 'Please select at least one category for this offer',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+                confirmButtonText: 'OK'
+            });
             return;
         }
         
@@ -242,19 +272,36 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 Swal.fire({
-                    title: 'Success!',
+                    title: 'Offer Created!',
                     text: data.message,
-                    icon: 'success'
+                    icon: 'success',
+                    confirmButtonColor: '#28a745',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: true,
+                    confirmButtonText: 'View Offers'
                 }).then(() => {
                     window.location.href = '/admin/offers';
                 });
             } else {
-                Swal.fire('Error!', data.message, 'error');
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message,
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'OK'
+                });
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            Swal.fire('Error!', 'Failed to create offer. Please try again.', 'error');
+            Swal.fire({
+                title: 'Network Error!',
+                text: 'Failed to create offer. Please check your connection and try again.',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'OK'
+            });
         });
     });
 });

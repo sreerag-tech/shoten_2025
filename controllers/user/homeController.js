@@ -68,6 +68,7 @@ const loadHome = async (req, res) => {
       return {
         _id: product._id,
         productName: product.productName,
+        description: product.description,
         productImage: product.productImage,
         category: product.category,
         price: finalPrice,
@@ -77,7 +78,9 @@ const loadHome = async (req, res) => {
         offerInfo: offerInfo,
         createdAt: product.createdAt,
         status: product.status,
-        quantity: product.quantity
+        quantity: product.quantity,
+        salePrice: product.salePrice,
+        regularPrice: product.regularPrice
       };
     }));
 

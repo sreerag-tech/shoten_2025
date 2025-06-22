@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error - Shoten</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        }
+        
+        .error-code {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center">
+    <div class="text-center px-6 max-w-4xl mx-auto">
+        <!-- Error Icon -->
+        <div class="mb-8">
+            <i class="fas fa-exclamation-triangle text-8xl text-red-500 glow-text"></i>
+        </div>
+
+        <!-- 500 Code -->
+        <div class="mb-8">
+            <h1 class="text-9xl md:text-[12rem] font-black error-code leading-none">
+                500
+            </h1>
+        </div>
+
+        <!-- Error Message -->
+        <div class="mb-8">
+            <h2 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                Server Error
+            </h2>
+            <p class="text-xl md:text-2xl text-gray-300 mb-2">
+                Something went wrong on our end. We're working to fix it!
+            </p>
+            <p class="text-lg text-gray-400">
+                Please try again in a few moments or contact support if the problem persists.
+            </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+            <a href="/" class="inline-flex items-center gap-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-lg">Back to Home</span>
+            </a>
+            
+            <button onclick="window.location.reload()" class="inline-flex items-center gap-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+                <i class="fas fa-redo text-xl"></i>
+                <span class="text-lg">Try Again</span>
+            </button>
+        </div>
+
+        <!-- Error Details (Development Only) -->
+        <% if (typeof error !== 'undefined' && error.stack) { %>
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 text-left">
+            <h3 class="text-xl font-semibold text-white mb-3">
+                <i class="fas fa-bug text-red-400 mr-2"></i>
+                Error Details (Development Mode)
+            </h3>
+            <pre class="text-sm text-gray-300 overflow-auto"><%= error.stack %></pre>
+        </div>
+        <% } %>
+    </div>
+</body>
+</html>

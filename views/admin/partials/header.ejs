@@ -10,6 +10,126 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Global SweetAlert configuration for admin pages
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default SweetAlert configuration
+            if (typeof Swal !== 'undefined') {
+                // Configure default styling
+                const Toast = Swal.mixin({
+                    toast: false,
+                    position: 'center',
+                    showConfirmButton: true,
+                    timer: false,
+                    customClass: {
+                        popup: 'admin-swal-popup',
+                        title: 'admin-swal-title',
+                        content: 'admin-swal-content',
+                        confirmButton: 'admin-swal-confirm',
+                        cancelButton: 'admin-swal-cancel'
+                    }
+                });
+
+                // Make Toast globally available
+                window.AdminToast = Toast;
+
+                console.log('SweetAlert2 configured for admin pages');
+
+                // Check for URL parameters for messages
+                const urlParams = new URLSearchParams(window.location.search);
+                const message = urlParams.get('message');
+                const type = urlParams.get('type') || 'info';
+
+                if (message) {
+                    // Display message and clean URL
+                    setTimeout(() => {
+                        showAdminMessage(decodeURIComponent(message), type);
+                        // Clean URL without reloading
+                        const url = new URL(window.location);
+                        url.searchParams.delete('message');
+                        url.searchParams.delete('type');
+                        window.history.replaceState({}, document.title, url);
+                    }, 500);
+                }
+            } else {
+                console.error('SweetAlert2 failed to load in admin header');
+            }
+        });
+
+        // Global function to show admin messages
+        function showAdminMessage(message, type = 'info') {
+            if (typeof Swal === 'undefined') {
+                alert(message);
+                return;
+            }
+
+            let icon = 'info';
+            let confirmButtonColor = '#3085d6';
+
+            switch(type) {
+                case 'success':
+                    icon = 'success';
+                    confirmButtonColor = '#28a745';
+                    break;
+                case 'error':
+                    icon = 'error';
+                    confirmButtonColor = '#dc3545';
+                    break;
+                case 'warning':
+                    icon = 'warning';
+                    confirmButtonColor = '#ffc107';
+                    break;
+                default:
+                    icon = 'info';
+                    confirmButtonColor = '#3085d6';
+            }
+
+            Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                text: message,
+                icon: icon,
+                confirmButtonColor: confirmButtonColor,
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup: 'admin-swal-popup',
+                    title: 'admin-swal-title',
+                    content: 'admin-swal-content',
+                    confirmButton: 'admin-swal-confirm'
+                }
+            });
+        }
+    </script>
+    <style>
+        /* Custom SweetAlert styling for admin */
+        .admin-swal-popup {
+            font-family: 'Inter', sans-serif !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        .admin-swal-title {
+            font-weight: 600 !important;
+            color: var(--text-primary) !important;
+        }
+
+        .admin-swal-content {
+            color: var(--text-secondary) !important;
+        }
+
+        .admin-swal-confirm {
+            border-radius: 10px !important;
+            font-weight: 500 !important;
+            padding: 0.625rem 1.25rem !important;
+        }
+
+        .admin-swal-cancel {
+            border-radius: 10px !important;
+            font-weight: 500 !important;
+            padding: 0.625rem 1.25rem !important;
+        }
+    </style>
     <style>
         :root {
             --primary-color: #6366f1;
