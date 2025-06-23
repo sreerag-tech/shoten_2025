@@ -247,10 +247,25 @@ const getOrderDetailsAPI = async (req, res) => {
       };
     }));
 
-    // Update order object with offer information
+    // Calculate new totals based on offer prices
+    let newSubtotal = 0;
+    orderedItemsWithOffers.forEach(item => {
+      const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
+      newSubtotal += itemPrice * item.quantity;
+    });
+
+    // Calculate new total (keeping original shipping and discount logic)
+    const shippingCharge = order.shippingCharge || 0;
+    const originalDiscount = order.discount || 0;
+    const newTotal = newSubtotal + shippingCharge - originalDiscount;
+
+    // Update order object with offer information and recalculated totals
     const orderWithOffers = {
       ...order.toObject(),
-      orderedItems: orderedItemsWithOffers
+      orderedItems: orderedItemsWithOffers,
+      subtotalWithOffers: newSubtotal,
+      totalPriceWithOffers: newTotal,
+      offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
     };
 
     res.json({ success: true, order: orderWithOffers });

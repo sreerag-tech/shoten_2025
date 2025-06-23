@@ -153,18 +153,24 @@
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-400">Subtotal:</span>
-                            <span class="text-white">₹<%= order.totalPrice %></span>
+                            <span class="text-white">₹<%= (order.subtotalWithOffers || order.totalPrice).toLocaleString() %></span>
                         </div>
+                        <% if (order.offerSavings && order.offerSavings > 0) { %>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Offer Savings:</span>
+                                <span class="text-green-400">-₹<%= order.offerSavings.toLocaleString() %></span>
+                            </div>
+                        <% } %>
                         <% if (order.discount > 0) { %>
                             <div class="flex justify-between">
-                                <span class="text-gray-400">Discount:</span>
-                                <span class="text-green-400">-₹<%= order.discount %></span>
+                                <span class="text-gray-400">Coupon Discount:</span>
+                                <span class="text-green-400">-₹<%= order.discount.toLocaleString() %></span>
                             </div>
                         <% } %>
                         <% if (order.shippingCharge > 0) { %>
                             <div class="flex justify-between">
                                 <span class="text-gray-400">Shipping:</span>
-                                <span class="text-white">₹<%= order.shippingCharge %></span>
+                                <span class="text-white">₹<%= order.shippingCharge.toLocaleString() %></span>
                             </div>
                         <% } %>
                         <% if (order.couponApplied && order.couponCode) { %>
@@ -176,7 +182,7 @@
                         <hr class="border-gray-700">
                         <div class="flex justify-between text-lg font-bold">
                             <span class="text-white">Total:</span>
-                            <span class="text-[#00ffff]">₹<%= order.finalAmount %></span>
+                            <span class="text-[#00ffff]">₹<%= (order.totalPriceWithOffers || order.finalAmount || order.totalPrice).toLocaleString() %></span>
                         </div>
                     </div>
                 </div>

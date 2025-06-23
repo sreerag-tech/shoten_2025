@@ -111,9 +111,25 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>₹<%= item.price.toLocaleString() %></td>
+                                        <td>
+                                            <% if (item.hasOffer && item.finalPrice < item.originalPrice) { %>
+                                                <span class="text-success">₹<%= item.finalPrice.toLocaleString() %></span>
+                                                <br><small class="text-muted text-decoration-line-through">₹<%= item.originalPrice.toLocaleString() %></small>
+                                                <% if (item.offerInfo) { %>
+                                                    <br><small class="text-info"><i class="fas fa-tag"></i> <%= item.offerInfo.name %></small>
+                                                <% } %>
+                                            <% } else { %>
+                                                ₹<%= item.price.toLocaleString() %>
+                                            <% } %>
+                                        </td>
                                         <td><%= item.quantity %></td>
-                                        <td>₹<%= (item.price * item.quantity).toLocaleString() %></td>
+                                        <td>
+                                            <% if (item.hasOffer && item.finalPrice) { %>
+                                                ₹<%= (item.finalPrice * item.quantity).toLocaleString() %>
+                                            <% } else { %>
+                                                ₹<%= (item.price * item.quantity).toLocaleString() %>
+                                            <% } %>
+                                        </td>
                                         <td>
                                             <% 
                                             let itemStatusClass = 'bg-secondary';
@@ -219,11 +235,17 @@
                             <tbody>
                                 <tr>
                                     <td>Sub Total :</td>
-                                    <td class="text-end">₹<%= (order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0)).toLocaleString() %></td>
+                                    <td class="text-end">₹<%= (order.subtotalWithOffers || order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0)).toLocaleString() %></td>
                                 </tr>
+                                <% if (order.offerSavings && order.offerSavings > 0) { %>
+                                    <tr>
+                                        <td>Offer Savings :</td>
+                                        <td class="text-end text-success">-₹<%= order.offerSavings.toLocaleString() %></td>
+                                    </tr>
+                                <% } %>
                                 <% if (order.discount > 0) { %>
                                     <tr>
-                                        <td>Discount :</td>
+                                        <td>Coupon Discount :</td>
                                         <td class="text-end text-success">-₹<%= order.discount.toLocaleString() %></td>
                                     </tr>
                                 <% } %>
@@ -235,7 +257,7 @@
                                 <% } %>
                                 <tr class="border-top">
                                     <th>Total :</th>
-                                    <th class="text-end">₹<%= order.totalPrice.toLocaleString() %></th>
+                                    <th class="text-end">₹<%= (order.totalPriceWithOffers || order.totalPrice).toLocaleString() %></th>
                                 </tr>
                             </tbody>
                         </table>

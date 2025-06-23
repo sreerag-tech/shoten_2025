@@ -228,14 +228,25 @@
                                     </td>
                                     <td>
                                         <div>
-                                            <span class="fw-semibold">₹<%= product.salePrice.toLocaleString() %></span>
-                                            <% if (product.regularPrice > product.salePrice) { %>
-                                                <br><small class="text-muted text-decoration-line-through">₹<%= product.regularPrice.toLocaleString() %></small>
+                                            <% if (product.hasOffer && product.finalPrice < product.salePrice) { %>
+                                                <span class="fw-semibold text-success">₹<%= product.finalPrice.toLocaleString() %></span>
+                                                <br><small class="text-muted text-decoration-line-through">₹<%= product.salePrice.toLocaleString() %></small>
+                                                <% if (product.offerInfo) { %>
+                                                    <br><small class="text-info"><i class="fas fa-tag"></i> <%= product.offerInfo.name %></small>
+                                                <% } %>
+                                            <% } else { %>
+                                                <span class="fw-semibold">₹<%= product.salePrice.toLocaleString() %></span>
+                                                <% if (product.regularPrice > product.salePrice) { %>
+                                                    <br><small class="text-muted text-decoration-line-through">₹<%= product.regularPrice.toLocaleString() %></small>
+                                                <% } %>
                                             <% } %>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="fw-semibold">₹<%= (product.quantity * product.salePrice).toLocaleString() %></span>
+                                        <span class="fw-semibold">₹<%= (product.totalValueWithOffers || product.quantity * product.salePrice).toLocaleString() %></span>
+                                        <% if (product.hasOffer && product.totalValueWithOffers < (product.quantity * product.salePrice)) { %>
+                                            <br><small class="text-muted text-decoration-line-through">₹<%= (product.quantity * product.salePrice).toLocaleString() %></small>
+                                        <% } %>
                                     </td>
                                     <td>
                                         <% if (product.quantity <= 0) { %>

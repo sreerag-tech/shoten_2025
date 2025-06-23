@@ -5,6 +5,7 @@ const User = require("../../models/userSchema");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
+const offerService = require("../../services/offerService");
 
 // ✅ IMPROVED: Helper function to safely delete files with better error handling
 const safeDeleteFile = async (filePath, retries = 3, delay = 1000) => {
@@ -146,12 +147,39 @@ const getProductList = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    // Calculate offers for products (for admin reference)
+    const productsWithOffers = await Promise.all(products.map(async (product) => {
+      const offerResult = await offerService.calculateBestOfferForProduct(product._id);
+
+      let finalPrice = product.salePrice;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount,
+          discountPercentage: offerResult.discountPercentage
+        };
+      }
+
+      return {
+        ...product.toObject(),
+        finalPrice: finalPrice,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo
+      };
+    }));
+
     // Get total count for pagination
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
     res.render("products", {
-      products,
+      products: productsWithOffers,
       error,
       success, // ✅ ADDED: Pass success message to view
       currentPage: page,

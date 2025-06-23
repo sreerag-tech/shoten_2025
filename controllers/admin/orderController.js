@@ -2,6 +2,7 @@ const Order = require("../../models/orderSchema");
 const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Wallet = require("../../models/walletSchema");
+const offerService = require("../../services/offerService");
 
 // Load Orders Page with Search, Sort, Filter, and Pagination
 const loadOrders = async (req, res) => {
@@ -67,27 +68,117 @@ const loadOrders = async (req, res) => {
     sortObj[sortBy] = sortOrder === "desc" ? -1 : 1;
 
     // Get orders with pagination
-    const orders = await Order.find(query)
+    const ordersRaw = await Order.find(query)
       .populate('userId', 'name email phone')
-      .populate('orderedItems.product', 'productName productImage')
+      .populate({
+        path: 'orderedItems.product',
+        select: 'productName productImage regularPrice salePrice category',
+        populate: {
+          path: 'category',
+          model: 'Category',
+          select: 'name'
+        }
+      })
       .sort(sortObj)
       .skip(skip)
       .limit(limit);
+
+    // Calculate offer-adjusted totals for each order
+    const orders = await Promise.all(ordersRaw.map(async (order) => {
+      let newSubtotal = 0;
+
+      // Calculate offers for each order item
+      const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
+        if (!item.product) return item;
+
+        const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
+
+        let finalPrice = item.price;
+        let hasOffer = false;
+        let offerInfo = null;
+
+        if (offerResult) {
+          finalPrice = offerResult.finalPrice;
+          hasOffer = true;
+          offerInfo = {
+            type: offerResult.offer.offerType,
+            name: offerResult.offer.offerName,
+            discountAmount: offerResult.discount,
+            discountPercentage: offerResult.discountPercentage
+          };
+        }
+
+        newSubtotal += finalPrice * item.quantity;
+
+        return {
+          ...item.toObject(),
+          finalPrice: finalPrice,
+          originalPrice: item.price,
+          hasOffer: hasOffer,
+          offerInfo: offerInfo
+        };
+      }));
+
+      // Calculate new total (keeping original shipping and discount logic)
+      const shippingCharge = order.shippingCharge || 0;
+      const originalDiscount = order.discount || 0;
+      const newTotal = newSubtotal + shippingCharge - originalDiscount;
+
+      return {
+        ...order.toObject(),
+        orderedItems: orderedItemsWithOffers,
+        subtotalWithOffers: newSubtotal,
+        totalPriceWithOffers: newTotal,
+        offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+      };
+    }));
 
     // Get total count for pagination
     const totalOrders = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalOrders / limit);
 
-    // Get order statistics
-    const orderStats = await Order.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-          totalAmount: { $sum: "$totalPrice" }
+    // Get order statistics with offer-adjusted amounts
+    const allOrdersForStats = await Order.find()
+      .populate('orderedItems.product');
+
+    const orderStatsByStatus = {};
+
+    for (const order of allOrdersForStats) {
+      let orderTotal = 0;
+
+      // Calculate offer-adjusted total for this order
+      for (const item of order.orderedItems) {
+        if (item.product) {
+          const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
+
+          let finalPrice = item.price;
+          if (offerResult) {
+            finalPrice = offerResult.finalPrice;
+          }
+
+          orderTotal += finalPrice * item.quantity;
+        } else {
+          orderTotal += item.price * item.quantity;
         }
       }
-    ]);
+
+      // Add shipping and subtract discounts
+      orderTotal += (order.shippingCharge || 0) - (order.discount || 0);
+
+      // Group by status
+      if (!orderStatsByStatus[order.status]) {
+        orderStatsByStatus[order.status] = {
+          _id: order.status,
+          count: 0,
+          totalAmount: 0
+        };
+      }
+
+      orderStatsByStatus[order.status].count += 1;
+      orderStatsByStatus[order.status].totalAmount += orderTotal;
+    }
+
+    const orderStats = Object.values(orderStatsByStatus);
 
     res.render("admin-orders", {
       orders: orders,
@@ -116,14 +207,73 @@ const loadOrderDetail = async (req, res) => {
     
     const order = await Order.findById(orderId)
       .populate('userId', 'name email phone profileImage')
-      .populate('orderedItems.product', 'productName productImage regularPrice salePrice');
+      .populate({
+        path: 'orderedItems.product',
+        select: 'productName productImage regularPrice salePrice category',
+        populate: {
+          path: 'category',
+          model: 'Category',
+          select: 'name'
+        }
+      });
 
     if (!order) {
       return res.redirect("/admin/orders?error=Order not found");
     }
 
+    // Calculate offers for ordered items (for admin reference)
+    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
+      if (!item.product) return item;
+
+      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
+
+      let finalPrice = item.price;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount,
+          discountPercentage: offerResult.discountPercentage
+        };
+      }
+
+      return {
+        ...item.toObject(),
+        finalPrice: finalPrice,
+        originalPrice: item.price,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo
+      };
+    }));
+
+    // Calculate new totals based on offer prices
+    let newSubtotal = 0;
+    orderedItemsWithOffers.forEach(item => {
+      const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
+      newSubtotal += itemPrice * item.quantity;
+    });
+
+    // Calculate new total (keeping original shipping and discount logic)
+    const shippingCharge = order.shippingCharge || 0;
+    const originalDiscount = order.discount || 0;
+    const newTotal = newSubtotal + shippingCharge - originalDiscount;
+
+    // Update order object with offer information and recalculated totals
+    const orderWithOffers = {
+      ...order.toObject(),
+      orderedItems: orderedItemsWithOffers,
+      subtotalWithOffers: newSubtotal,
+      totalPriceWithOffers: newTotal,
+      offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+    };
+
     res.render("admin-order-detail", {
-      order: order,
+      order: orderWithOffers,
       activePage: 'orders'
     });
   } catch (error) {
@@ -341,24 +491,59 @@ const getReturnRequests = async (req, res) => {
       'orderedItems.status': 'Return Request'
     })
     .populate('userId', 'name email phone')
-    .populate('orderedItems.product', 'productName productImage')
+    .populate({
+      path: 'orderedItems.product',
+      select: 'productName productImage regularPrice salePrice category',
+      populate: {
+        path: 'category',
+        model: 'Category',
+        select: 'name'
+      }
+    })
     .sort({ createdOn: -1 })
     .skip(skip)
     .limit(limit);
 
-    // Filter items to show only return requests
+    // Filter items to show only return requests with offer calculations
     const returnRequests = [];
-    orders.forEach(order => {
-      order.orderedItems.forEach((item, index) => {
+    for (const order of orders) {
+      for (let index = 0; index < order.orderedItems.length; index++) {
+        const item = order.orderedItems[index];
         if (item.status === 'Return Request') {
+          // Calculate offer for return request item
+          let finalPrice = item.price;
+          let hasOffer = false;
+          let offerInfo = null;
+
+          if (item.product) {
+            const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
+
+            if (offerResult) {
+              finalPrice = offerResult.finalPrice;
+              hasOffer = true;
+              offerInfo = {
+                type: offerResult.offer.offerType,
+                name: offerResult.offer.offerName,
+                discountAmount: offerResult.discount,
+                discountPercentage: offerResult.discountPercentage
+              };
+            }
+          }
+
           returnRequests.push({
             order: order,
-            item: item,
+            item: {
+              ...item.toObject(),
+              finalPrice: finalPrice,
+              originalPrice: item.price,
+              hasOffer: hasOffer,
+              offerInfo: offerInfo
+            },
             itemIndex: index
           });
         }
-      });
-    });
+      }
+    }
 
     const totalRequests = await Order.aggregate([
       { $unwind: '$orderedItems' },
@@ -387,13 +572,72 @@ const getOrderDetailsAPI = async (req, res) => {
 
     const order = await Order.findById(orderId)
       .populate('userId', 'name email phone')
-      .populate('orderedItems.product', 'productName productImage regularPrice salePrice');
+      .populate({
+        path: 'orderedItems.product',
+        select: 'productName productImage regularPrice salePrice category',
+        populate: {
+          path: 'category',
+          model: 'Category',
+          select: 'name'
+        }
+      });
 
     if (!order) {
       return res.json({ success: false, message: 'Order not found' });
     }
 
-    res.json({ success: true, order: order });
+    // Calculate offers for ordered items
+    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
+      if (!item.product) return item;
+
+      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
+
+      let finalPrice = item.price;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount,
+          discountPercentage: offerResult.discountPercentage
+        };
+      }
+
+      return {
+        ...item.toObject(),
+        finalPrice: finalPrice,
+        originalPrice: item.price,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo
+      };
+    }));
+
+    // Calculate new totals based on offer prices
+    let newSubtotal = 0;
+    orderedItemsWithOffers.forEach(item => {
+      const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
+      newSubtotal += itemPrice * item.quantity;
+    });
+
+    // Calculate new total (keeping original shipping and discount logic)
+    const shippingCharge = order.shippingCharge || 0;
+    const originalDiscount = order.discount || 0;
+    const newTotal = newSubtotal + shippingCharge - originalDiscount;
+
+    // Update order object with offer information and recalculated totals
+    const orderWithOffers = {
+      ...order.toObject(),
+      orderedItems: orderedItemsWithOffers,
+      subtotalWithOffers: newSubtotal,
+      totalPriceWithOffers: newTotal,
+      offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+    };
+
+    res.json({ success: true, order: orderWithOffers });
   } catch (error) {
     res.json({ success: false, message: 'Failed to fetch order details' });
   }

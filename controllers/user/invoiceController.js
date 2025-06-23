@@ -137,19 +137,38 @@ function generateInvoicePDF(doc, order) {
     yPosition += 20;
   });
   
+  // Calculate totals with offers
+  let subtotalWithOffers = 0;
+  order.orderedItems.forEach(item => {
+    const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
+    subtotalWithOffers += itemPrice * item.quantity;
+  });
+
+  const originalSubtotal = order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0);
+  const offerSavings = originalSubtotal - subtotalWithOffers;
+
   // Totals
   yPosition += 20;
-  doc.text(`Subtotal: ₹${order.totalPrice}`, 200, yPosition);
+  doc.text(`Subtotal: ₹${subtotalWithOffers}`, 200, yPosition);
   yPosition += 15;
-  if (order.discount > 0) {
-    doc.text(`Discount: -₹${order.discount}`, 200, yPosition);
+
+  if (offerSavings > 0) {
+    doc.text(`Offer Savings: -₹${offerSavings}`, 200, yPosition);
     yPosition += 15;
   }
+
+  if (order.discount > 0) {
+    doc.text(`Coupon Discount: -₹${order.discount}`, 200, yPosition);
+    yPosition += 15;
+  }
+
   if (order.shippingCharge > 0) {
     doc.text(`Shipping: ₹${order.shippingCharge}`, 200, yPosition);
     yPosition += 15;
   }
-  doc.fontSize(12).text(`Total: ₹${order.finalAmount}`, 200, yPosition);
+
+  const finalTotal = subtotalWithOffers + (order.shippingCharge || 0) - (order.discount || 0);
+  doc.fontSize(12).text(`Total: ₹${finalTotal}`, 200, yPosition);
   
   // Footer
   doc.fontSize(8).text('Thank you for shopping with Shoten!', 50, 700);

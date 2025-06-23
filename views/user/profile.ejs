@@ -196,7 +196,10 @@
                                             </span>
                                         </div>
                                         <div class="flex justify-between items-center">
-                                            <p class="text-gray-300">Total: ₹<%= order.finalAmount || '0.00' %></p>
+                                            <p class="text-gray-300">Total: ₹<%= (order.totalPriceWithOffers || order.finalAmount || order.totalPrice || '0.00').toLocaleString() %></p>
+                                            <% if (order.offerSavings && order.offerSavings > 0) { %>
+                                                <p class="text-green-400 text-sm">Saved: ₹<%= order.offerSavings.toLocaleString() %></p>
+                                            <% } %>
                                             <div class="space-x-2">
                                                 <button class="view-order-btn px-3 py-1 bg-[#00ffff] text-black rounded text-sm hover:bg-[#0088ff] transition"
                                                         data-order-id="<%= order._id %>">

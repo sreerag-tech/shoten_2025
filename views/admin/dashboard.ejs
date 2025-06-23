@@ -125,7 +125,12 @@
                                         </div>
                                     </td>
                                     <td><%= new Date(order.createdOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
-                                    <td><span class="fw-semibold">₹<%= order.totalPrice.toLocaleString() %></span></td>
+                                    <td>
+                                        <span class="fw-semibold">₹<%= (order.totalPriceWithOffers || order.totalPrice).toLocaleString() %></span>
+                                        <% if (order.totalPriceWithOffers && order.totalPriceWithOffers < order.totalPrice) { %>
+                                            <br><small class="text-muted text-decoration-line-through">₹<%= order.totalPrice.toLocaleString() %></small>
+                                        <% } %>
+                                    </td>
                                     <td>
                                         <span class="badge bg-<%= order.status === 'Delivered' ? 'success' : order.status === 'Cancelled' ? 'danger' : order.status === 'Shipped' ? 'primary' : 'warning' %>">
                                             <%= order.status %>

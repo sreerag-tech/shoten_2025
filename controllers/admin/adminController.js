@@ -7,6 +7,7 @@ const Product = require("../../models/productSchema");
 const Category = require("../../models/categorySchema");
 const mongoose = require("mongoose");
 const bcrypt = require(`bcrypt`);
+const offerService = require("../../services/offerService");
 
 
 const pageerror= async(req,res)=>{
@@ -72,24 +73,101 @@ const loadDashboard = async (req, res) => {
       const totalProducts = await Product.countDocuments();
       const totalOrders = await Order.countDocuments();
 
-      // Get total revenue
-      const revenueResult = await Order.aggregate([
-        { $match: { status: { $ne: 'Cancelled' } } },
-        { $group: { _id: null, totalRevenue: { $sum: "$totalPrice" } } }
-      ]);
-      const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+      // Get total revenue (offer-adjusted)
+      const orders = await Order.find({ status: { $ne: 'Cancelled' } })
+        .populate('orderedItems.product');
 
-      // Get recent orders (last 5)
-      const recentOrders = await Order.find()
+      let totalRevenue = 0;
+      for (const order of orders) {
+        let orderTotal = 0;
+
+        for (const item of order.orderedItems) {
+          if (item.product) {
+            const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
+
+            let finalPrice = item.price;
+            if (offerResult) {
+              finalPrice = offerResult.finalPrice;
+            }
+
+            orderTotal += finalPrice * item.quantity;
+          } else {
+            orderTotal += item.price * item.quantity;
+          }
+        }
+
+        // Add shipping and subtract discounts
+        orderTotal += (order.shippingCharge || 0) - (order.discount || 0);
+        totalRevenue += orderTotal;
+      }
+
+      // Get recent orders (last 5) with offer-adjusted amounts
+      const recentOrdersRaw = await Order.find()
         .populate('userId', 'name email profileImage')
+        .populate('orderedItems.product')
         .sort({ createdOn: -1 })
         .limit(5);
 
-      // Get latest products (last 5)
-      const latestProducts = await Product.find({ isBlocked: false })
+      // Calculate offer-adjusted amounts for recent orders
+      const recentOrders = await Promise.all(recentOrdersRaw.map(async (order) => {
+        let orderTotal = 0;
+
+        for (const item of order.orderedItems) {
+          if (item.product) {
+            const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
+
+            let finalPrice = item.price;
+            if (offerResult) {
+              finalPrice = offerResult.finalPrice;
+            }
+
+            orderTotal += finalPrice * item.quantity;
+          } else {
+            orderTotal += item.price * item.quantity;
+          }
+        }
+
+        // Add shipping and subtract discounts
+        orderTotal += (order.shippingCharge || 0) - (order.discount || 0);
+
+        return {
+          ...order.toObject(),
+          totalPriceWithOffers: orderTotal
+        };
+      }));
+
+      // Get latest products (last 5) with offers
+      const latestProductsRaw = await Product.find({ isBlocked: false })
         .populate('category', 'name')
         .sort({ createdOn: -1 })
         .limit(5);
+
+      // Calculate offers for latest products
+      const latestProducts = await Promise.all(latestProductsRaw.map(async (product) => {
+        const offerResult = await offerService.calculateBestOfferForProduct(product._id);
+
+        let finalPrice = product.salePrice;
+        let hasOffer = false;
+        let offerInfo = null;
+
+        if (offerResult) {
+          finalPrice = offerResult.finalPrice;
+          hasOffer = true;
+          offerInfo = {
+            type: offerResult.offer.offerType,
+            name: offerResult.offer.offerName,
+            discountAmount: offerResult.discount,
+            discountPercentage: offerResult.discountPercentage
+          };
+        }
+
+        return {
+          ...product.toObject(),
+          finalPrice: finalPrice,
+          hasOffer: hasOffer,
+          offerInfo: offerInfo
+        };
+      }));
 
       // Get order statistics by status
       const orderStats = await Order.aggregate([

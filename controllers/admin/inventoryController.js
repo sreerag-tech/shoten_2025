@@ -1,5 +1,6 @@
 const Product = require("../../models/productSchema");
 const Category = require("../../models/categorySchema");
+const offerService = require("../../services/offerService");
 const Order = require("../../models/orderSchema");
 
 // Load Inventory Management Page
@@ -43,11 +44,39 @@ const loadInventory = async (req, res) => {
     sortObj[sortBy] = sortOrder === "desc" ? -1 : 1;
 
     // Get products with pagination
-    const products = await Product.find(query)
+    const productsRaw = await Product.find(query)
       .populate('category', 'name')
       .sort(sortObj)
       .skip(skip)
       .limit(limit);
+
+    // Calculate offers for products
+    const products = await Promise.all(productsRaw.map(async (product) => {
+      const offerResult = await offerService.calculateBestOfferForProduct(product._id);
+
+      let finalPrice = product.salePrice;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount,
+          discountPercentage: offerResult.discountPercentage
+        };
+      }
+
+      return {
+        ...product.toObject(),
+        finalPrice: finalPrice,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo,
+        totalValueWithOffers: product.quantity * finalPrice
+      };
+    }));
 
     // Get total count for pagination
     const totalProducts = await Product.countDocuments(query);
@@ -56,7 +85,7 @@ const loadInventory = async (req, res) => {
     // Get categories for filter dropdown
     const categories = await Category.find({ isListed: true }).sort({ name: 1 });
 
-    // Get inventory statistics
+    // Get inventory statistics with offer-adjusted values
     const inventoryStats = await Product.aggregate([
       { $match: { isDeleted: { $ne: true } } },
       {
@@ -66,19 +95,37 @@ const loadInventory = async (req, res) => {
           totalStock: { $sum: "$quantity" },
           inStock: { $sum: { $cond: [{ $gt: ["$quantity", 0] }, 1, 0] } },
           outOfStock: { $sum: { $cond: [{ $lte: ["$quantity", 0] }, 1, 0] } },
-          lowStock: { $sum: { $cond: [{ $and: [{ $gt: ["$quantity", 0] }, { $lte: ["$quantity", 10] }] }, 1, 0] } },
-          totalValue: { $sum: { $multiply: ["$quantity", "$salePrice"] } }
+          lowStock: { $sum: { $cond: [{ $and: [{ $gt: ["$quantity", 0] }, { $lte: ["$quantity", 10] }] }, 1, 0] } }
         }
       }
     ]);
 
-    const stats = inventoryStats[0] || {
+    const basicStats = inventoryStats[0] || {
       totalProducts: 0,
       totalStock: 0,
       inStock: 0,
       outOfStock: 0,
-      lowStock: 0,
-      totalValue: 0
+      lowStock: 0
+    };
+
+    // Calculate total value with offer-adjusted prices
+    const allProducts = await Product.find({ isDeleted: false });
+    let totalValue = 0;
+
+    for (const product of allProducts) {
+      const offerResult = await offerService.calculateBestOfferForProduct(product._id);
+
+      let finalPrice = product.salePrice;
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+      }
+
+      totalValue += product.quantity * finalPrice;
+    }
+
+    const stats = {
+      ...basicStats,
+      totalValue: totalValue
     };
 
     res.render("inventory", {
@@ -309,16 +356,24 @@ const exportInventoryReport = async (req, res) => {
       .populate('category', 'name')
       .sort({ productName: 1 });
 
-    // Create CSV content
-    let csvContent = 'Product Name,Category,Current Stock,Sale Price,Regular Price,Total Value,Status\n';
-    
-    products.forEach(product => {
-      const status = product.quantity <= 0 ? 'Out of Stock' : 
+    // Create CSV content with offer-adjusted prices
+    let csvContent = 'Product Name,Category,Current Stock,Sale Price,Offer Price,Regular Price,Total Value,Status\n';
+
+    for (const product of products) {
+      const status = product.quantity <= 0 ? 'Out of Stock' :
                     product.quantity <= 10 ? 'Low Stock' : 'In Stock';
-      const totalValue = product.quantity * product.salePrice;
-      
-      csvContent += `"${product.productName}","${product.category?.name || 'N/A'}",${product.quantity},${product.salePrice},${product.regularPrice},${totalValue},"${status}"\n`;
-    });
+
+      // Calculate offer price
+      const offerResult = await offerService.calculateBestOfferForProduct(product._id);
+      let finalPrice = product.salePrice;
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+      }
+
+      const totalValue = product.quantity * finalPrice;
+
+      csvContent += `"${product.productName}","${product.category?.name || 'N/A'}",${product.quantity},${product.salePrice},${finalPrice},${product.regularPrice},${totalValue},"${status}"\n`;
+    }
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=inventory-report.csv');

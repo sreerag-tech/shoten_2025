@@ -26,10 +26,52 @@ const loadProfile = async (req, res) => {
       createdAt: -1,
     });
 
-    // Get user orders
+    // Get user orders with populated product data
     const orders = await Order.find({ userId: userId })
+      .populate({
+        path: 'orderedItems.product',
+        select: 'productName productImage regularPrice salePrice category',
+        populate: {
+          path: 'category',
+          model: 'Category',
+          select: 'name'
+        }
+      })
       .sort({ createdOn: -1 })
       .limit(10);
+
+    // Calculate offer-adjusted totals for orders
+    const ordersWithOffers = await Promise.all(orders.map(async (order) => {
+      let newSubtotal = 0;
+
+      // Calculate offers for each order item
+      for (const item of order.orderedItems) {
+        if (item.product) {
+          const offerResult = await offerService.calculateBestOfferForProduct(item.product._id, userId);
+
+          let finalPrice = item.price;
+          if (offerResult) {
+            finalPrice = offerResult.finalPrice;
+          }
+
+          newSubtotal += finalPrice * item.quantity;
+        } else {
+          newSubtotal += item.price * item.quantity;
+        }
+      }
+
+      // Calculate new total (keeping original shipping and discount logic)
+      const shippingCharge = order.shippingCharge || 0;
+      const originalDiscount = order.discount || 0;
+      const newTotal = newSubtotal + shippingCharge - originalDiscount;
+
+      return {
+        ...order.toObject(),
+        subtotalWithOffers: newSubtotal,
+        totalPriceWithOffers: newTotal,
+        offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+      };
+    }));
 
     // Get user wishlist items
     const mongoose = require("mongoose");
@@ -108,7 +150,7 @@ const loadProfile = async (req, res) => {
     res.render("profile", {
       user: userData,
       addresses: addresses,
-      orders: orders,
+      orders: ordersWithOffers,
       wishlistItems: wishlistProducts,
       wishlistCount: wishlistProducts.length,
       profileMessage: profileMessage,
