@@ -4,6 +4,7 @@ const Category = require("../../models/categorySchema");
 const Cart = require("../../models/cartSchema");
 const mongoose = require('mongoose');
 const Wishlist = mongoose.models.Wishlist || require("../../models/wishListSchema");
+const offerService = require("../../services/offerService");
 
 // Maximum quantity per product
 const MAX_QUANTITY_PER_PRODUCT = 10;
@@ -181,18 +182,26 @@ const updateCartQuantity = async (req, res) => {
       return res.json({ success: false, message: 'Invalid action' });
     }
     
-    // Update quantity and prices
+    // Calculate offer for the product
+    const offerResult = await offerService.calculateBestOfferForProduct(cartItem.productId._id, userId);
+
+    let finalPrice = cartItem.productId.salePrice;
+    if (offerResult) {
+      finalPrice = offerResult.finalPrice;
+    }
+
+    // Update quantity and prices with offer-adjusted price
     cartItem.quantity = newQuantity;
-    cartItem.price = cartItem.productId.salePrice;
-    cartItem.totalPrice = cartItem.productId.salePrice * newQuantity;
+    cartItem.price = finalPrice;
+    cartItem.totalPrice = finalPrice * newQuantity;
     await cartItem.save();
 
-    // Calculate new item total
+    // Calculate new item total with offers
     const itemTotal = cartItem.totalPrice;
     const cartCount = await getCartItemCount(userId);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'Cart updated successfully',
       newQuantity: newQuantity,
       itemTotal: itemTotal,

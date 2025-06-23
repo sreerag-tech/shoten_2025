@@ -128,7 +128,21 @@
                                                 Category: <%= item.product.category.name %>
                                             </p>
                                         <% } %>
-                                        <p class="text-gray-400 text-sm">Quantity: <%= item.quantity %> | Price: ₹<%= item.price.toLocaleString() %></p>
+                                        <p class="text-gray-400 text-sm">
+                                            Quantity: <%= item.quantity %> |
+                                            Price:
+                                            <% if (item.hasOffer && item.finalPrice < item.originalPrice) { %>
+                                                <span class="text-[#00ffff]">₹<%= item.finalPrice.toLocaleString() %></span>
+                                                <span class="line-through text-gray-500 text-xs ml-1">₹<%= item.originalPrice.toLocaleString() %></span>
+                                            <% } else { %>
+                                                ₹<%= item.price.toLocaleString() %>
+                                            <% } %>
+                                        </p>
+                                        <% if (item.hasOffer && item.offerInfo) { %>
+                                            <p class="text-green-400 text-xs">
+                                                <i class="fas fa-tag"></i> <%= item.offerInfo.name %>
+                                            </p>
+                                        <% } %>
                                         <span class="inline-block px-2 py-1 rounded text-xs font-semibold mt-1
                                             <% if (item.status === 'Processing') { %>bg-yellow-500/20 text-yellow-400
                                             <% } else if (item.status === 'Shipped') { %>bg-blue-500/20 text-blue-400
@@ -394,8 +408,21 @@ function displayUserOrderDetails(order) {
                                         <h5 class="text-white font-semibold">${item.product?.productName || 'Product Not Found'}</h5>
                                         <div class="grid grid-cols-2 gap-4 text-sm text-gray-400 mt-2">
                                             <div><span class="font-medium">Quantity:</span> ${item.quantity}</div>
-                                            <div><span class="font-medium">Price:</span> ₹${item.price.toLocaleString()}</div>
-                                            <div><span class="font-medium">Total:</span> ₹${(item.price * item.quantity).toLocaleString()}</div>
+                                            <div>
+                                                <span class="font-medium">Price:</span>
+                                                ${item.hasOffer && item.finalPrice < item.originalPrice ?
+                                                    `<span class="text-cyan-400">₹${item.finalPrice.toLocaleString()}</span> <span class="line-through text-gray-500 text-sm">₹${item.originalPrice.toLocaleString()}</span>` :
+                                                    `₹${item.price.toLocaleString()}`
+                                                }
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Total:</span>
+                                                ₹${(item.hasOffer && item.finalPrice ? item.finalPrice * item.quantity : item.price * item.quantity).toLocaleString()}
+                                            </div>
+                                            ${item.hasOffer && item.offerInfo ?
+                                                `<div><span class="font-medium">Offer:</span> <span class="text-green-400"><i class="fas fa-tag"></i> ${item.offerInfo.name}</span></div>` :
+                                                ''
+                                            }
                                             <div>
                                                 <span class="font-medium">Status:</span>
                                                 <span class="px-2 py-1 rounded text-xs font-semibold ml-1 ${getUserStatusClass(item.status)}">

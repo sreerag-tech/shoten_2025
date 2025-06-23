@@ -179,22 +179,58 @@ const loadOrderSuccess = async (req, res) => {
   try {
     const userId = req.session.user;
     const orderId = req.params.orderId;
-    
+
     // Get user data for header
     const userData = await User.findById(userId);
-    
+
     // Get order details
     const order = await Order.findOne({ _id: orderId, userId: userId })
       .populate('orderedItems.product');
-    
+
     if (!order) {
       req.session.checkoutMessage = { type: 'error', text: 'Order not found' };
       return res.redirect('/orders');
     }
-    
+
+    // Calculate offers for ordered items
+    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
+      if (!item.product) return item;
+
+      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id, userId);
+
+      let finalPrice = item.price;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount,
+          discountPercentage: offerResult.discountPercentage
+        };
+      }
+
+      return {
+        ...item.toObject(),
+        finalPrice: finalPrice,
+        originalPrice: item.price,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo
+      };
+    }));
+
+    // Update order object with offer information
+    const orderWithOffers = {
+      ...order.toObject(),
+      orderedItems: orderedItemsWithOffers
+    };
+
     res.render("order-success", {
       user: userData,
-      order: order
+      order: orderWithOffers
     });
   } catch (error) {
     console.error('Error loading order success:', error);
@@ -249,16 +285,24 @@ const applyCoupon = async (req, res) => {
       return res.json({ success: false, message: 'You have already used this coupon' });
     }
 
-    // Calculate cart subtotal
+    // Calculate cart subtotal with offers
     const cartItems = await Cart.find({ userId: userId })
       .populate('productId');
 
     let subtotal = 0;
-    cartItems.forEach(item => {
+    for (const item of cartItems) {
       if (item.productId && !item.productId.isBlocked && !item.productId.isDeleted) {
-        subtotal += item.productId.salePrice * item.quantity;
+        // Calculate offer for the product
+        const offerResult = await offerService.calculateBestOfferForProduct(item.productId._id, userId);
+
+        let finalPrice = item.productId.salePrice;
+        if (offerResult) {
+          finalPrice = offerResult.finalPrice;
+        }
+
+        subtotal += finalPrice * item.quantity;
       }
-    });
+    }
 
     // Check minimum order value
     if (subtotal < coupon.minimumPrice) {
@@ -321,11 +365,19 @@ const removeCoupon = async (req, res) => {
       .populate('productId');
 
     let subtotal = 0;
-    cartItems.forEach(item => {
+    for (const item of cartItems) {
       if (item.productId && !item.productId.isBlocked && !item.productId.isDeleted) {
-        subtotal += item.productId.salePrice * item.quantity;
+        // Calculate offer for the product
+        const offerResult = await offerService.calculateBestOfferForProduct(item.productId._id, userId);
+
+        let finalPrice = item.productId.salePrice;
+        if (offerResult) {
+          finalPrice = offerResult.finalPrice;
+        }
+
+        subtotal += finalPrice * item.quantity;
       }
-    });
+    }
 
     const taxRate = 0.18;
     const taxAmount = Math.round(subtotal * taxRate);

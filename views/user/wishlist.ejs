@@ -110,11 +110,26 @@
                                 Category: <%= item.category %>
                             </p>
 
-                            <!-- Price -->
-                            <div class="flex items-center gap-2">
-                                <span class="text-[#00ffff] font-bold text-xl">₹<%= item.price %></span>
-                                <% if (item.originalPrice > item.price) { %>
-                                    <span class="text-gray-500 line-through text-sm">₹<%= item.originalPrice %></span>
+                            <!-- Price and Offers -->
+                            <div class="mb-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-[#00ffff] font-bold text-xl">₹<%= item.price %></span>
+                                    <% if (item.originalPrice > item.price) { %>
+                                        <span class="text-gray-500 line-through text-sm">₹<%= item.originalPrice %></span>
+                                        <% if (item.discount > 0) { %>
+                                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                                <%= item.discount %>% OFF
+                                            </span>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+
+                                <!-- Offer Information -->
+                                <% if (item.hasOffer && item.offerInfo) { %>
+                                    <div class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full inline-block">
+                                        <i class="fas fa-tag mr-1"></i>
+                                        <%= item.offerInfo.type.charAt(0).toUpperCase() + item.offerInfo.type.slice(1) %> Offer: <%= item.offerInfo.name %>
+                                    </div>
                                 <% } %>
                             </div>
 

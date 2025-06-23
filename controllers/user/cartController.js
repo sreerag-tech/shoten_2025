@@ -2,7 +2,7 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Category = require("../../models/categorySchema");
 const Cart = require("../../models/cartSchema");
-const Wishlist = require("../../models/wishlistSchema");
+const Wishlist = require("../../models/wishListSchema");
 const offerService = require("../../services/offerService");
 
 // Load Cart Page

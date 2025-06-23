@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema");
 const Category = require("../../models/categorySchema");
 const mongoose = require('mongoose');
 const Wishlist = mongoose.models.Wishlist || require("../../models/wishListSchema");
+const offerService = require("../../services/offerService");
 
 // Load Wishlist Page
 const loadWishlist = async (req, res) => {
@@ -23,26 +24,51 @@ const loadWishlist = async (req, res) => {
       })
       .sort({ 'products.addedOn': -1 });
 
-    // Extract products from wishlist
+    // Extract products from wishlist and calculate offers
     let products = [];
     if (wishlistItems.length > 0) {
-      products = wishlistItems[0].products
-        .filter(item => item.productId && !item.productId.isDeleted && !item.productId.isBlocked)
-        .map(item => ({
+      const filteredProducts = wishlistItems[0].products
+        .filter(item => item.productId && !item.productId.isDeleted && !item.productId.isBlocked);
+
+      // Calculate offers for each product
+      products = await Promise.all(filteredProducts.map(async (item) => {
+        const offerResult = await offerService.calculateBestOfferForProduct(item.productId._id, userId);
+
+        let finalPrice = item.productId.salePrice;
+        let discount = 0;
+        let hasOffer = false;
+        let offerInfo = null;
+
+        if (offerResult) {
+          finalPrice = offerResult.finalPrice;
+          discount = offerResult.discountPercentage;
+          hasOffer = true;
+          offerInfo = {
+            type: offerResult.offer.offerType,
+            name: offerResult.offer.offerName,
+            discountAmount: offerResult.discount
+          };
+        }
+
+        return {
           _id: item.productId._id,
           name: item.productId.productName,
           description: item.productId.description,
-          price: item.productId.salePrice,
-          originalPrice: item.productId.regularPrice,
+          price: finalPrice,
+          originalPrice: item.productId.salePrice,
+          regularPrice: item.productId.regularPrice,
           image: item.productId.productImage && item.productId.productImage.length > 0
             ? `/uploads/product-images/${item.productId.productImage[0]}`
             : '/images/placeholder.jpg',
           category: item.productId.category ? item.productId.category.name : 'Unknown',
           stock: item.productId.quantity,
           isAvailable: item.productId.quantity > 0,
-          discount: item.productId.offerPercentage || 0,
+          discount: discount,
+          hasOffer: hasOffer,
+          offerInfo: offerInfo,
           addedOn: item.addedOn
-        }));
+        };
+      }));
     }
 
     // Get available categories (only listed categories that have products)

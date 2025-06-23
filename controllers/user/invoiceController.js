@@ -1,6 +1,7 @@
 const User = require("../../models/userSchema");
 const Order = require("../../models/orderSchema");
 const PDFDocument = require('pdfkit');
+const offerService = require("../../services/offerService");
 
 // Generate and Download Invoice
 const downloadInvoice = async (req, res) => {
@@ -11,23 +12,59 @@ const downloadInvoice = async (req, res) => {
     const order = await Order.findOne({ _id: orderId, userId: userId })
       .populate('orderedItems.product')
       .populate('userId');
-    
+
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
-    
+
+    // Calculate offers for ordered items
+    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
+      if (!item.product) return item;
+
+      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id, userId);
+
+      let finalPrice = item.price;
+      let hasOffer = false;
+      let offerInfo = null;
+
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+        hasOffer = true;
+        offerInfo = {
+          type: offerResult.offer.offerType,
+          name: offerResult.offer.offerName,
+          discountAmount: offerResult.discount,
+          discountPercentage: offerResult.discountPercentage
+        };
+      }
+
+      return {
+        ...item.toObject(),
+        finalPrice: finalPrice,
+        originalPrice: item.price,
+        hasOffer: hasOffer,
+        offerInfo: offerInfo
+      };
+    }));
+
+    // Update order object with offer information
+    const orderWithOffers = {
+      ...order.toObject(),
+      orderedItems: orderedItemsWithOffers
+    };
+
     // Create PDF document
     const doc = new PDFDocument({ margin: 50 });
-    
+
     // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderId}.pdf`);
-    
+
     // Pipe PDF to response
     doc.pipe(res);
-    
+
     // Add content to PDF
-    generateInvoicePDF(doc, order);
+    generateInvoicePDF(doc, orderWithOffers);
     
     // Finalize PDF
     doc.end();
@@ -71,10 +108,32 @@ function generateInvoicePDF(doc, order) {
   
   // Order items
   order.orderedItems.forEach((item, index) => {
-    doc.text(`Product #${index + 1}`, 50, yPosition);
+    const productName = item.product?.productName || `Product #${index + 1}`;
+    const finalPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
+    const itemTotal = finalPrice * item.quantity;
+
+    doc.text(productName, 50, yPosition);
     doc.text(item.quantity.toString(), 200, yPosition);
-    doc.text(`₹${item.price}`, 250, yPosition);
-    doc.text(`₹${item.price * item.quantity}`, 300, yPosition);
+
+    // Show offer price if applicable
+    if (item.hasOffer && item.finalPrice < item.originalPrice) {
+      doc.text(`₹${finalPrice}`, 250, yPosition);
+      doc.fontSize(8).text(`(was ₹${item.originalPrice})`, 250, yPosition + 10);
+      doc.fontSize(10);
+      yPosition += 10;
+    } else {
+      doc.text(`₹${finalPrice}`, 250, yPosition);
+    }
+
+    doc.text(`₹${itemTotal}`, 300, yPosition);
+
+    // Add offer info if available
+    if (item.hasOffer && item.offerInfo) {
+      yPosition += 15;
+      doc.fontSize(8).text(`Offer: ${item.offerInfo.name}`, 50, yPosition);
+      doc.fontSize(10);
+    }
+
     yPosition += 20;
   });
   

@@ -86,7 +86,17 @@
                                         <%= item.product?.productName || `Item #${index + 1}` %>
                                     </p>
                                     <p class="text-gray-400 text-xs">Qty: <%= item.quantity %></p>
-                                    <p class="text-[#00ffff] text-sm font-semibold">₹<%= (item.price * item.quantity).toLocaleString() %></p>
+                                    <% if (item.hasOffer && item.finalPrice < item.originalPrice) { %>
+                                        <p class="text-[#00ffff] text-sm font-semibold">₹<%= (item.finalPrice * item.quantity).toLocaleString() %></p>
+                                        <p class="text-gray-500 line-through text-xs">₹<%= (item.originalPrice * item.quantity).toLocaleString() %></p>
+                                        <% if (item.offerInfo) { %>
+                                            <p class="text-green-400 text-xs">
+                                                <i class="fas fa-tag"></i> <%= item.offerInfo.name %>
+                                            </p>
+                                        <% } %>
+                                    <% } else { %>
+                                        <p class="text-[#00ffff] text-sm font-semibold">₹<%= (item.price * item.quantity).toLocaleString() %></p>
+                                    <% } %>
                                 </div>
                             </div>
                         <% }) %>

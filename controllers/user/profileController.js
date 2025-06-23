@@ -3,6 +3,7 @@ const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+const offerService = require("../../services/offerService");
 const crypto = require("crypto");
 
 const loadProfile = async (req, res) => {
@@ -48,19 +49,41 @@ const loadProfile = async (req, res) => {
     // Extract wishlist products (limit to 6 for profile preview)
     let wishlistProducts = [];
     if (wishlistItems.length > 0) {
-      wishlistProducts = wishlistItems[0].products
+      const filteredProducts = wishlistItems[0].products
         .filter(
           (item) =>
             item.productId &&
             !item.productId.isDeleted &&
             !item.productId.isBlocked
         )
-        .slice(0, 6) // Limit to 6 items for profile preview
-        .map((item) => ({
+        .slice(0, 6); // Limit to 6 items for profile preview
+
+      // Calculate offers for wishlist products
+      wishlistProducts = await Promise.all(filteredProducts.map(async (item) => {
+        const offerResult = await offerService.calculateBestOfferForProduct(item.productId._id, userId);
+
+        let finalPrice = item.productId.salePrice;
+        let discount = 0;
+        let hasOffer = false;
+        let offerInfo = null;
+
+        if (offerResult) {
+          finalPrice = offerResult.finalPrice;
+          discount = offerResult.discountPercentage;
+          hasOffer = true;
+          offerInfo = {
+            type: offerResult.offer.offerType,
+            name: offerResult.offer.offerName,
+            discountAmount: offerResult.discount
+          };
+        }
+
+        return {
           _id: item.productId._id,
           name: item.productId.productName,
-          price: item.productId.salePrice,
-          originalPrice: item.productId.regularPrice,
+          price: finalPrice,
+          originalPrice: item.productId.salePrice,
+          regularPrice: item.productId.regularPrice,
           image:
             item.productId.productImage &&
             item.productId.productImage.length > 0
@@ -70,9 +93,12 @@ const loadProfile = async (req, res) => {
             ? item.productId.category.name
             : "Unknown",
           isAvailable: item.productId.quantity > 0,
-          discount: item.productId.offerPercentage || 0,
+          discount: discount,
+          hasOffer: hasOffer,
+          offerInfo: offerInfo,
           addedOn: item.addedOn,
-        }));
+        };
+      }));
     }
 
     // Get success/error messages from session
