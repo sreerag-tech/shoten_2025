@@ -228,24 +228,21 @@
                                     </td>
                                     <td>
                                         <div>
-                                            <% if (product.hasOffer && product.finalPrice < product.salePrice) { %>
+                                            <% if (product.hasOffer && product.finalPrice < product.regularPrice) { %>
                                                 <span class="fw-semibold text-success">₹<%= product.finalPrice.toLocaleString() %></span>
-                                                <br><small class="text-muted text-decoration-line-through">₹<%= product.salePrice.toLocaleString() %></small>
+                                                <br><small class="text-muted text-decoration-line-through">₹<%= product.regularPrice.toLocaleString() %></small>
                                                 <% if (product.offerInfo) { %>
                                                     <br><small class="text-info"><i class="fas fa-tag"></i> <%= product.offerInfo.name %></small>
                                                 <% } %>
                                             <% } else { %>
-                                                <span class="fw-semibold">₹<%= product.salePrice.toLocaleString() %></span>
-                                                <% if (product.regularPrice > product.salePrice) { %>
-                                                    <br><small class="text-muted text-decoration-line-through">₹<%= product.regularPrice.toLocaleString() %></small>
-                                                <% } %>
+                                                <span class="fw-semibold">₹<%= product.regularPrice.toLocaleString() %></span>
                                             <% } %>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="fw-semibold">₹<%= (product.totalValueWithOffers || product.quantity * product.salePrice).toLocaleString() %></span>
-                                        <% if (product.hasOffer && product.totalValueWithOffers < (product.quantity * product.salePrice)) { %>
-                                            <br><small class="text-muted text-decoration-line-through">₹<%= (product.quantity * product.salePrice).toLocaleString() %></small>
+                                        <span class="fw-semibold">₹<%= (product.totalValueWithOffers || product.quantity * product.regularPrice).toLocaleString() %></span>
+                                        <% if (product.hasOffer && product.totalValueWithOffers < (product.quantity * product.regularPrice)) { %>
+                                            <br><small class="text-muted text-decoration-line-through">₹<%= (product.quantity * product.regularPrice).toLocaleString() %></small>
                                         <% } %>
                                     </td>
                                     <td>

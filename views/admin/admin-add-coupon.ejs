@@ -1,0 +1,287 @@
+<%- include("../../views/admin/partials/header", { activePage: 'coupons' }) %>
+
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="content-main">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">Add New Coupon</h1>
+                <p class="page-subtitle">Create a new discount coupon for customers</p>
+            </div>
+            <a href="/admin/coupons" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Coupons
+            </a>
+        </div>
+    </div>
+
+    <!-- Add Coupon Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Coupon Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="addCouponForm">
+                        <div class="row">
+                            <!-- Coupon Code -->
+                            <div class="col-md-6 mb-3">
+                                <label for="code" class="form-label">Coupon Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="code" name="code" 
+                                       placeholder="e.g., SAVE20, WELCOME10" maxlength="20" required>
+                                <div class="form-text">3-20 characters, letters and numbers only. Will be converted to uppercase.</div>
+                            </div>
+
+                            <!-- Coupon Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Coupon Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       placeholder="e.g., Welcome Discount" maxlength="100" required>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Optional description for the coupon" maxlength="500"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <!-- Discount Type -->
+                            <div class="col-md-6 mb-3">
+                                <label for="discountType" class="form-label">Discount Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="discountType" name="discountType" required>
+                                    <option value="">Select Discount Type</option>
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="fixed">Fixed Amount (₹)</option>
+                                </select>
+                            </div>
+
+                            <!-- Discount Value -->
+                            <div class="col-md-6 mb-3">
+                                <label for="discountValue" class="form-label">Discount Value <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text" id="discountPrefix">₹</span>
+                                    <input type="number" class="form-control" id="discountValue" name="discountValue" 
+                                           placeholder="Enter discount value" min="0" step="0.01" required>
+                                </div>
+                                <div class="form-text" id="discountHelp">Enter the discount amount</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Minimum Order Amount -->
+                            <div class="col-md-6 mb-3">
+                                <label for="minimumPrice" class="form-label">Minimum Order Amount <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" id="minimumPrice" name="minimumPrice" 
+                                           placeholder="0" min="0" step="0.01" required>
+                                </div>
+                                <div class="form-text">Minimum order amount required to use this coupon</div>
+                            </div>
+
+                            <!-- Maximum Discount Amount -->
+                            <div class="col-md-6 mb-3">
+                                <label for="maximumDiscountAmount" class="form-label">Maximum Discount Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" id="maximumDiscountAmount" name="maximumDiscountAmount" 
+                                           placeholder="No limit" min="0" step="0.01">
+                                </div>
+                                <div class="form-text">Maximum discount amount (leave empty for no limit)</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Total Usage Limit -->
+                            <div class="col-md-6 mb-3">
+                                <label for="maxUses" class="form-label">Total Usage Limit</label>
+                                <input type="number" class="form-control" id="maxUses" name="maxUses" 
+                                       placeholder="Unlimited" min="1">
+                                <div class="form-text">Total number of times this coupon can be used (leave empty for unlimited)</div>
+                            </div>
+
+                            <!-- Per User Usage Limit -->
+                            <div class="col-md-6 mb-3">
+                                <label for="userUsageLimit" class="form-label">Per User Usage Limit</label>
+                                <input type="number" class="form-control" id="userUsageLimit" name="userUsageLimit" 
+                                       placeholder="1" min="1" value="1">
+                                <div class="form-text">How many times a single user can use this coupon</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Start Date -->
+                            <div class="col-md-6 mb-3">
+                                <label for="startOn" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="startOn" name="startOn" required>
+                                <div class="form-text">When the coupon becomes active</div>
+                            </div>
+
+                            <!-- End Date -->
+                            <div class="col-md-6 mb-3">
+                                <label for="expireOn" class="form-label">End Date <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="expireOn" name="expireOn" required>
+                                <div class="form-text">When the coupon expires</div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="/admin/coupons" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Coupon
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Set default dates
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Set default start date to now
+    const startInput = document.getElementById('startOn');
+    startInput.value = now.toISOString().slice(0, 16);
+    
+    // Set default end date to 30 days from now
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 30);
+    const endInput = document.getElementById('expireOn');
+    endInput.value = endDate.toISOString().slice(0, 16);
+});
+
+// Update discount input based on type
+document.getElementById('discountType').addEventListener('change', function() {
+    const discountType = this.value;
+    const prefix = document.getElementById('discountPrefix');
+    const help = document.getElementById('discountHelp');
+    const input = document.getElementById('discountValue');
+    
+    if (discountType === 'percentage') {
+        prefix.textContent = '%';
+        help.textContent = 'Enter percentage (1-100)';
+        input.max = '100';
+        input.placeholder = 'e.g., 20 for 20%';
+    } else if (discountType === 'fixed') {
+        prefix.textContent = '₹';
+        help.textContent = 'Enter fixed discount amount';
+        input.removeAttribute('max');
+        input.placeholder = 'e.g., 100 for ₹100 off';
+    } else {
+        prefix.textContent = '₹';
+        help.textContent = 'Enter the discount amount';
+        input.removeAttribute('max');
+        input.placeholder = 'Enter discount value';
+    }
+});
+
+// Form validation and submission
+document.getElementById('addCouponForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Client-side validation
+    if (!data.code || !data.name || !data.discountType || !data.discountValue || 
+        !data.minimumPrice || !data.startOn || !data.expireOn) {
+        Swal.fire('Error!', 'Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Validate coupon code format
+    if (!/^[A-Z0-9]{3,20}$/i.test(data.code)) {
+        Swal.fire('Error!', 'Coupon code must be 3-20 characters long and contain only letters and numbers', 'error');
+        return;
+    }
+    
+    // Validate discount value
+    if (data.discountType === 'percentage' && (data.discountValue <= 0 || data.discountValue > 100)) {
+        Swal.fire('Error!', 'Percentage discount must be between 1 and 100', 'error');
+        return;
+    }
+    
+    if (data.discountType === 'fixed' && data.discountValue <= 0) {
+        Swal.fire('Error!', 'Fixed discount amount must be greater than 0', 'error');
+        return;
+    }
+    
+    // Validate dates
+    const startDate = new Date(data.startOn);
+    const endDate = new Date(data.expireOn);
+    const now = new Date();
+    
+    if (startDate >= endDate) {
+        Swal.fire('Error!', 'End date must be after start date', 'error');
+        return;
+    }
+    
+    if (endDate <= now) {
+        Swal.fire('Error!', 'End date must be in the future', 'error');
+        return;
+    }
+    
+    // Show loading
+    Swal.fire({
+        title: 'Creating Coupon...',
+        text: 'Please wait while we create the coupon.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Submit form
+    fetch('/admin/coupons/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonText: 'Go to Coupons'
+            }).then(() => {
+                window.location.href = '/admin/coupons';
+            });
+        } else {
+            Swal.fire('Error!', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error!', 'Failed to create coupon. Please try again.', 'error');
+    });
+});
+
+// Convert coupon code to uppercase as user types
+document.getElementById('code').addEventListener('input', function() {
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+});
+</script>
+
+<%- include("../../views/admin/partials/footer") %>

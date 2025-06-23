@@ -151,7 +151,7 @@ const getProductList = async (req, res) => {
     const productsWithOffers = await Promise.all(products.map(async (product) => {
       const offerResult = await offerService.calculateBestOfferForProduct(product._id);
 
-      let finalPrice = product.salePrice;
+      let finalPrice = product.regularPrice;
       let hasOffer = false;
       let offerInfo = null;
 

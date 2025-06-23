@@ -1,0 +1,409 @@
+<%- include("../../views/admin/partials/header", { activePage: 'coupons' }) %>
+
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="content-main">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">Coupon Management</h1>
+                <p class="page-subtitle">Manage discount coupons and promotional codes</p>
+            </div>
+            <a href="/admin/coupons/add" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add New Coupon
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0"><%= stats.total %></h4>
+                            <p class="mb-0">Total Coupons</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-ticket-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0"><%= stats.active %></h4>
+                            <p class="mb-0">Active Coupons</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0"><%= stats.expired %></h4>
+                            <p class="mb-0">Expired Coupons</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0"><%= stats.totalUsed %></h4>
+                            <p class="mb-0">Total Uses</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="/admin/coupons">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Search Coupons</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" name="search" 
+                                   placeholder="Search by code or name..." value="<%= search %>">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="">All Status</option>
+                            <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+                            <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                            <option value="expired" <%= status === 'expired' ? 'selected' : '' %>>Expired</option>
+                            <option value="upcoming" <%= status === 'upcoming' ? 'selected' : '' %>>Upcoming</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" name="sortBy">
+                            <option value="createdOn" <%= sortBy === 'createdOn' ? 'selected' : '' %>>Created Date</option>
+                            <option value="code" <%= sortBy === 'code' ? 'selected' : '' %>>Code</option>
+                            <option value="name" <%= sortBy === 'name' ? 'selected' : '' %>>Name</option>
+                            <option value="expireOn" <%= sortBy === 'expireOn' ? 'selected' : '' %>>Expiry Date</option>
+                            <option value="usesCount" <%= sortBy === 'usesCount' ? 'selected' : '' %>>Usage Count</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Order</label>
+                        <select class="form-select" name="sortOrder">
+                            <option value="desc" <%= sortOrder === 'desc' ? 'selected' : '' %>>Descending</option>
+                            <option value="asc" <%= sortOrder === 'asc' ? 'selected' : '' %>>Ascending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Coupons Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">All Coupons</h5>
+            <span class="badge bg-primary">Total: <%= totalCoupons %></span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Discount</th>
+                            <th>Min. Order</th>
+                            <th>Usage</th>
+                            <th>Validity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (coupons && coupons.length > 0) { %>
+                            <% coupons.forEach(coupon => { %>
+                                <tr>
+                                    <td>
+                                        <span class="fw-bold text-primary"><%= coupon.code %></span>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div class="fw-semibold"><%= coupon.name %></div>
+                                            <% if (coupon.description) { %>
+                                                <small class="text-muted"><%= coupon.description.substring(0, 50) %><%= coupon.description.length > 50 ? '...' : '' %></small>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% if (coupon.discountType === 'percentage') { %>
+                                            <span class="badge bg-success"><%= coupon.discountValue %>% OFF</span>
+                                        <% } else { %>
+                                            <span class="badge bg-info">₹<%= coupon.discountValue %> OFF</span>
+                                        <% } %>
+                                        <% if (coupon.maximumDiscountAmount) { %>
+                                            <br><small class="text-muted">Max: ₹<%= coupon.maximumDiscountAmount %></small>
+                                        <% } %>
+                                    </td>
+                                    <td>₹<%= coupon.minimumPrice.toLocaleString() %></td>
+                                    <td>
+                                        <div>
+                                            <span class="fw-semibold"><%= coupon.usesCount %></span>
+                                            <% if (coupon.maxUses) { %>
+                                                / <%= coupon.maxUses %>
+                                            <% } else { %>
+                                                / ∞
+                                            <% } %>
+                                        </div>
+                                        <small class="text-muted">Per user: <%= coupon.userUsageLimit %></small>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <small class="text-muted">From:</small> <%= new Date(coupon.startOn).toLocaleDateString('en-IN') %><br>
+                                            <small class="text-muted">To:</small> <%= new Date(coupon.expireOn).toLocaleDateString('en-IN') %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% 
+                                            const now = new Date();
+                                            const isActive = coupon.isListed && !coupon.isDeleted && 
+                                                            coupon.startOn <= now && coupon.expireOn >= now &&
+                                                            (coupon.maxUses === null || coupon.usesCount < coupon.maxUses);
+                                            const isExpired = coupon.expireOn < now;
+                                            const isUpcoming = coupon.startOn > now;
+                                        %>
+                                        <% if (isActive) { %>
+                                            <span class="badge bg-success">Active</span>
+                                        <% } else if (isExpired) { %>
+                                            <span class="badge bg-danger">Expired</span>
+                                        <% } else if (isUpcoming) { %>
+                                            <span class="badge bg-warning">Upcoming</span>
+                                        <% } else if (!coupon.isListed) { %>
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        <% } else { %>
+                                            <span class="badge bg-dark">Unknown</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-info"
+                                                    onclick="viewCouponDetails('<%= coupon._id %>')"
+                                                    title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-<%= coupon.isListed ? 'warning' : 'success' %>" 
+                                                    onclick="toggleCouponStatus('<%= coupon._id %>', '<%= coupon.code %>', <%= coupon.isListed %>)"
+                                                    title="<%= coupon.isListed ? 'Deactivate' : 'Activate' %>">
+                                                <i class="fas fa-<%= coupon.isListed ? 'pause' : 'play' %>"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteCoupon('<%= coupon._id %>', '<%= coupon.code %>')"
+                                                    title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-ticket-alt fa-3x mb-3"></i>
+                                        <p>No coupons found</p>
+                                        <a href="/admin/coupons/add" class="btn btn-primary">Create First Coupon</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <% if (currentPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>&status=<%= status %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>">Previous</a>
+                            </li>
+                        <% } %>
+                        
+                        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>&search=<%= search %>&status=<%= status %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>&status=<%= status %>&sortBy=<%= sortBy %>&sortOrder=<%= sortOrder %>">Next</a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// View coupon details
+function viewCouponDetails(couponId) {
+    fetch(`/admin/coupons/api/${couponId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const coupon = data.coupon;
+            const now = new Date();
+            const isActive = coupon.isListed && coupon.startOn <= now && coupon.expireOn >= now;
+            
+            let discountText = '';
+            if (coupon.discountType === 'percentage') {
+                discountText = `${coupon.discountValue}% OFF`;
+            } else {
+                discountText = `₹${coupon.discountValue} OFF`;
+            }
+            
+            if (coupon.maximumDiscountAmount) {
+                discountText += ` (Max: ₹${coupon.maximumDiscountAmount})`;
+            }
+            
+            Swal.fire({
+                title: `Coupon: ${coupon.code}`,
+                html: `
+                    <div class="text-start">
+                        <p><strong>Name:</strong> ${coupon.name}</p>
+                        ${coupon.description ? `<p><strong>Description:</strong> ${coupon.description}</p>` : ''}
+                        <p><strong>Discount:</strong> ${discountText}</p>
+                        <p><strong>Minimum Order:</strong> ₹${coupon.minimumPrice.toLocaleString()}</p>
+                        <p><strong>Usage:</strong> ${coupon.usesCount} ${coupon.maxUses ? `/ ${coupon.maxUses}` : '/ Unlimited'}</p>
+                        <p><strong>Per User Limit:</strong> ${coupon.userUsageLimit}</p>
+                        <p><strong>Valid From:</strong> ${new Date(coupon.startOn).toLocaleDateString('en-IN')}</p>
+                        <p><strong>Valid Until:</strong> ${new Date(coupon.expireOn).toLocaleDateString('en-IN')}</p>
+                        <p><strong>Status:</strong> <span class="badge bg-${isActive ? 'success' : 'danger'}">${isActive ? 'Active' : 'Inactive'}</span></p>
+                        <p><strong>Created:</strong> ${new Date(coupon.createdOn).toLocaleDateString('en-IN')}</p>
+                        ${coupon.createdBy ? `<p><strong>Created By:</strong> ${coupon.createdBy.name}</p>` : ''}
+                    </div>
+                `,
+                width: '600px',
+                confirmButtonText: 'Close'
+            });
+        } else {
+            Swal.fire('Error!', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        Swal.fire('Error!', 'Failed to load coupon details', 'error');
+    });
+}
+
+// Toggle coupon status
+function toggleCouponStatus(couponId, couponCode, isCurrentlyListed) {
+    const action = isCurrentlyListed ? 'deactivate' : 'activate';
+    
+    Swal.fire({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Coupon?`,
+        text: `Are you sure you want to ${action} coupon "${couponCode}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: `Yes, ${action}!`,
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/coupons/toggle/${couponId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error!', 'Failed to update coupon status', 'error');
+            });
+        }
+    });
+}
+
+// Delete coupon
+function deleteCoupon(couponId, couponCode) {
+    Swal.fire({
+        title: 'Delete Coupon?',
+        text: `Are you sure you want to delete coupon "${couponCode}"? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete!',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/coupons/delete/${couponId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error!', 'Failed to delete coupon', 'error');
+            });
+        }
+    });
+}
+</script>
+
+<%- include("../../views/admin/partials/footer") %>

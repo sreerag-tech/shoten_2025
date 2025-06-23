@@ -423,8 +423,21 @@ const handleReturnRequest = async (req, res) => {
       item.status = 'Returned';
       item.adminResponse = adminResponse || 'Return request approved';
 
-      // Add refund amount to user's wallet using proper Wallet schema
-      const refundAmount = item.price * item.quantity;
+      // Calculate offer-adjusted refund amount
+      let refundAmount = item.price * item.quantity;
+
+      // Get the product to calculate current offer price
+      const Product = require("../../models/productSchema");
+      const product = await Product.findById(item.product);
+
+      if (product) {
+        const offerResult = await offerService.calculateBestOfferForProduct(item.product);
+
+        if (offerResult) {
+          // Use offer-adjusted price for refund
+          refundAmount = offerResult.finalPrice * item.quantity;
+        }
+      }
 
       // Get or create wallet for user
       let wallet = await Wallet.findOne({ user: order.userId._id });
@@ -446,7 +459,6 @@ const handleReturnRequest = async (req, res) => {
       await user.save();
 
       // Restore product stock
-      const product = await Product.findById(item.product);
       if (product) {
         product.quantity += item.quantity;
         await product.save();

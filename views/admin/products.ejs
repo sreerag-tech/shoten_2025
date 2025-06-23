@@ -108,17 +108,14 @@
                                     </td>
                                     <td>
                                         <div>
-                                            <% if (product.hasOffer && product.finalPrice < product.salePrice) { %>
+                                            <% if (product.hasOffer && product.finalPrice < product.regularPrice) { %>
                                                 <span class="fw-semibold text-success">₹<%= product.finalPrice.toFixed(2) %></span>
-                                                <br><small class="text-muted text-decoration-line-through">₹<%= product.salePrice.toFixed(2) %></small>
+                                                <br><small class="text-muted text-decoration-line-through">₹<%= product.regularPrice.toFixed(2) %></small>
                                                 <% if (product.offerInfo) { %>
                                                     <br><small class="text-info"><i class="fas fa-tag"></i> <%= product.offerInfo.name %></small>
                                                 <% } %>
                                             <% } else { %>
-                                                <span class="fw-semibold text-success">₹<%= product.salePrice.toFixed(2) %></span>
-                                                <% if (product.regularPrice !== product.salePrice) { %>
-                                                    <br><small class="text-muted text-decoration-line-through">₹<%= product.regularPrice.toFixed(2) %></small>
-                                                <% } %>
+                                                <span class="fw-semibold">₹<%= product.regularPrice.toFixed(2) %></span>
                                             <% } %>
                                         </div>
                                     </td>

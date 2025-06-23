@@ -6,6 +6,7 @@ const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const Coupon = require("../../models/couponSchema");
 const offerService = require("../../services/offerService");
+const couponService = require("../../services/couponService");
 
 // Load Checkout Page
 const loadCheckout = async (req, res) => {
@@ -133,20 +134,8 @@ const loadCheckout = async (req, res) => {
     // Calculate final total
     const finalTotal = subtotal + taxAmount + shippingCharge - discount;
     
-    // Get available coupons for user
-    const availableCoupons = await Coupon.find({
-      isListed: true,
-      isDeleted: false,
-      startOn: { $lte: new Date() },
-      expireOn: { $gte: new Date() },
-      minimumPrice: { $lte: subtotal }
-    }).select('code offerPrice minimumPrice description').limit(5);
-
-    // Filter coupons user hasn't used
-    const userAvailableCoupons = availableCoupons.filter(coupon => {
-      const userUsage = coupon.userUses.find(usage => usage.userId.toString() === userId.toString());
-      return !userUsage || userUsage.count === 0;
-    });
+    // Get available coupons for user using coupon service
+    const userAvailableCoupons = await couponService.getAvailableCoupons(userId, subtotal);
 
     // Get checkout message from session
     const checkoutMessage = req.session.checkoutMessage || null;
@@ -268,38 +257,6 @@ const applyCoupon = async (req, res) => {
       return res.json({ success: false, message: 'This coupon is already applied' });
     }
 
-    // Find the coupon
-    const coupon = await Coupon.findOne({
-      code: couponCode.toUpperCase(),
-      isListed: true,
-      isDeleted: false
-    });
-
-    if (!coupon) {
-      return res.json({ success: false, message: 'Invalid coupon code' });
-    }
-
-    // Check if coupon is active
-    const currentDate = new Date();
-    if (currentDate < coupon.startOn) {
-      return res.json({ success: false, message: 'This coupon is not yet active' });
-    }
-
-    if (currentDate > coupon.expireOn) {
-      return res.json({ success: false, message: 'This coupon has expired' });
-    }
-
-    // Check if coupon has reached maximum uses
-    if (coupon.usesCount >= coupon.maxUses) {
-      return res.json({ success: false, message: 'This coupon has reached its usage limit' });
-    }
-
-    // Check if user has already used this coupon
-    const userUsage = coupon.userUses.find(usage => usage.userId.toString() === userId.toString());
-    if (userUsage && userUsage.count > 0) {
-      return res.json({ success: false, message: 'You have already used this coupon' });
-    }
-
     // Calculate cart subtotal with offers
     const cartItems = await Cart.find({ userId: userId })
       .populate('productId');
@@ -319,33 +276,37 @@ const applyCoupon = async (req, res) => {
       }
     }
 
-    // Check minimum order value
-    if (subtotal < coupon.minimumPrice) {
+    // Use coupon service to validate and apply coupon
+    const couponResult = await couponService.applyCoupon(couponCode, userId, subtotal);
+
+    if (!couponResult.isValid) {
       return res.json({
         success: false,
-        message: `Minimum order value of ₹${coupon.minimumPrice} required to use this coupon`
+        message: couponResult.message
       });
     }
 
     // Apply coupon to session
     req.session.appliedCoupon = {
-      code: coupon.code,
-      discount: coupon.offerPrice,
-      minimumPrice: coupon.minimumPrice
+      code: couponResult.coupon.code,
+      discount: couponResult.discount,
+      couponId: couponResult.coupon._id,
+      name: couponResult.coupon.name || couponResult.coupon.code
     };
 
     // Calculate new totals
     const taxRate = 0.18;
     const taxAmount = Math.round(subtotal * taxRate);
     const shippingCharge = subtotal >= 500 ? 0 : 50;
-    const discount = coupon.offerPrice;
+    const discount = couponResult.discount;
     const finalTotal = subtotal + taxAmount + shippingCharge - discount;
 
     res.json({
       success: true,
       message: `Coupon applied successfully! You saved ₹${discount}`,
       coupon: {
-        code: coupon.code,
+        code: couponResult.coupon.code,
+        name: couponResult.coupon.name || couponResult.coupon.code,
         discount: discount
       },
       totals: {

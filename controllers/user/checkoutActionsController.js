@@ -4,6 +4,8 @@ const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const Coupon = require("../../models/couponSchema");
+const offerService = require("../../services/offerService");
+const couponService = require("../../services/couponService");
 const { v4: uuidv4 } = require('uuid');
 
 // Place Order
@@ -54,21 +56,29 @@ const placeOrder = async (req, res) => {
       return res.json({ success: false, message: 'No valid items in cart' });
     }
     
-    // Calculate order totals
+    // Calculate order totals with offers
     let subtotal = 0;
     const orderedItems = [];
-    
+
     for (const item of validCartItems) {
-      const itemTotal = item.productId.salePrice * item.quantity;
+      // Calculate offer for the product
+      const offerResult = await offerService.calculateBestOfferForProduct(item.productId._id, userId);
+
+      let finalPrice = item.productId.salePrice;
+      if (offerResult) {
+        finalPrice = offerResult.finalPrice;
+      }
+
+      const itemTotal = finalPrice * item.quantity;
       subtotal += itemTotal;
-      
+
       orderedItems.push({
         product: item.productId._id,
         quantity: item.quantity,
-        price: item.productId.salePrice,
+        price: finalPrice, // Store the offer-adjusted price
         status: 'Processing'
       });
-      
+
       // Reduce product stock
       await Product.findByIdAndUpdate(item.productId._id, {
         $inc: { quantity: -item.quantity }
@@ -86,33 +96,16 @@ const placeOrder = async (req, res) => {
     let couponApplied = false;
 
     if (req.session.appliedCoupon) {
-      // Verify coupon is still valid
-      const coupon = await Coupon.findOne({
-        code: req.session.appliedCoupon.code,
-        isListed: true,
-        isDeleted: false,
-        startOn: { $lte: new Date() },
-        expireOn: { $gte: new Date() }
-      });
+      // Use coupon service to validate and apply coupon
+      const couponResult = await couponService.applyCoupon(req.session.appliedCoupon.code, userId, subtotal);
 
-      if (coupon && subtotal >= coupon.minimumPrice) {
-        // Check if user has already used this coupon
-        const userUsage = coupon.userUses.find(usage => usage.userId.toString() === userId.toString());
+      if (couponResult.isValid) {
+        discount = couponResult.discount;
+        couponCode = couponResult.coupon.code;
+        couponApplied = true;
 
-        if (!userUsage || userUsage.count === 0) {
-          discount = coupon.offerPrice;
-          couponCode = coupon.code;
-          couponApplied = true;
-
-          // Update coupon usage
-          if (userUsage) {
-            userUsage.count += 1;
-          } else {
-            coupon.userUses.push({ userId: userId, count: 1 });
-          }
-          coupon.usesCount += 1;
-          await coupon.save();
-        }
+        // Use the coupon (increment usage count)
+        await couponService.useCoupon(couponResult.coupon._id, userId);
       }
 
       // Clear coupon from session after processing

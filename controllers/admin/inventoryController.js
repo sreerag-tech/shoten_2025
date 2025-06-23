@@ -54,7 +54,7 @@ const loadInventory = async (req, res) => {
     const products = await Promise.all(productsRaw.map(async (product) => {
       const offerResult = await offerService.calculateBestOfferForProduct(product._id);
 
-      let finalPrice = product.salePrice;
+      let finalPrice = product.regularPrice;
       let hasOffer = false;
       let offerInfo = null;
 
@@ -115,7 +115,7 @@ const loadInventory = async (req, res) => {
     for (const product of allProducts) {
       const offerResult = await offerService.calculateBestOfferForProduct(product._id);
 
-      let finalPrice = product.salePrice;
+      let finalPrice = product.regularPrice;
       if (offerResult) {
         finalPrice = offerResult.finalPrice;
       }
@@ -357,7 +357,7 @@ const exportInventoryReport = async (req, res) => {
       .sort({ productName: 1 });
 
     // Create CSV content with offer-adjusted prices
-    let csvContent = 'Product Name,Category,Current Stock,Sale Price,Offer Price,Regular Price,Total Value,Status\n';
+    let csvContent = 'Product Name,Category,Current Stock,Regular Price,Offer Price,Total Value,Status\n';
 
     for (const product of products) {
       const status = product.quantity <= 0 ? 'Out of Stock' :
@@ -365,14 +365,14 @@ const exportInventoryReport = async (req, res) => {
 
       // Calculate offer price
       const offerResult = await offerService.calculateBestOfferForProduct(product._id);
-      let finalPrice = product.salePrice;
+      let finalPrice = product.regularPrice;
       if (offerResult) {
         finalPrice = offerResult.finalPrice;
       }
 
       const totalValue = product.quantity * finalPrice;
 
-      csvContent += `"${product.productName}","${product.category?.name || 'N/A'}",${product.quantity},${product.salePrice},${finalPrice},${product.regularPrice},${totalValue},"${status}"\n`;
+      csvContent += `"${product.productName}","${product.category?.name || 'N/A'}",${product.quantity},${product.regularPrice},${finalPrice},${totalValue},"${status}"\n`;
     }
 
     res.setHeader('Content-Type', 'text/csv');
