@@ -10,6 +10,7 @@ const orderController = require("../controllers/admin/orderController");
 const inventoryController = require("../controllers/admin/inventoryController");
 const couponController = require("../controllers/admin/couponController");
 const offerController = require("../controllers/admin/offerController");
+const salesReportController = require("../controllers/admin/salesReportController");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 
 router.get("/pageerror", adminController.pageerror);
@@ -77,5 +78,10 @@ router.post("/coupons/create", adminAuth, couponController.createCoupon);
 router.put("/coupons/toggle/:id", adminAuth, couponController.toggleCouponStatus);
 router.delete("/coupons/delete/:id", adminAuth, couponController.deleteCoupon);
 router.get("/coupons/api/:id", adminAuth, couponController.getCouponDetails);
+
+// Sales Report Routes
+router.get("/sales-report", adminAuth, salesReportController.loadSalesReport);
+router.get("/sales-report/download-pdf", adminAuth, salesReportController.downloadPDFReport);
+router.get("/sales-report/download-excel", adminAuth, salesReportController.downloadExcelReport);
 
 module.exports = router;

@@ -85,9 +85,7 @@ const placeOrder = async (req, res) => {
       });
     }
     
-    // Calculate taxes and charges
-    const taxRate = 0.18;
-    const taxAmount = Math.round(subtotal * taxRate);
+    // Calculate shipping charge
     const shippingCharge = subtotal >= 500 ? 0 : 50;
 
     // Handle coupon discount
@@ -112,7 +110,7 @@ const placeOrder = async (req, res) => {
       req.session.appliedCoupon = null;
     }
 
-    const finalTotal = subtotal + taxAmount + shippingCharge - discount;
+    const finalTotal = subtotal + shippingCharge - discount;
     
     // Generate unique order ID
     const orderId = 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -122,9 +120,10 @@ const placeOrder = async (req, res) => {
       orderId: orderId,
       userId: userId,
       orderedItems: orderedItems,
-      totalPrice: subtotal,
-      discount: discount,
-      finalAmount: finalTotal,
+      totalPrice: subtotal, // Subtotal (sum of item prices after offers)
+      shippingCharge: shippingCharge, // Shipping charge
+      discount: discount, // Coupon discount
+      finalAmount: finalTotal, // Final amount: subtotal + shipping - discount
       shippingAddress: {
         fullName: selectedAddress.name,
         addressType: selectedAddress.addressType,
@@ -139,8 +138,6 @@ const placeOrder = async (req, res) => {
       orderDate: new Date(),
       deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
       invoiceDate: new Date(),
-      shippingCharge: shippingCharge,
-      taxAmount: taxAmount,
       couponApplied: couponApplied,
       couponCode: couponCode,
       status: 'Processing'

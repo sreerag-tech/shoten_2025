@@ -235,12 +235,13 @@
                             <tbody>
                                 <tr>
                                     <td>Sub Total :</td>
-                                    <td class="text-end">₹<%= (order.subtotalWithOffers || order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0)).toLocaleString() %></td>
+                                    <td class="text-end">₹<%= order.subtotal.toLocaleString() %></td>
                                 </tr>
-                                <% if (order.offerSavings && order.offerSavings > 0) { %>
+
+                                <% if (order.shippingCharge > 0) { %>
                                     <tr>
-                                        <td>Offer Savings :</td>
-                                        <td class="text-end text-success">-₹<%= order.offerSavings.toLocaleString() %></td>
+                                        <td>Shipping Charge :</td>
+                                        <td class="text-end">₹<%= order.shippingCharge.toLocaleString() %></td>
                                     </tr>
                                 <% } %>
                                 <% if (order.discount > 0) { %>
@@ -249,15 +250,9 @@
                                         <td class="text-end text-success">-₹<%= order.discount.toLocaleString() %></td>
                                     </tr>
                                 <% } %>
-                                <% if (order.shippingCharge > 0) { %>
-                                    <tr>
-                                        <td>Shipping Charge :</td>
-                                        <td class="text-end">₹<%= order.shippingCharge.toLocaleString() %></td>
-                                    </tr>
-                                <% } %>
                                 <tr class="border-top">
                                     <th>Total :</th>
-                                    <th class="text-end">₹<%= (order.totalPriceWithOffers || order.totalPrice).toLocaleString() %></th>
+                                    <th class="text-end">₹<%= order.finalTotal.toLocaleString() %></th>
                                 </tr>
                             </tbody>
                         </table>

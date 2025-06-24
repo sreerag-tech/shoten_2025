@@ -73,7 +73,7 @@
                                 </h3>
                                 <div class="flex flex-wrap gap-4 text-sm text-gray-400">
                                     <span>📅 Placed: <%= new Date(order.createdOn).toLocaleDateString() %></span>
-                                    <span>💰 Total: ₹<%= order.finalAmount %></span>
+                                    <span>💰 Total: ₹<%= ((order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0)).toLocaleString() %></span>
                                     <span>📦 Items: <%= order.orderedItems.length %></span>
                                 </div>
                             </div>
@@ -446,30 +446,30 @@ function displayUserOrderDetails(order) {
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-400">Subtotal:</span>
-                            <span class="text-white">₹${(order.subtotalWithOffers || order.totalPrice).toLocaleString()}</span>
+                            <span class="text-white">₹${(order.totalPrice || 0).toLocaleString()}</span>
                         </div>
-                        ${order.offerSavings && order.offerSavings > 0 ? `
+                        ${(order.taxAmount || 0) > 0 ? `
                             <div class="flex justify-between">
-                                <span class="text-gray-400">Offer Savings:</span>
-                                <span class="text-green-400">-₹${order.offerSavings.toLocaleString()}</span>
+                                <span class="text-gray-400">Tax (18% GST):</span>
+                                <span class="text-white">₹${order.taxAmount.toLocaleString()}</span>
                             </div>
                         ` : ''}
-                        ${order.discount > 0 ? `
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Coupon Discount:</span>
-                                <span class="text-green-400">-₹${order.discount.toLocaleString()}</span>
-                            </div>
-                        ` : ''}
-                        ${order.shippingCharge > 0 ? `
+                        ${(order.shippingCharge || 0) > 0 ? `
                             <div class="flex justify-between">
                                 <span class="text-gray-400">Shipping:</span>
                                 <span class="text-white">₹${order.shippingCharge.toLocaleString()}</span>
                             </div>
                         ` : ''}
+                        ${(order.discount || 0) > 0 ? `
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Coupon Discount:</span>
+                                <span class="text-green-400">-₹${order.discount.toLocaleString()}</span>
+                            </div>
+                        ` : ''}
                         <hr class="border-gray-600">
                         <div class="flex justify-between text-lg font-bold">
                             <span class="text-white">Total:</span>
-                            <span class="text-[#00ffff]">₹${(order.totalPriceWithOffers || order.totalPrice).toLocaleString()}</span>
+                            <span class="text-[#00ffff]">₹${((order.totalPrice || 0) + (order.taxAmount || 0) + (order.shippingCharge || 0) - (order.discount || 0)).toLocaleString()}</span>
                         </div>
                     </div>
                 </div>

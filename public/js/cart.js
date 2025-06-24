@@ -106,28 +106,57 @@ function updateHeaderCartCount() {
 function calculateCartTotals() {
     let subtotal = 0;
     let totalItems = 0;
-    
+
     document.querySelectorAll('.cart-item').forEach(item => {
         const quantity = parseInt(item.querySelector('.quantity-display').textContent);
         const priceText = item.querySelector('.item-total').textContent.replace('₹', '').replace(',', '');
         const itemTotal = parseFloat(priceText);
-        
+
         if (!isNaN(itemTotal)) {
             subtotal += itemTotal;
             totalItems += quantity;
         }
     });
-    
+
+    // Calculate shipping (consistent with server logic)
+    const shippingThreshold = 500;
+    const shippingCharge = subtotal >= shippingThreshold ? 0 : 50;
+    const finalTotal = subtotal + shippingCharge;
+
     // Update display
     const subtotalElement = document.getElementById('cart-subtotal');
     const totalElement = document.getElementById('cart-total');
-    
+
     if (subtotalElement) {
         subtotalElement.textContent = `₹${subtotal.toLocaleString()}`;
     }
-    
+
     if (totalElement) {
-        totalElement.textContent = `₹${subtotal.toLocaleString()}`;
+        totalElement.textContent = `₹${finalTotal.toLocaleString()}`;
+    }
+
+    // Update shipping display
+    const shippingElements = document.querySelectorAll('.shipping-amount');
+    shippingElements.forEach(element => {
+        if (shippingCharge > 0) {
+            element.textContent = `₹${shippingCharge}`;
+            element.className = 'text-white';
+        } else {
+            element.textContent = 'FREE';
+            element.className = 'text-green-400';
+        }
+    });
+
+    // Update shipping threshold message
+    const thresholdMessage = document.querySelector('.shipping-threshold-message');
+    if (thresholdMessage) {
+        if (shippingCharge > 0) {
+            const remaining = shippingThreshold - subtotal;
+            thresholdMessage.innerHTML = `💡 Add ₹${remaining.toLocaleString()} more for FREE shipping!`;
+            thresholdMessage.parentElement.style.display = 'block';
+        } else {
+            thresholdMessage.parentElement.style.display = 'none';
+        }
     }
     
     // Update items count

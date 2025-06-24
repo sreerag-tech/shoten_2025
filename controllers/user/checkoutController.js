@@ -96,10 +96,6 @@ const loadCheckout = async (req, res) => {
       };
     }));
     
-    // Calculate taxes (18% GST)
-    const taxRate = 0.18;
-    const taxAmount = Math.round(subtotal * taxRate);
-    
     // Calculate shipping (free for orders above ₹500)
     const shippingThreshold = 500;
     const shippingCharge = subtotal >= shippingThreshold ? 0 : 50;
@@ -109,21 +105,15 @@ const loadCheckout = async (req, res) => {
     let appliedCoupon = null;
 
     if (req.session.appliedCoupon) {
-      // Verify coupon is still valid
-      const coupon = await Coupon.findOne({
-        code: req.session.appliedCoupon.code,
-        isListed: true,
-        isDeleted: false,
-        startOn: { $lte: new Date() },
-        expireOn: { $gte: new Date() }
-      });
+      // Use coupon service to validate and calculate discount
+      const couponResult = await couponService.validateCoupon(req.session.appliedCoupon.code, userId, subtotal);
 
-      if (coupon && subtotal >= coupon.minimumPrice) {
-        discount = coupon.offerPrice;
+      if (couponResult.isValid) {
+        discount = couponResult.discount;
         appliedCoupon = {
-          code: coupon.code,
+          code: couponResult.coupon.code,
           discount: discount,
-          minimumPrice: coupon.minimumPrice
+          minimumPrice: couponResult.coupon.minimumPrice
         };
       } else {
         // Remove invalid coupon from session
@@ -132,7 +122,7 @@ const loadCheckout = async (req, res) => {
     }
 
     // Calculate final total
-    const finalTotal = subtotal + taxAmount + shippingCharge - discount;
+    const finalTotal = subtotal + shippingCharge - discount;
     
     // Get available coupons for user using coupon service
     const userAvailableCoupons = await couponService.getAvailableCoupons(userId, subtotal);
@@ -147,8 +137,6 @@ const loadCheckout = async (req, res) => {
       addresses: addresses,
       subtotal: subtotal,
       totalItems: totalItems,
-      taxAmount: taxAmount,
-      taxRate: taxRate,
       shippingCharge: shippingCharge,
       shippingThreshold: shippingThreshold,
       discount: discount,
@@ -181,60 +169,35 @@ const loadOrderSuccess = async (req, res) => {
       return res.redirect('/orders');
     }
 
-    // Calculate offers for ordered items
-    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
-      if (!item.product) return item;
-
-      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id, userId);
-
-      let finalPrice = item.price;
-      let hasOffer = false;
-      let offerInfo = null;
-
-      if (offerResult) {
-        finalPrice = offerResult.finalPrice;
-        hasOffer = true;
-        offerInfo = {
-          type: offerResult.offer.offerType,
-          name: offerResult.offer.offerName,
-          discountAmount: offerResult.discount,
-          discountPercentage: offerResult.discountPercentage
-        };
-      }
-
+    // Use original order data (prices already include offers applied at order time)
+    const orderedItemsWithDetails = order.orderedItems.map(item => {
       return {
         ...item.toObject(),
-        finalPrice: finalPrice,
-        originalPrice: item.price,
-        hasOffer: hasOffer,
-        offerInfo: offerInfo
+        finalPrice: item.price, // This already includes any offers that were applied
+        itemTotal: item.price * item.quantity
       };
-    }));
-
-    // Calculate new totals based on offer prices
-    let newSubtotal = 0;
-    orderedItemsWithOffers.forEach(item => {
-      const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
-      newSubtotal += itemPrice * item.quantity;
     });
 
-    // Calculate new total (keeping original shipping and discount logic)
+    // Use the original stored totals from when the order was placed
+    const subtotal = order.totalPrice; // Original subtotal
     const shippingCharge = order.shippingCharge || 0;
-    const originalDiscount = order.discount || 0;
-    const newTotal = newSubtotal + shippingCharge - originalDiscount;
+    const discount = order.discount || 0;
 
-    // Update order object with offer information and recalculated totals
-    const orderWithOffers = {
+    // Calculate correct final total: subtotal + shipping - discount
+    const finalTotal = subtotal + shippingCharge - discount;
+    // Create order object with correct calculations
+    const orderWithCorrectTotals = {
       ...order.toObject(),
-      orderedItems: orderedItemsWithOffers,
-      subtotalWithOffers: newSubtotal,
-      totalPriceWithOffers: newTotal,
-      offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+      orderedItems: orderedItemsWithDetails,
+      subtotal: subtotal,
+      shippingCharge: shippingCharge,
+      discount: discount,
+      finalTotal: finalTotal
     };
 
     res.render("order-success", {
       user: userData,
-      order: orderWithOffers
+      order: orderWithCorrectTotals
     });
   } catch (error) {
     console.error('Error loading order success:', error);
@@ -295,11 +258,9 @@ const applyCoupon = async (req, res) => {
     };
 
     // Calculate new totals
-    const taxRate = 0.18;
-    const taxAmount = Math.round(subtotal * taxRate);
     const shippingCharge = subtotal >= 500 ? 0 : 50;
     const discount = couponResult.discount;
-    const finalTotal = subtotal + taxAmount + shippingCharge - discount;
+    const finalTotal = subtotal + shippingCharge - discount;
 
     res.json({
       success: true,
@@ -311,7 +272,6 @@ const applyCoupon = async (req, res) => {
       },
       totals: {
         subtotal: subtotal,
-        taxAmount: taxAmount,
         shippingCharge: shippingCharge,
         discount: discount,
         finalTotal: finalTotal
@@ -355,18 +315,15 @@ const removeCoupon = async (req, res) => {
       }
     }
 
-    const taxRate = 0.18;
-    const taxAmount = Math.round(subtotal * taxRate);
     const shippingCharge = subtotal >= 500 ? 0 : 50;
     const discount = 0;
-    const finalTotal = subtotal + taxAmount + shippingCharge - discount;
+    const finalTotal = subtotal + shippingCharge - discount;
 
     res.json({
       success: true,
       message: 'Coupon removed successfully',
       totals: {
         subtotal: subtotal,
-        taxAmount: taxAmount,
         shippingCharge: shippingCharge,
         discount: discount,
         finalTotal: finalTotal

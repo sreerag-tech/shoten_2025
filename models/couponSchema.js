@@ -144,12 +144,15 @@ couponSchema.methods.calculateDiscount = function(orderAmount) {
 
   let discount = 0;
 
-  if (this.discountType === "percentage") {
-    discount = (orderAmount * this.discountValue) / 100;
-  } else if (this.discountType === "fixed") {
-    discount = this.discountValue;
-  } else {
-    // Backward compatibility with offerPrice
+  // Use new discount system if available
+  if (this.discountType && this.discountValue) {
+    if (this.discountType === "percentage") {
+      discount = (orderAmount * this.discountValue) / 100;
+    } else if (this.discountType === "fixed") {
+      discount = this.discountValue;
+    }
+  } else if (this.offerPrice) {
+    // Backward compatibility with old offerPrice system
     discount = this.offerPrice;
   }
 

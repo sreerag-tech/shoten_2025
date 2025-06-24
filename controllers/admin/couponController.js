@@ -231,7 +231,7 @@ const createCoupon = async (req, res) => {
       userUsageLimit: userUsageLimit ? parseInt(userUsageLimit) : 1,
       startOn: startDate,
       expireOn: endDate,
-      offerPrice: discountType === "fixed" ? parseFloat(discountValue) : 0, // For backward compatibility
+      offerPrice: parseFloat(discountValue), // For backward compatibility - store the discount value
       createdBy: req.session.adminId || null, // Use adminId instead of admin boolean
       isListed: true,
       isDeleted: false

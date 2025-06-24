@@ -1,0 +1,261 @@
+<%- include('partials/header') %>
+
+        <!-- ============================================================== -->
+        <!-- Start Page Content here -->
+        <!-- ============================================================== -->
+
+        <div class="content-main">
+            <div class="page-header">
+                <h1 class="page-title">Sales Report</h1>
+                <p class="page-subtitle">Comprehensive sales analytics and reporting</p>
+            </div>
+
+                    <!-- Filters Row -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="header-title mb-3">Report Filters</h4>
+                                    
+                                    <form id="reportFilterForm" method="GET" action="/admin/sales-report">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label for="reportType" class="form-label">Report Type</label>
+                                                    <select class="form-select" id="reportType" name="reportType">
+                                                        <option value="daily" <%= reportType === 'daily' ? 'selected' : '' %>>Daily</option>
+                                                        <option value="weekly" <%= reportType === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                                                        <option value="monthly" <%= reportType === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                                                        <option value="yearly" <%= reportType === 'yearly' ? 'selected' : '' %>>Yearly</option>
+                                                        <option value="custom" <%= reportType === 'custom' ? 'selected' : '' %>>Custom Date Range</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-3" id="customDateStart" style="display: <%= reportType === 'custom' ? 'block' : 'none' %>;">
+                                                <div class="mb-3">
+                                                    <label for="customStartDate" class="form-label">Start Date</label>
+                                                    <input type="date" class="form-control" id="customStartDate" name="customStartDate" value="<%= customStartDate %>">
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-3" id="customDateEnd" style="display: <%= reportType === 'custom' ? 'block' : 'none' %>;">
+                                                <div class="mb-3">
+                                                    <label for="customEndDate" class="form-label">End Date</label>
+                                                    <input type="date" class="form-control" id="customEndDate" name="customEndDate" value="<%= customEndDate %>">
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label class="form-label">&nbsp;</label>
+                                                    <div class="d-grid">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="mdi mdi-filter"></i> Generate Report
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards Row -->
+                    <div class="row">
+                        <div class="col-md-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-6">
+                                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Total Sales">Total Sales</h5>
+                                            <h3 class="my-2 py-1"><%= salesData.totalSalesCount %></h3>
+                                            <p class="mb-0 text-muted">
+                                                <span class="text-success me-2"><i class="mdi mdi-arrow-up-bold"></i></span>
+                                                Orders
+                                            </p>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-end">
+                                                <div id="total-sales-chart" data-colors="#727cf5"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-6">
+                                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Order Amount">Order Amount</h5>
+                                            <h3 class="my-2 py-1">₹<%= salesData.totalOrderAmount.toLocaleString() %></h3>
+                                            <p class="mb-0 text-muted">
+                                                <span class="text-success me-2"><i class="mdi mdi-arrow-up-bold"></i></span>
+                                                Subtotal
+                                            </p>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-end">
+                                                <div id="order-amount-chart" data-colors="#0acf97"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-6">
+                                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Total Discount">Total Discount</h5>
+                                            <h3 class="my-2 py-1">₹<%= salesData.totalDiscount.toLocaleString() %></h3>
+                                            <p class="mb-0 text-muted">
+                                                <span class="text-danger me-2"><i class="mdi mdi-arrow-down-bold"></i></span>
+                                                Coupons
+                                            </p>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-end">
+                                                <div id="discount-chart" data-colors="#fa5c7c"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-6">
+                                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Net Sales">Net Sales</h5>
+                                            <h3 class="my-2 py-1">₹<%= salesData.netSalesAmount.toLocaleString() %></h3>
+                                            <p class="mb-0 text-muted">
+                                                <span class="text-success me-2"><i class="mdi mdi-arrow-up-bold"></i></span>
+                                                Final Amount
+                                            </p>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-end">
+                                                <div id="net-sales-chart" data-colors="#ffbc00"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 class="header-title"><%= reportTitle %></h4>
+                                        <div class="dropdown">
+                                            <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="mdi mdi-download"></i> Download Report
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" onclick="downloadReport('pdf')">
+                                                    <i class="mdi mdi-file-pdf"></i> Download PDF
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="downloadReport('excel')">
+                                                    <i class="mdi mdi-file-excel"></i> Download Excel
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div style="height: 400px;">
+                                        <canvas id="salesChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sales Details Table -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="header-title mb-3">Sales Details</h4>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-centered table-nowrap table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Order ID</th>
+                                                    <th>Date</th>
+                                                    <th>Customer</th>
+                                                    <th>Items</th>
+                                                    <th>Subtotal</th>
+                                                    <th>Shipping</th>
+                                                    <th>Discount</th>
+                                                    <th>Total</th>
+                                                    <th>Status</th>
+                                                    <th>Payment</th>
+                                                    <th>Coupon</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% if (salesData.salesDetails && salesData.salesDetails.length > 0) { %>
+                                                    <% salesData.salesDetails.forEach(order => { %>
+                                                        <tr>
+                                                            <td><%= order.orderId %></td>
+                                                            <td><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                                                            <td><%= order.customerName %></td>
+                                                            <td><%= order.itemsCount %></td>
+                                                            <td>₹<%= order.subtotal.toLocaleString() %></td>
+                                                            <td>₹<%= order.shipping.toLocaleString() %></td>
+                                                            <td>₹<%= order.discount.toLocaleString() %></td>
+                                                            <td><strong>₹<%= order.total.toLocaleString() %></strong></td>
+                                                            <td>
+                                                                <span class="badge bg-<%= order.status === 'Delivered' ? 'success' : order.status === 'Cancelled' ? 'danger' : 'warning' %>">
+                                                                    <%= order.status %>
+                                                                </span>
+                                                            </td>
+                                                            <td><%= order.paymentMethod.toUpperCase() %></td>
+                                                            <td><%= order.couponCode %></td>
+                                                        </tr>
+                                                    <% }) %>
+                                                <% } else { %>
+                                                    <tr>
+                                                        <td colspan="11" class="text-center">No sales data found for the selected period</td>
+                                                    </tr>
+                                                <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+        </div>
+
+    <!-- Chart Data -->
+    <script>
+        const chartData = <%- JSON.stringify(chartData) %>;
+        const reportType = '<%= reportType %>';
+        const customStartDate = '<%= customStartDate %>';
+        const customEndDate = '<%= customEndDate %>';
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Sales Report JavaScript -->
+    <script src="/admin/assets/js/sales-report.js"></script>
+
+<%- include('partials/footer') %>

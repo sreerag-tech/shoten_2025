@@ -83,87 +83,46 @@ const loadOrders = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Calculate offer-adjusted totals for each order
-    const orders = await Promise.all(ordersRaw.map(async (order) => {
-      let newSubtotal = 0;
-
-      // Calculate offers for each order item
-      const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
-        if (!item.product) return item;
-
-        const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
-
-        let finalPrice = item.price;
-        let hasOffer = false;
-        let offerInfo = null;
-
-        if (offerResult) {
-          finalPrice = offerResult.finalPrice;
-          hasOffer = true;
-          offerInfo = {
-            type: offerResult.offer.offerType,
-            name: offerResult.offer.offerName,
-            discountAmount: offerResult.discount,
-            discountPercentage: offerResult.discountPercentage
-          };
-        }
-
-        newSubtotal += finalPrice * item.quantity;
-
+    // Use original order data (prices already include offers applied at order time)
+    const orders = ordersRaw.map(order => {
+      const orderedItemsWithDetails = order.orderedItems.map(item => {
         return {
           ...item.toObject(),
-          finalPrice: finalPrice,
-          originalPrice: item.price,
-          hasOffer: hasOffer,
-          offerInfo: offerInfo
+          finalPrice: item.price, // This already includes any offers that were applied
+          itemTotal: item.price * item.quantity
         };
-      }));
+      });
 
-      // Calculate new total (keeping original shipping and discount logic)
+      // Use the original stored totals from when the order was placed
+      const subtotal = order.totalPrice; // Original subtotal
       const shippingCharge = order.shippingCharge || 0;
-      const originalDiscount = order.discount || 0;
-      const newTotal = newSubtotal + shippingCharge - originalDiscount;
+      const discount = order.discount || 0;
+
+      // Calculate correct final total: subtotal + shipping - discount
+      const finalTotal = subtotal + shippingCharge - discount;
 
       return {
         ...order.toObject(),
-        orderedItems: orderedItemsWithOffers,
-        subtotalWithOffers: newSubtotal,
-        totalPriceWithOffers: newTotal,
-        offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+        orderedItems: orderedItemsWithDetails,
+        subtotal: subtotal,
+        shippingCharge: shippingCharge,
+        discount: discount,
+        finalTotal: finalTotal
       };
-    }));
+    });
 
     // Get total count for pagination
     const totalOrders = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalOrders / limit);
 
-    // Get order statistics with offer-adjusted amounts
-    const allOrdersForStats = await Order.find()
-      .populate('orderedItems.product');
+    // Get order statistics using original order amounts
+    const allOrdersForStats = await Order.find();
 
     const orderStatsByStatus = {};
 
     for (const order of allOrdersForStats) {
-      let orderTotal = 0;
-
-      // Calculate offer-adjusted total for this order
-      for (const item of order.orderedItems) {
-        if (item.product) {
-          const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
-
-          let finalPrice = item.price;
-          if (offerResult) {
-            finalPrice = offerResult.finalPrice;
-          }
-
-          orderTotal += finalPrice * item.quantity;
-        } else {
-          orderTotal += item.price * item.quantity;
-        }
-      }
-
-      // Add shipping and subtract discounts
-      orderTotal += (order.shippingCharge || 0) - (order.discount || 0);
+      // Use original stored totals: subtotal + shipping - discount
+      const orderTotal = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
 
       // Group by status
       if (!orderStatsByStatus[order.status]) {
@@ -221,59 +180,35 @@ const loadOrderDetail = async (req, res) => {
       return res.redirect("/admin/orders?error=Order not found");
     }
 
-    // Calculate offers for ordered items (for admin reference)
-    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
-      if (!item.product) return item;
-
-      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
-
-      let finalPrice = item.price;
-      let hasOffer = false;
-      let offerInfo = null;
-
-      if (offerResult) {
-        finalPrice = offerResult.finalPrice;
-        hasOffer = true;
-        offerInfo = {
-          type: offerResult.offer.offerType,
-          name: offerResult.offer.offerName,
-          discountAmount: offerResult.discount,
-          discountPercentage: offerResult.discountPercentage
-        };
-      }
-
+    // Use original order data (prices already include offers applied at order time)
+    const orderedItemsWithDetails = order.orderedItems.map(item => {
       return {
         ...item.toObject(),
-        finalPrice: finalPrice,
-        originalPrice: item.price,
-        hasOffer: hasOffer,
-        offerInfo: offerInfo
+        finalPrice: item.price, // This already includes any offers that were applied
+        itemTotal: item.price * item.quantity
       };
-    }));
-
-    // Calculate new totals based on offer prices
-    let newSubtotal = 0;
-    orderedItemsWithOffers.forEach(item => {
-      const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
-      newSubtotal += itemPrice * item.quantity;
     });
 
-    // Calculate new total (keeping original shipping and discount logic)
+    // Use the original stored totals from when the order was placed
+    const subtotal = order.totalPrice; // Original subtotal
     const shippingCharge = order.shippingCharge || 0;
-    const originalDiscount = order.discount || 0;
-    const newTotal = newSubtotal + shippingCharge - originalDiscount;
+    const discount = order.discount || 0;
 
-    // Update order object with offer information and recalculated totals
-    const orderWithOffers = {
+    // Calculate correct final total: subtotal + shipping - discount
+    const finalTotal = subtotal + shippingCharge - discount;
+
+    // Create order object with correct calculations
+    const orderWithCorrectTotals = {
       ...order.toObject(),
-      orderedItems: orderedItemsWithOffers,
-      subtotalWithOffers: newSubtotal,
-      totalPriceWithOffers: newTotal,
-      offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+      orderedItems: orderedItemsWithDetails,
+      subtotal: subtotal,
+      shippingCharge: shippingCharge,
+      discount: discount,
+      finalTotal: finalTotal
     };
 
     res.render("admin-order-detail", {
-      order: orderWithOffers,
+      order: orderWithCorrectTotals,
       activePage: 'orders'
     });
   } catch (error) {
@@ -423,20 +358,36 @@ const handleReturnRequest = async (req, res) => {
       item.status = 'Returned';
       item.adminResponse = adminResponse || 'Return request approved';
 
-      // Calculate offer-adjusted refund amount
-      let refundAmount = item.price * item.quantity;
+      // SIMPLE SOLUTION: Calculate refund based on what customer actually paid
+      // Total amount paid by customer
+      const totalPaidByCustomer = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
 
-      // Get the product to calculate current offer price
+      // Total number of items in the order
+      const totalItemsInOrder = order.orderedItems.reduce((sum, orderItem) => sum + (orderItem.quantity || 0), 0);
+
+      // This item's quantity
+      const thisItemQuantity = item.quantity || 1;
+
+      // Calculate refund as proportional share of total amount paid
+      const refundAmount = totalItemsInOrder > 0 ?
+        Math.round((totalPaidByCustomer * thisItemQuantity) / totalItemsInOrder) : 0;
+
+      console.log('=== REFUND CALCULATION ===');
+      console.log('Order ID:', order.orderId);
+      console.log('Total paid by customer:', totalPaidByCustomer);
+      console.log('Total items in order:', totalItemsInOrder);
+      console.log('This item quantity:', thisItemQuantity);
+      console.log('Refund amount:', refundAmount);
+      console.log('=== END ===');
+
+      // Get the product for stock restoration
       const Product = require("../../models/productSchema");
       const product = await Product.findById(item.product);
 
+      // Restore product stock
       if (product) {
-        const offerResult = await offerService.calculateBestOfferForProduct(item.product);
-
-        if (offerResult) {
-          // Use offer-adjusted price for refund
-          refundAmount = offerResult.finalPrice * item.quantity;
-        }
+        product.quantity += item.quantity;
+        await product.save();
       }
 
       // Get or create wallet for user
@@ -446,9 +397,11 @@ const handleReturnRequest = async (req, res) => {
       }
 
       // Add refund to wallet with transaction log
+      const refundDescription = `Refund for returned item: ${item.product?.productName || 'Product'} - Order: ${order.orderId}`;
+
       await wallet.addMoney(
         refundAmount,
-        `Refund for returned item: ${item.product?.productName || 'Product'} (Order: ${order.orderId})`,
+        refundDescription,
         order._id,
         `REFUND-${Date.now()}`
       );
@@ -458,12 +411,7 @@ const handleReturnRequest = async (req, res) => {
       user.wallet = (user.wallet || 0) + refundAmount;
       await user.save();
 
-      // Restore product stock
-      if (product) {
-        product.quantity += item.quantity;
-        await product.save();
-      }
-
+      // Save order with updated item status
       await order.save();
 
       res.json({
@@ -522,34 +470,21 @@ const getReturnRequests = async (req, res) => {
       for (let index = 0; index < order.orderedItems.length; index++) {
         const item = order.orderedItems[index];
         if (item.status === 'Return Request') {
-          // Calculate offer for return request item
-          let finalPrice = item.price;
-          let hasOffer = false;
-          let offerInfo = null;
+          // Calculate the actual refund amount using the same logic as the refund process
+          const totalPaidByCustomer = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
+          const totalItemsInOrder = order.orderedItems.reduce((sum, orderItem) => sum + (orderItem.quantity || 0), 0);
+          const thisItemQuantity = item.quantity || 1;
 
-          if (item.product) {
-            const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
-
-            if (offerResult) {
-              finalPrice = offerResult.finalPrice;
-              hasOffer = true;
-              offerInfo = {
-                type: offerResult.offer.offerType,
-                name: offerResult.offer.offerName,
-                discountAmount: offerResult.discount,
-                discountPercentage: offerResult.discountPercentage
-              };
-            }
-          }
+          const actualRefundAmount = totalItemsInOrder > 0 ?
+            Math.round((totalPaidByCustomer * thisItemQuantity) / totalItemsInOrder) : 0;
 
           returnRequests.push({
             order: order,
             item: {
               ...item.toObject(),
-              finalPrice: finalPrice,
+              finalPrice: item.price,
               originalPrice: item.price,
-              hasOffer: hasOffer,
-              offerInfo: offerInfo
+              actualRefundAmount: actualRefundAmount
             },
             itemIndex: index
           });
@@ -598,58 +533,34 @@ const getOrderDetailsAPI = async (req, res) => {
       return res.json({ success: false, message: 'Order not found' });
     }
 
-    // Calculate offers for ordered items
-    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
-      if (!item.product) return item;
-
-      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id);
-
-      let finalPrice = item.price;
-      let hasOffer = false;
-      let offerInfo = null;
-
-      if (offerResult) {
-        finalPrice = offerResult.finalPrice;
-        hasOffer = true;
-        offerInfo = {
-          type: offerResult.offer.offerType,
-          name: offerResult.offer.offerName,
-          discountAmount: offerResult.discount,
-          discountPercentage: offerResult.discountPercentage
-        };
-      }
-
+    // Use original order data (prices already include offers applied at order time)
+    const orderedItemsWithDetails = order.orderedItems.map(item => {
       return {
         ...item.toObject(),
-        finalPrice: finalPrice,
-        originalPrice: item.price,
-        hasOffer: hasOffer,
-        offerInfo: offerInfo
+        finalPrice: item.price, // This already includes any offers that were applied
+        itemTotal: item.price * item.quantity
       };
-    }));
-
-    // Calculate new totals based on offer prices
-    let newSubtotal = 0;
-    orderedItemsWithOffers.forEach(item => {
-      const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
-      newSubtotal += itemPrice * item.quantity;
     });
 
-    // Calculate new total (keeping original shipping and discount logic)
+    // Use the original stored totals from when the order was placed
+    const subtotal = order.totalPrice; // Original subtotal
     const shippingCharge = order.shippingCharge || 0;
-    const originalDiscount = order.discount || 0;
-    const newTotal = newSubtotal + shippingCharge - originalDiscount;
+    const discount = order.discount || 0;
 
-    // Update order object with offer information and recalculated totals
-    const orderWithOffers = {
+    // Calculate correct final total: subtotal + shipping - discount
+    const finalTotal = subtotal + shippingCharge - discount;
+
+    // Create order object with correct calculations
+    const orderWithCorrectTotals = {
       ...order.toObject(),
-      orderedItems: orderedItemsWithOffers,
-      subtotalWithOffers: newSubtotal,
-      totalPriceWithOffers: newTotal,
-      offerSavings: order.totalPrice - shippingCharge + originalDiscount - newSubtotal
+      orderedItems: orderedItemsWithDetails,
+      subtotal: subtotal,
+      shippingCharge: shippingCharge,
+      discount: discount,
+      finalTotal: finalTotal
     };
 
-    res.json({ success: true, order: orderWithOffers });
+    res.json({ success: true, order: orderWithCorrectTotals });
   } catch (error) {
     res.json({ success: false, message: 'Failed to fetch order details' });
   }

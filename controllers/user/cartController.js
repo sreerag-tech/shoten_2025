@@ -79,16 +79,22 @@ const loadCart = async (req, res) => {
         itemTotal: itemTotal
       };
     }));
+
+    // Calculate shipping (consistent with checkout)
+    const shippingThreshold = 500;
+    const shippingCharge = subtotal >= shippingThreshold ? 0 : 50;
     
     // Get cart message from session
     const cartMessage = req.session.cartMessage || null;
     req.session.cartMessage = null;
-    
+
     res.render("cart", {
       user: userData,
       cartItems: cartItemsWithOffers,
       subtotal: subtotal,
       totalItems: totalItems,
+      shippingCharge: shippingCharge,
+      shippingThreshold: shippingThreshold,
       cartMessage: cartMessage
     });
   } catch (error) {

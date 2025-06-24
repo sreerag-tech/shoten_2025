@@ -50,7 +50,11 @@
                         </div>
                         <div>
                             <div class="text-[#00ffff] text-2xl font-bold mb-2">
-                                ₹<%= (order.totalPriceWithOffers || order.finalAmount).toLocaleString() %>
+                                <%
+                                    // Calculate correct total: subtotal + shipping - discount
+                                    const correctTotal = (order.subtotal || order.totalPrice) + (order.shippingCharge || 0) - (order.discount || 0);
+                                %>
+                                ₹<%= correctTotal.toLocaleString() %>
                             </div>
                             <div class="text-gray-400 text-sm">Total Amount</div>
                             <% if (order.offerSavings && order.offerSavings > 0) { %>

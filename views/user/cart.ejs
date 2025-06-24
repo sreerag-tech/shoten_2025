@@ -151,18 +151,31 @@
                         <div class="space-y-4 mb-6">
                             <div class="flex justify-between">
                                 <span class="text-gray-400">Items (<%= totalItems %>):</span>
-                                <span class="text-white" id="cart-subtotal">₹<%= subtotal %></span>
+                                <span class="text-white" id="cart-subtotal">₹<%= subtotal.toLocaleString() %></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-400">Shipping:</span>
-                                <span class="text-green-400">FREE</span>
+                                <% if (shippingCharge > 0) { %>
+                                    <span class="text-white">₹<%= shippingCharge %></span>
+                                <% } else { %>
+                                    <span class="text-green-400">FREE</span>
+                                <% } %>
                             </div>
                             <hr class="border-gray-700">
                             <div class="flex justify-between text-lg font-bold">
                                 <span class="text-white">Total:</span>
-                                <span class="text-[#00ffff]" id="cart-total">₹<%= subtotal %></span>
+                                <span class="text-[#00ffff]" id="cart-total">₹<%= (subtotal + shippingCharge).toLocaleString() %></span>
                             </div>
                         </div>
+
+                        <!-- Shipping Threshold Message -->
+                        <% if (shippingCharge > 0) { %>
+                            <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-6">
+                                <p class="text-yellow-400 text-sm">
+                                    💡 Add ₹<%= (shippingThreshold - subtotal).toLocaleString() %> more for FREE shipping!
+                                </p>
+                            </div>
+                        <% } %>
                         
                         <!-- Checkout Button -->
                         <% 

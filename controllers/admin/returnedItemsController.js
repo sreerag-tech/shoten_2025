@@ -55,12 +55,41 @@ const loadReturnedItems = async (req, res) => {
       {
         $addFields: {
           returnDate: '$orderedItems.updatedAt',
-          refundAmount: { $multiply: ['$orderedItems.price', '$orderedItems.quantity'] },
+          // Calculate total amount paid by customer
+          totalPaidByCustomer: {
+            $add: [
+              { $subtract: ['$totalPrice', { $ifNull: ['$discount', 0] }] },
+              { $ifNull: ['$shippingCharge', 0] }
+            ]
+          },
+          // Calculate total items in order
+          totalItemsInOrder: {
+            $sum: '$orderedItems.quantity'
+          },
           customerName: '$user.name',
           customerEmail: '$user.email',
           productName: '$product.productName',
           returnReason: '$orderedItems.returnReason',
           adminResponse: '$orderedItems.adminResponse'
+        }
+      },
+      // Calculate final refund amount based on proportional share of total paid
+      {
+        $addFields: {
+          refundAmount: {
+            $cond: {
+              if: { $gt: ['$totalItemsInOrder', 0] },
+              then: {
+                $round: {
+                  $divide: [
+                    { $multiply: ['$totalPaidByCustomer', '$orderedItems.quantity'] },
+                    '$totalItemsInOrder'
+                  ]
+                }
+              },
+              else: 0
+            }
+          }
         }
       }
     ];
@@ -109,20 +138,49 @@ const loadReturnedItems = async (req, res) => {
     // Execute aggregation
     const returnedItems = await Order.aggregate(pipeline);
 
-    // Calculate statistics
+    // Calculate statistics with correct refund amounts
     const statsResult = await Order.aggregate([
       { $unwind: '$orderedItems' },
       { $match: { 'orderedItems.status': 'Returned' } },
       {
+        $addFields: {
+          // Calculate total amount paid by customer
+          totalPaidByCustomer: {
+            $add: [
+              { $subtract: ['$totalPrice', { $ifNull: ['$discount', 0] }] },
+              { $ifNull: ['$shippingCharge', 0] }
+            ]
+          },
+          // Calculate total items in order
+          totalItemsInOrder: {
+            $sum: '$orderedItems.quantity'
+          }
+        }
+      },
+      {
+        $addFields: {
+          actualRefundAmount: {
+            $cond: {
+              if: { $gt: ['$totalItemsInOrder', 0] },
+              then: {
+                $round: {
+                  $divide: [
+                    { $multiply: ['$totalPaidByCustomer', '$orderedItems.quantity'] },
+                    '$totalItemsInOrder'
+                  ]
+                }
+              },
+              else: 0
+            }
+          }
+        }
+      },
+      {
         $group: {
           _id: null,
           totalReturns: { $sum: 1 },
-          totalRefundAmount: { 
-            $sum: { $multiply: ['$orderedItems.price', '$orderedItems.quantity'] } 
-          },
-          avgRefundAmount: { 
-            $avg: { $multiply: ['$orderedItems.price', '$orderedItems.quantity'] } 
-          }
+          totalRefundAmount: { $sum: '$actualRefundAmount' },
+          avgRefundAmount: { $avg: '$actualRefundAmount' }
         }
       }
     ]);
@@ -179,6 +237,21 @@ const exportReturnedItems = async (req, res) => {
       { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
       { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          // Calculate total amount paid by customer
+          totalPaidByCustomer: {
+            $add: [
+              { $subtract: ['$totalPrice', { $ifNull: ['$discount', 0] }] },
+              { $ifNull: ['$shippingCharge', 0] }
+            ]
+          },
+          // Calculate total items in order
+          totalItemsInOrder: {
+            $sum: '$orderedItems.quantity'
+          }
+        }
+      },
+      {
         $project: {
           orderId: 1,
           customerName: '$user.name',
@@ -186,7 +259,20 @@ const exportReturnedItems = async (req, res) => {
           productName: '$product.productName',
           quantity: '$orderedItems.quantity',
           price: '$orderedItems.price',
-          refundAmount: { $multiply: ['$orderedItems.price', '$orderedItems.quantity'] },
+          refundAmount: {
+            $cond: {
+              if: { $gt: ['$totalItemsInOrder', 0] },
+              then: {
+                $round: {
+                  $divide: [
+                    { $multiply: ['$totalPaidByCustomer', '$orderedItems.quantity'] },
+                    '$totalItemsInOrder'
+                  ]
+                }
+              },
+              else: 0
+            }
+          },
           returnReason: '$orderedItems.returnReason',
           adminResponse: '$orderedItems.adminResponse',
           returnDate: '$orderedItems.updatedAt',
@@ -199,8 +285,8 @@ const exportReturnedItems = async (req, res) => {
     const returnedItems = await Order.aggregate(pipeline);
 
     // Generate CSV
-    let csv = 'Order ID,Customer Name,Customer Email,Product Name,Quantity,Price,Refund Amount,Return Reason,Admin Response,Return Date,Order Date\n';
-    
+    let csv = 'Order ID,Customer Name,Customer Email,Product Name,Quantity,Item Price,Refund Amount,Return Reason,Admin Response,Return Date,Order Date\n';
+
     returnedItems.forEach(item => {
       csv += `"${item.orderId}","${item.customerName || ''}","${item.customerEmail || ''}","${item.productName || ''}",${item.quantity},${item.price},${item.refundAmount},"${item.returnReason || ''}","${item.adminResponse || ''}","${new Date(item.returnDate).toLocaleDateString()}","${new Date(item.orderDate).toLocaleDateString()}"\n`;
     });

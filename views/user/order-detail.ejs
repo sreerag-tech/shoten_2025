@@ -68,22 +68,9 @@
                                             </div>
                                             <div>
                                                 <span class="font-medium">Price:</span>
-                                                <% if (item.hasOffer && item.finalPrice < item.originalPrice) { %>
-                                                    <span class="text-[#00ffff]">₹<%= item.finalPrice %></span>
-                                                    <span class="text-gray-500 line-through text-sm ml-2">₹<%= item.originalPrice %></span>
-                                                <% } else { %>
-                                                    ₹<%= item.price %>
-                                                <% } %>
+                                                ₹<%= item.finalPrice %>
                                             </div>
-                                            <% if (item.hasOffer && item.offerInfo) { %>
-                                                <div>
-                                                    <span class="font-medium">Offer:</span>
-                                                    <span class="text-green-400">
-                                                        <i class="fas fa-tag"></i> <%= item.offerInfo.name %>
-                                                        (<%= item.offerInfo.type.charAt(0).toUpperCase() + item.offerInfo.type.slice(1) %> Offer)
-                                                    </span>
-                                                </div>
-                                            <% } %>
+
                                             <div>
                                                 <span class="font-medium">Total:</span>
                                                 <% if (item.hasOffer && item.finalPrice) { %>
@@ -153,24 +140,19 @@
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-400">Subtotal:</span>
-                            <span class="text-white">₹<%= (order.subtotalWithOffers || order.totalPrice).toLocaleString() %></span>
+                            <span class="text-white">₹<%= order.subtotal.toLocaleString() %></span>
                         </div>
-                        <% if (order.offerSavings && order.offerSavings > 0) { %>
+
+                        <% if (order.shippingCharge > 0) { %>
                             <div class="flex justify-between">
-                                <span class="text-gray-400">Offer Savings:</span>
-                                <span class="text-green-400">-₹<%= order.offerSavings.toLocaleString() %></span>
+                                <span class="text-gray-400">Shipping:</span>
+                                <span class="text-white">₹<%= order.shippingCharge.toLocaleString() %></span>
                             </div>
                         <% } %>
                         <% if (order.discount > 0) { %>
                             <div class="flex justify-between">
                                 <span class="text-gray-400">Coupon Discount:</span>
                                 <span class="text-green-400">-₹<%= order.discount.toLocaleString() %></span>
-                            </div>
-                        <% } %>
-                        <% if (order.shippingCharge > 0) { %>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Shipping:</span>
-                                <span class="text-white">₹<%= order.shippingCharge.toLocaleString() %></span>
                             </div>
                         <% } %>
                         <% if (order.couponApplied && order.couponCode) { %>
@@ -182,7 +164,11 @@
                         <hr class="border-gray-700">
                         <div class="flex justify-between text-lg font-bold">
                             <span class="text-white">Total:</span>
-                            <span class="text-[#00ffff]">₹<%= (order.totalPriceWithOffers || order.finalAmount || order.totalPrice).toLocaleString() %></span>
+                            <%
+                                // Calculate correct total: subtotal + shipping - discount
+                                const correctTotal = (order.subtotal || order.totalPrice) + (order.shippingCharge || 0) - (order.discount || 0);
+                            %>
+                            <span class="text-[#00ffff]">₹<%= correctTotal.toLocaleString() %></span>
                         </div>
                     </div>
                 </div>

@@ -7,7 +7,13 @@ const bcrypt = require("bcrypt");
 
 const loadSignUppage = async (req, res) => {
   try {
-    return res.render("signup");
+    // Get referral code from URL query parameter
+    const referralCode = req.query.ref || '';
+
+    return res.render("signup", {
+      referralCode: referralCode,
+      formData: {}
+    });
   } catch (error) {
     console.log("signup not found");
     res.status(500).send("server error");
@@ -72,7 +78,7 @@ const securePassword = async (password) => {
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password, cPassword } = req.body;
+    const { name, email, password, cPassword, referralCode } = req.body;
 
     if (!email || !password || !cPassword) {
       return res.render("signup", { message: "All fields are required" });
@@ -87,19 +93,34 @@ const signup = async (req, res) => {
       return res.render("login", { message: "User already exists" });
     }
 
+    // Validate referral code if provided
+    let referralValidation = null;
+    if (referralCode && referralCode.trim()) {
+      const ReferralService = require("../../services/referralService");
+      referralValidation = await ReferralService.validateReferralCode(referralCode.trim());
+
+      if (!referralValidation.valid) {
+        return res.render("signup", {
+          message: referralValidation.message,
+          formData: { name, email, referralCode }
+        });
+      }
+    }
+
     const otp = generateOtp();
     const emailSent = await sendVerificationEmail(email, otp);
 
     if (!emailSent) {
       return res.render("signup", {
         message: "Failed to send OTP. Check email settings.",
+        formData: { name, email, referralCode }
       });
     }
     console.log('Otp in signup controller',otp);
-    
-    req.session.userOtp = otp;  
+
+    req.session.userOtp = otp;
     req.session.otpTimestamp = Date.now();
-    req.session.userData = { name, email, password };
+    req.session.userData = { name, email, password, referralCode: referralCode?.trim() || null };
     res.render("verify-otp");
   } catch (error) {
     console.error("Signup error:", error);
@@ -130,11 +151,38 @@ console.log(otp)
 
       const passwordHash = await securePassword(user.password);
       const saveUserData = new User({
-        name: user.name,  
+        name: user.name,
         email: user.email,
         password: passwordHash,
       });
       await saveUserData.save();
+
+      // Process referral if provided
+      if (user.referralCode) {
+        try {
+          const ReferralService = require("../../services/referralService");
+          const referralResult = await ReferralService.processReferral(saveUserData._id, user.referralCode);
+
+          if (referralResult.success) {
+            console.log('Referral processed successfully:', referralResult);
+          } else {
+            console.log('Referral processing failed:', referralResult.message);
+          }
+        } catch (referralError) {
+          console.error('Error processing referral:', referralError);
+          // Don't fail the signup if referral processing fails
+        }
+      }
+
+      // Generate referral code for the new user
+      try {
+        const ReferralService = require("../../services/referralService");
+        await ReferralService.generateReferralCode(saveUserData._id);
+      } catch (referralCodeError) {
+        console.error('Error generating referral code:', referralCodeError);
+        // Don't fail the signup if referral code generation fails
+      }
+
       req.session.user = saveUserData._id;
       res.json({ success: true, redirectUrl: "/home" });
     } else {

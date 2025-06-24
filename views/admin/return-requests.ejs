@@ -82,7 +82,12 @@
                                         <span class="badge bg-info"><%= request.item.quantity %></span>
                                     </td>
                                     <td>
-                                        <span class="fw-semibold">₹<%= (request.item.price * request.item.quantity).toLocaleString() %></span>
+                                        <span class="fw-semibold">₹<%= (request.item.actualRefundAmount || 0).toLocaleString() %></span>
+                                        <% if (request.item.actualRefundAmount !== (request.item.price * request.item.quantity)) { %>
+                                            <br><small class="text-muted">
+                                                Original: ₹<%= (request.item.price * request.item.quantity).toLocaleString() %>
+                                            </small>
+                                        <% } %>
                                     </td>
                                     <td>
                                         <div class="text-wrap" style="max-width: 200px;">

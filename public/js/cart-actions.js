@@ -186,36 +186,53 @@ function updateQuantityButtonStates(cartItem, newQuantity) {
 function updateCartTotals() {
     let subtotal = 0;
     let totalItems = 0;
-    
+
     document.querySelectorAll('.cart-item').forEach(item => {
         const quantity = parseInt(item.querySelector('.quantity-display').textContent);
         const itemTotalText = item.querySelector('.item-total').textContent.replace('₹', '').replace(',', '');
         const itemTotal = parseFloat(itemTotalText);
-        
+
         if (!isNaN(itemTotal) && !isNaN(quantity)) {
             subtotal += itemTotal;
             totalItems += quantity;
         }
     });
-    
+
+    // Calculate shipping (consistent with server logic)
+    const shippingThreshold = 500;
+    const shippingCharge = subtotal >= shippingThreshold ? 0 : 50;
+    const finalTotal = subtotal + shippingCharge;
+
     // Update subtotal display
     const subtotalElement = document.getElementById('cart-subtotal');
     if (subtotalElement) {
         subtotalElement.textContent = `₹${subtotal.toLocaleString()}`;
     }
-    
+
     // Update total display
     const totalElement = document.getElementById('cart-total');
     if (totalElement) {
-        totalElement.textContent = `₹${subtotal.toLocaleString()}`;
+        totalElement.textContent = `₹${finalTotal.toLocaleString()}`;
     }
-    
+
+    // Update shipping display
+    const shippingElements = document.querySelectorAll('.shipping-amount');
+    shippingElements.forEach(element => {
+        if (shippingCharge > 0) {
+            element.textContent = `₹${shippingCharge}`;
+            element.className = 'text-white';
+        } else {
+            element.textContent = 'FREE';
+            element.className = 'text-green-400';
+        }
+    });
+
     // Update items count in summary
     const itemsCountText = document.querySelector('.text-gray-400');
     if (itemsCountText && itemsCountText.textContent.includes('Items')) {
         itemsCountText.textContent = `Items (${totalItems}):`;
     }
-    
+
     // Update checkout button state
     updateCheckoutButtonState();
 }

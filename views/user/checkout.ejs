@@ -261,10 +261,7 @@
                             <span class="text-gray-400">Subtotal (<%= totalItems %> items):</span>
                             <span class="text-white" id="subtotalAmount">₹<%= subtotal.toLocaleString() %></span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Tax (GST <%= (taxRate * 100) %>%):</span>
-                            <span class="text-white" id="taxAmount">₹<%= taxAmount.toLocaleString() %></span>
-                        </div>
+
                         <div class="flex justify-between">
                             <span class="text-gray-400">Shipping:</span>
                             <% if (shippingCharge === 0) { %>

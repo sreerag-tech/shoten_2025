@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
     ref: "User",
     default: null,
   },
+  referralCount: {
+    type: Number,
+    default: 0,
+  },
   searchHistory: [
     {
       category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },

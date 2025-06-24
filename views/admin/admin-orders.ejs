@@ -173,12 +173,9 @@
                                         <span class="badge bg-info"><%= order.orderedItems.length %> items</span>
                                     </td>
                                     <td>
-                                        <span class="fw-semibold">₹<%= (order.totalPriceWithOffers || order.totalPrice).toLocaleString() %></span>
-                                        <% if (order.totalPriceWithOffers && order.totalPriceWithOffers < order.totalPrice) { %>
-                                            <br><small class="text-muted text-decoration-line-through">₹<%= order.totalPrice.toLocaleString() %></small>
-                                        <% } %>
-                                        <% if (order.offerSavings && order.offerSavings > 0) { %>
-                                            <br><small class="text-success">Saved: ₹<%= order.offerSavings.toLocaleString() %></small>
+                                        <span class="fw-semibold">₹<%= ((order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0)).toLocaleString() %></span>
+                                        <% if (order.discount > 0) { %>
+                                            <br><small class="text-success">Coupon: -₹<%= order.discount.toLocaleString() %></small>
                                         <% } %>
                                     </td>
                                     <td>
@@ -435,30 +432,24 @@ function displayOrderDetails(order) {
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Subtotal:</span>
-                            <span>₹${(order.subtotalWithOffers || order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0)).toLocaleString()}</span>
+                            <span>₹${(order.totalPrice || 0).toLocaleString()}</span>
                         </div>
-                        ${order.offerSavings && order.offerSavings > 0 ? `
-                            <div class="d-flex justify-content-between mb-2 text-success">
-                                <span>Offer Savings:</span>
-                                <span>-₹${order.offerSavings.toLocaleString()}</span>
-                            </div>
-                        ` : ''}
-                        ${order.discount > 0 ? `
-                            <div class="d-flex justify-content-between mb-2 text-success">
-                                <span>Coupon Discount:</span>
-                                <span>-₹${order.discount.toLocaleString()}</span>
-                            </div>
-                        ` : ''}
-                        ${order.shippingCharge > 0 ? `
+                        ${(order.shippingCharge || 0) > 0 ? `
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Shipping:</span>
                                 <span>₹${order.shippingCharge.toLocaleString()}</span>
                             </div>
                         ` : ''}
+                        ${(order.discount || 0) > 0 ? `
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Coupon Discount:</span>
+                                <span>-₹${order.discount.toLocaleString()}</span>
+                            </div>
+                        ` : ''}
                         <hr>
                         <div class="d-flex justify-content-between fw-bold">
                             <span>Total:</span>
-                            <span>₹${(order.totalPriceWithOffers || order.totalPrice).toLocaleString()}</span>
+                            <span>₹${((order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0)).toLocaleString()}</span>
                         </div>
                         <div class="mt-3">
                             <small class="text-muted">Payment Method: ${order.paymentMethod || 'Cash on Delivery'}</small>

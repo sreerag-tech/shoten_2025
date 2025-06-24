@@ -17,40 +17,19 @@ const downloadInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Calculate offers for ordered items
-    const orderedItemsWithOffers = await Promise.all(order.orderedItems.map(async (item) => {
-      if (!item.product) return item;
-
-      const offerResult = await offerService.calculateBestOfferForProduct(item.product._id, userId);
-
-      let finalPrice = item.price;
-      let hasOffer = false;
-      let offerInfo = null;
-
-      if (offerResult) {
-        finalPrice = offerResult.finalPrice;
-        hasOffer = true;
-        offerInfo = {
-          type: offerResult.offer.offerType,
-          name: offerResult.offer.offerName,
-          discountAmount: offerResult.discount,
-          discountPercentage: offerResult.discountPercentage
-        };
-      }
-
+    // Use original order data (prices already include offers applied at order time)
+    const orderedItemsWithDetails = order.orderedItems.map(item => {
       return {
         ...item.toObject(),
-        finalPrice: finalPrice,
-        originalPrice: item.price,
-        hasOffer: hasOffer,
-        offerInfo: offerInfo
+        finalPrice: item.price, // This already includes any offers that were applied
+        itemTotal: item.price * item.quantity
       };
-    }));
+    });
 
-    // Update order object with offer information
-    const orderWithOffers = {
+    // Create order object with original data for PDF
+    const orderForPDF = {
       ...order.toObject(),
-      orderedItems: orderedItemsWithOffers
+      orderedItems: orderedItemsWithDetails
     };
 
     // Create PDF document
@@ -64,7 +43,7 @@ const downloadInvoice = async (req, res) => {
     doc.pipe(res);
 
     // Add content to PDF
-    generateInvoicePDF(doc, orderWithOffers);
+    generateInvoicePDF(doc, orderForPDF);
     
     // Finalize PDF
     doc.end();
@@ -137,37 +116,29 @@ function generateInvoicePDF(doc, order) {
     yPosition += 20;
   });
   
-  // Calculate totals with offers
-  let subtotalWithOffers = 0;
-  order.orderedItems.forEach(item => {
-    const itemPrice = item.hasOffer && item.finalPrice ? item.finalPrice : item.price;
-    subtotalWithOffers += itemPrice * item.quantity;
-  });
+  // Use original order totals and calculate correct final total
+  const subtotal = order.totalPrice;
+  const shippingCharge = order.shippingCharge || 0;
+  const discount = order.discount || 0;
 
-  const originalSubtotal = order.totalPrice - (order.shippingCharge || 0) + (order.discount || 0);
-  const offerSavings = originalSubtotal - subtotalWithOffers;
+  // Calculate correct final total: subtotal + shipping - discount
+  const finalTotal = subtotal + shippingCharge - discount;
 
   // Totals
   yPosition += 20;
-  doc.text(`Subtotal: ₹${subtotalWithOffers}`, 200, yPosition);
+  doc.text(`Subtotal: ₹${subtotal}`, 200, yPosition);
   yPosition += 15;
 
-  if (offerSavings > 0) {
-    doc.text(`Offer Savings: -₹${offerSavings}`, 200, yPosition);
+  if (shippingCharge > 0) {
+    doc.text(`Shipping: ₹${shippingCharge}`, 200, yPosition);
     yPosition += 15;
   }
 
-  if (order.discount > 0) {
-    doc.text(`Coupon Discount: -₹${order.discount}`, 200, yPosition);
+  if (discount > 0) {
+    doc.text(`Coupon Discount: -₹${discount}`, 200, yPosition);
     yPosition += 15;
   }
 
-  if (order.shippingCharge > 0) {
-    doc.text(`Shipping: ₹${order.shippingCharge}`, 200, yPosition);
-    yPosition += 15;
-  }
-
-  const finalTotal = subtotalWithOffers + (order.shippingCharge || 0) - (order.discount || 0);
   doc.fontSize(12).text(`Total: ₹${finalTotal}`, 200, yPosition);
   
   // Footer
