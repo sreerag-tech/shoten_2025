@@ -103,7 +103,7 @@
                         <div>
                             <p class="text-gray-600 text-sm font-medium">Active Coupons</p>
                             <p class="text-3xl font-bold gradient-text">
-                                <%= referralStats.rewardCoupons.filter(c => c.isList && c.usedCount === 0).length %>
+                                <%= referralStats.rewardCoupons.filter(c => c.isListed && c.usesCount === 0 && new Date(c.expireOn) > new Date()).length %>
                             </p>
                         </div>
                         <div class="bg-purple-100 p-3 rounded-full">
@@ -232,20 +232,36 @@
                 </h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <% referralStats.rewardCoupons.forEach(coupon => { %>
-                    <div class="border-2 border-gray-200 rounded-xl p-6 <%= coupon.isList && coupon.usedCount === 0 ? 'bg-gradient-to-r from-green-50 to-blue-50 border-green-200' : 'bg-gray-50 border-gray-300' %>">
+                    <% referralStats.rewardCoupons.forEach(coupon => {
+                        const isExpired = new Date(coupon.expireOn) < new Date();
+                        const isUsed = coupon.usesCount >= (coupon.maxUses || 1);
+                        const isActive = coupon.isListed && !isUsed && !isExpired;
+                    %>
+                    <div class="border-2 border-gray-200 rounded-xl p-6 <%= isActive ? 'bg-gradient-to-r from-green-50 to-blue-50 border-green-200' : 'bg-gray-50 border-gray-300' %>">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-lg text-gray-800"><%= coupon.couponCode %></h3>
-                            <span class="px-3 py-1 rounded-full text-sm font-medium <%= coupon.isList && coupon.usedCount === 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' %>">
-                                <%= coupon.isList && coupon.usedCount === 0 ? 'Active' : 'Used' %>
+                            <h3 class="font-bold text-lg text-gray-800"><%= coupon.code %></h3>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium <%= isActive ? 'bg-green-100 text-green-800' : (isUsed ? 'bg-gray-100 text-gray-600' : 'bg-red-100 text-red-800') %>">
+                                <%= isActive ? 'Active' : (isUsed ? 'Used' : 'Expired') %>
                             </span>
                         </div>
                         <p class="text-gray-600 mb-2">
-                            <i class="fas fa-percentage mr-2"></i><%= coupon.offerPrice %>% OFF
+                            <i class="fas fa-percentage mr-2"></i>
+                            <% if (coupon.discountType === 'percentage') { %>
+                                <%= coupon.discountValue || coupon.offerPrice %>% OFF
+                            <% } else { %>
+                                ₹<%= coupon.discountValue || coupon.offerPrice %> OFF
+                            <% } %>
                         </p>
                         <p class="text-gray-600 text-sm">
                             <i class="fas fa-calendar mr-2"></i>Expires: <%= new Date(coupon.expireOn).toLocaleDateString() %>
                         </p>
+                        <% if (isActive) { %>
+                        <div class="mt-3">
+                            <button onclick="copyCouponCode('<%= coupon.code %>')" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg text-sm hover:bg-blue-600 transition-colors">
+                                Copy Code
+                            </button>
+                        </div>
+                        <% } %>
                     </div>
                     <% }) %>
                 </div>
@@ -295,8 +311,36 @@
             const referralCode = document.getElementById('referralCode').value;
             const subject = 'Join Shoten and get amazing discounts!';
             const body = `Hey!\n\nI wanted to share something awesome with you! I've been using Shoten for my shopping and it's amazing.\n\nUse my referral code "${referralCode}" when you sign up and you'll get special discounts on your purchases!\n\nSign up here: ${document.getElementById('referralLink').value}\n\nHappy shopping!`;
-            
+
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        function copyCouponCode(couponCode) {
+            navigator.clipboard.writeText(couponCode).then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: `Coupon code "${couponCode}" copied to clipboard`,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = couponCode;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: `Coupon code "${couponCode}" copied to clipboard`,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            });
         }
     </script>
 </body>

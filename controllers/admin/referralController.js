@@ -15,10 +15,14 @@ const loadReferralManagement = async (req, res) => {
     // Get referral statistics
     const totalUsers = await User.countDocuments();
     const usersWithReferrals = await User.countDocuments({ referredBy: { $ne: null } });
-    const totalReferralCoupons = await Coupon.countDocuments({ couponCode: { $regex: /^REF/ } });
-    const usedReferralCoupons = await Coupon.countDocuments({ 
-      couponCode: { $regex: /^REF/ }, 
-      usedCount: { $gt: 0 } 
+    const totalReferralCoupons = await Coupon.countDocuments({
+      code: { $regex: /^REF/ },
+      isDeleted: false
+    });
+    const usedReferralCoupons = await Coupon.countDocuments({
+      code: { $regex: /^REF/ },
+      isDeleted: false,
+      usesCount: { $gt: 0 }
     });
 
     const stats = {

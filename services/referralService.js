@@ -113,24 +113,29 @@ class ReferralService {
   static async createReferralRewardCoupon(referrer) {
     try {
       const couponCode = `REF${referrer.referralCode}${Date.now().toString().slice(-4)}`;
-      
-      // Calculate reward amount (10% discount or ₹100, whichever is higher)
+
+      // Calculate reward amount (10% discount)
       const discountPercentage = 10;
-      const minimumDiscount = 100;
+      const now = new Date();
 
       const rewardCoupon = new Coupon({
+        code: couponCode,
         name: `Referral Reward - ${referrer.name}`,
-        couponCode: couponCode,
-        createdOn: new Date(),
-        expireOn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        offerPrice: discountPercentage,
-        minimumPrice: 500, // Minimum order value to use coupon
-        isList: true,
-        userId: [referrer._id], // Only this user can use this coupon
         description: `Congratulations! You've earned this coupon for successfully referring a friend. Enjoy ${discountPercentage}% off on your next purchase!`,
         discountType: 'percentage',
-        usageLimit: 1,
-        usedCount: 0
+        discountValue: discountPercentage,
+        createdOn: now,
+        startOn: now,
+        expireOn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        offerPrice: discountPercentage, // For backward compatibility
+        minimumPrice: 500, // Minimum order value to use coupon
+        maximumDiscountAmount: 1000, // Maximum discount of ₹1000
+        maxUses: 1, // Single use coupon
+        usesCount: 0,
+        userUsageLimit: 1,
+        isListed: true,
+        isDeleted: false,
+        createdBy: null // System generated
       });
 
       await rewardCoupon.save();
@@ -139,6 +144,7 @@ class ReferralService {
         couponCode: couponCode,
         discountPercentage: discountPercentage,
         minimumOrderValue: 500,
+        maximumDiscount: 1000,
         expiryDate: rewardCoupon.expireOn,
         description: rewardCoupon.description
       };
@@ -168,11 +174,11 @@ class ReferralService {
         .select('name email createdOn')
         .sort({ createdOn: -1 });
 
-      // Get referral coupons for this user
+      // Get referral coupons for this user (coupons that contain their referral code)
       const referralCoupons = await Coupon.find({
-        userId: userId,
-        couponCode: { $regex: /^REF/ }
-      }).select('couponCode offerPrice expireOn isList usedCount');
+        code: { $regex: new RegExp(`^REF${user.referralCode}`, 'i') },
+        isDeleted: false
+      }).select('code name discountType discountValue offerPrice expireOn isListed usesCount maxUses');
 
       return {
         referralCode: referralCode,

@@ -4,6 +4,7 @@ const passport = require("passport");
 const userController = require("../controllers/user/userController");
 const authController = require("../controllers/user/authController");
 const referralController = require("../controllers/user/referralController");
+const couponController = require("../controllers/user/couponController");
 const  {userAuth}  = require("../middlewares/auth"); // Import userAuth middleware
 
 // Import existing multer configuration for profile uploads
@@ -137,6 +138,11 @@ router.get(
 router.get("/referral", userAuth, referralController.loadReferralDashboard);
 router.post("/referral/generate-code", userAuth, referralController.generateReferralCode);
 router.get("/referral/stats", userAuth, referralController.getReferralStats);
+
+// Coupon routes
+router.get("/coupons", userAuth, couponController.loadUserCoupons);
+router.get("/coupon/:couponCode", userAuth, couponController.getCouponDetails);
+router.post("/validate-coupon", userAuth, couponController.validateCouponForCheckout);
 
 module.exports = router;
 
