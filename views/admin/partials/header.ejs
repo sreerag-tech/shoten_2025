@@ -161,6 +161,7 @@
 
         .sidebar {
             min-height: 100vh;
+            height: 100vh;
             background: linear-gradient(135deg, var(--dark-color) 0%, #334155 100%);
             color: #fff;
             width: var(--sidebar-width);
@@ -170,6 +171,8 @@
             z-index: 1000;
             box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .sidebar-brand {
@@ -494,7 +497,7 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" style="display: flex; flex-direction: column;">
         <div class="sidebar-brand">
             <h4>
                 <div class="brand-icon">
@@ -504,13 +507,14 @@
             </h4>
         </div>
 
-        <ul class="nav nav-pills flex-column">
-            <li class="nav-item">
-                <a href="/admin/dashboard" class="nav-link <%= activePage === 'dashboard' ? 'active' : '' %>">
-                    <i class="fas fa-tachometer-alt"></i>
-                    Dashboard
-                </a>
-            </li>
+        <div class="sidebar-nav" style="flex: 1; overflow-y: auto; padding-bottom: 2rem;">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item">
+                    <a href="/admin/dashboard" class="nav-link <%= activePage === 'dashboard' ? 'active' : '' %>">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
             <li class="nav-item">
                 <a href="/admin/users" class="nav-link <%= activePage === 'customers' ? 'active' : '' %>">
                     <i class="fas fa-users"></i>
@@ -566,9 +570,16 @@
                     Sales Report
                 </a>
             </li>
-        </ul>
+            <li class="nav-item">
+                <a href="/admin/referral-management" class="nav-link <%= activePage === 'referral-management' ? 'active' : '' %>">
+                    <i class="fas fa-users"></i>
+                    Referral Management
+                </a>
+            </li>
+            </ul>
+        </div>
 
-        <div style="margin-top: auto; padding: 1.5rem;">
+        <div style="margin-top: auto; padding: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-white" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="admin-avatar me-2">A</div>

@@ -11,6 +11,7 @@ const inventoryController = require("../controllers/admin/inventoryController");
 const couponController = require("../controllers/admin/couponController");
 const offerController = require("../controllers/admin/offerController");
 const salesReportController = require("../controllers/admin/salesReportController");
+const referralController = require("../controllers/admin/referralController");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 
 router.get("/pageerror", adminController.pageerror);
@@ -83,5 +84,11 @@ router.get("/coupons/api/:id", adminAuth, couponController.getCouponDetails);
 router.get("/sales-report", adminAuth, salesReportController.loadSalesReport);
 router.get("/sales-report/download-pdf", adminAuth, salesReportController.downloadPDFReport);
 router.get("/sales-report/download-excel", adminAuth, salesReportController.downloadExcelReport);
+
+// Referral Management Routes
+router.get("/referral-management", adminAuth, referralController.loadReferralManagement);
+router.get("/referral-analytics", adminAuth, referralController.getReferralAnalytics);
+router.get("/referral-export", adminAuth, referralController.exportReferralData);
+router.get("/referral-user/:userId", adminAuth, referralController.getUserReferralDetails);
 
 module.exports = router;

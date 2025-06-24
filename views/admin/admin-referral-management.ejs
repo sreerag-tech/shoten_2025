@@ -1,0 +1,338 @@
+<%- include('partials/header') %>
+
+        <div class="content-main">
+            <div class="page-header">
+                <h1 class="page-title">Referral Management</h1>
+                <p class="page-subtitle">Monitor and manage user referrals and rewards</p>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Total Users</h6>
+                                    <h3 class="mb-0"><%= stats.totalUsers %></h3>
+                                </div>
+                                <div class="card-icon text-primary">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Referred Users</h6>
+                                    <h3 class="mb-0"><%= stats.usersWithReferrals %></h3>
+                                    <small class="text-success"><%= stats.referralRate %>% of total</small>
+                                </div>
+                                <div class="card-icon text-success">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Reward Coupons</h6>
+                                    <h3 class="mb-0"><%= stats.totalReferralCoupons %></h3>
+                                </div>
+                                <div class="card-icon text-warning">
+                                    <i class="fas fa-gift"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Used Coupons</h6>
+                                    <h3 class="mb-0"><%= stats.usedReferralCoupons %></h3>
+                                    <small class="text-info"><%= stats.couponUsageRate %>% usage rate</small>
+                                </div>
+                                <div class="card-icon text-info">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referrals Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>Referral Activity
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" onclick="exportReferralData('csv')">
+                                <i class="fas fa-download me-1"></i>Export CSV
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="exportReferralData('json')">
+                                <i class="fas fa-download me-1"></i>Export JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <% if (referrals && referrals.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Referee</th>
+                                    <th>Referrer</th>
+                                    <th>Referral Code</th>
+                                    <th>Signup Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% referrals.forEach(referral => { %>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                <span class="text-white fw-bold">
+                                                    <%= referral.name.charAt(0).toUpperCase() %>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold"><%= referral.name %></div>
+                                                <small class="text-muted"><%= referral.email %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% if (referral.referredBy) { %>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                <span class="text-white fw-bold">
+                                                    <%= referral.referredBy.name.charAt(0).toUpperCase() %>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold"><%= referral.referredBy.name %></div>
+                                                <small class="text-muted"><%= referral.referredBy.email %></small>
+                                            </div>
+                                        </div>
+                                        <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (referral.referredBy && referral.referredBy.referralCode) { %>
+                                        <span class="badge bg-primary font-monospace">
+                                            <%= referral.referredBy.referralCode %>
+                                        </span>
+                                        <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">
+                                            <%= new Date(referral.createdOn).toLocaleDateString() %>
+                                        </div>
+                                        <small class="text-muted">
+                                            <%= new Date(referral.createdOn).toLocaleTimeString() %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Active</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                onclick="viewUserDetails('<%= referral._id %>')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <% if (totalPages > 1) { %>
+                    <nav aria-label="Referrals pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <% if (hasPrevPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage - 1 %>">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            <% } %>
+
+                            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                            <% } %>
+
+                            <% if (hasNextPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage + 1 %>">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <% } %>
+                        </ul>
+                    </nav>
+                    <% } %>
+
+                    <% } else { %>
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-users fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No Referrals Found</h5>
+                        <p class="text-muted">No users have been referred yet.</p>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+    <!-- User Details Modal -->
+    <div class="modal fade" id="userDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Referral Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="userDetailsContent">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Export referral data
+        function exportReferralData(format) {
+            Swal.fire({
+                title: 'Exporting Data...',
+                text: 'Please wait while we prepare your export',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            window.location.href = `/admin/referral-export?format=${format}`;
+            
+            setTimeout(() => {
+                Swal.close();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Export Complete!',
+                    text: 'Your referral data has been downloaded.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }, 2000);
+        }
+
+        // View user details
+        async function viewUserDetails(userId) {
+            const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+            modal.show();
+
+            try {
+                const response = await fetch(`/admin/referral-user/${userId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const user = result.data.user;
+                    const stats = result.data.referralStats;
+
+                    document.getElementById('userDetailsContent').innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">User Information</h6>
+                                <p><strong>Name:</strong> ${user.name}</p>
+                                <p><strong>Email:</strong> ${user.email}</p>
+                                <p><strong>Joined:</strong> ${new Date(user.createdOn).toLocaleDateString()}</p>
+                                <p><strong>Referral Code:</strong> 
+                                    <span class="badge bg-primary">${stats.referralCode}</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">Referral Statistics</h6>
+                                <p><strong>Total Referrals:</strong> ${stats.totalReferrals}</p>
+                                <p><strong>Reward Coupons:</strong> ${stats.rewardCoupons.length}</p>
+                                <p><strong>Active Coupons:</strong> ${stats.rewardCoupons.filter(c => c.isList && c.usedCount === 0).length}</p>
+                            </div>
+                        </div>
+                        
+                        ${stats.referredUsers.length > 0 ? `
+                        <hr>
+                        <h6 class="fw-bold">Referred Users</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.referredUsers.map(u => `
+                                        <tr>
+                                            <td>${u.name}</td>
+                                            <td>${u.email}</td>
+                                            <td>${new Date(u.createdOn).toLocaleDateString()}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ` : ''}
+                    `;
+                } else {
+                    document.getElementById('userDetailsContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading user details: ${result.message}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading user details:', error);
+                document.getElementById('userDetailsContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading user details. Please try again.
+                    </div>
+                `;
+            }
+        }
+    </script>
+
+<%- include('partials/footer') %>

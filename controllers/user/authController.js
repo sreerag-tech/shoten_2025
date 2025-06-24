@@ -297,6 +297,37 @@ const logout = async (req, res) => {
   }
 };
 
+// Validate referral code
+const validateReferralCode = async (req, res) => {
+  try {
+    const { referralCode } = req.body;
+
+    if (!referralCode) {
+      return res.json({ valid: false, message: 'Referral code is required' });
+    }
+
+    const ReferralService = require("../../services/referralService");
+    const validation = await ReferralService.validateReferralCode(referralCode);
+
+    if (validation.valid) {
+      return res.json({
+        valid: true,
+        referrerName: validation.referrer.name,
+        message: 'Valid referral code'
+      });
+    } else {
+      return res.json({
+        valid: false,
+        message: validation.message
+      });
+    }
+
+  } catch (error) {
+    console.error('Error validating referral code:', error);
+    return res.json({ valid: false, message: 'Error validating referral code' });
+  }
+};
+
 module.exports = {
   loadSignUppage,
   loadLoginpage,
@@ -308,5 +339,6 @@ module.exports = {
   logout,
   generateOtp,
   sendVerificationEmail,
-  securePassword
+  securePassword,
+  validateReferralCode
 };

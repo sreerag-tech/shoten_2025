@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Dashboard - Shoten</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .anime-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .anime-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .copy-button {
+            transition: all 0.3s ease;
+        }
+        
+        .copy-button:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <%- include('partials/header') %>
+
+    <div class="min-h-screen anime-bg py-8">
+        <div class="container mx-auto px-4 relative z-10">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-white mb-4">
+                    <i class="fas fa-users mr-3"></i>Referral Dashboard
+                </h1>
+                <p class="text-white/80 text-lg">Invite friends and earn rewards!</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Total Referrals -->
+                <div class="bg-white rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Referrals</p>
+                            <p class="text-3xl font-bold gradient-text"><%= referralStats.totalReferrals %></p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-user-friends text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward Coupons -->
+                <div class="bg-white rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Reward Coupons</p>
+                            <p class="text-3xl font-bold gradient-text"><%= referralStats.rewardCoupons.length %></p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i class="fas fa-gift text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Coupons -->
+                <div class="bg-white rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Active Coupons</p>
+                            <p class="text-3xl font-bold gradient-text">
+                                <%= referralStats.rewardCoupons.filter(c => c.isList && c.usedCount === 0).length %>
+                            </p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <i class="fas fa-ticket-alt text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Code Section -->
+            <div class="bg-white rounded-2xl p-8 mb-8 card-hover">
+                <h2 class="text-2xl font-bold gradient-text mb-6">
+                    <i class="fas fa-share-alt mr-3"></i>Your Referral Code
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Referral Code -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-3">Referral Code</label>
+                        <div class="flex items-center space-x-3">
+                            <input 
+                                type="text" 
+                                id="referralCode" 
+                                value="<%= referralStats.referralCode %>" 
+                                readonly 
+                                class="flex-1 p-4 border-2 border-gray-200 rounded-xl bg-gray-50 font-mono text-lg font-bold text-center"
+                            >
+                            <button 
+                                onclick="copyToClipboard('referralCode')" 
+                                class="copy-button px-6 py-4 bg-gray-100 border-2 border-gray-200 rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-300"
+                            >
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Referral Link -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-3">Referral Link</label>
+                        <div class="flex items-center space-x-3">
+                            <input 
+                                type="text" 
+                                id="referralLink" 
+                                value="<%= `${process.env.BASE_URL || 'http://localhost:4200'}${referralStats.referralLink}` %>" 
+                                readonly 
+                                class="flex-1 p-4 border-2 border-gray-200 rounded-xl bg-gray-50 text-sm"
+                            >
+                            <button 
+                                onclick="copyToClipboard('referralLink')" 
+                                class="copy-button px-6 py-4 bg-gray-100 border-2 border-gray-200 rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-300"
+                            >
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share Buttons -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Share with friends:</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="shareWhatsApp()" class="flex items-center px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors">
+                            <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                        </button>
+                        <button onclick="shareTwitter()" class="flex items-center px-6 py-3 bg-blue-400 text-white rounded-xl hover:bg-blue-500 transition-colors">
+                            <i class="fab fa-twitter mr-2"></i>Twitter
+                        </button>
+                        <button onclick="shareFacebook()" class="flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
+                            <i class="fab fa-facebook mr-2"></i>Facebook
+                        </button>
+                        <button onclick="shareEmail()" class="flex items-center px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-envelope mr-2"></i>Email
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referred Users -->
+            <% if (referralStats.referredUsers && referralStats.referredUsers.length > 0) { %>
+            <div class="bg-white rounded-2xl p-8 mb-8 card-hover">
+                <h2 class="text-2xl font-bold gradient-text mb-6">
+                    <i class="fas fa-users mr-3"></i>Referred Users
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Joined Date</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% referralStats.referredUsers.forEach(user => { %>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                            <%= user.name.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <%= user.name %>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-gray-600"><%= user.email %></td>
+                                <td class="py-4 px-4 text-gray-600"><%= new Date(user.createdOn).toLocaleDateString() %></td>
+                                <td class="py-4 px-4">
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                        Active
+                                    </span>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Reward Coupons -->
+            <% if (referralStats.rewardCoupons && referralStats.rewardCoupons.length > 0) { %>
+            <div class="bg-white rounded-2xl p-8 card-hover">
+                <h2 class="text-2xl font-bold gradient-text mb-6">
+                    <i class="fas fa-gift mr-3"></i>Your Reward Coupons
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <% referralStats.rewardCoupons.forEach(coupon => { %>
+                    <div class="border-2 border-gray-200 rounded-xl p-6 <%= coupon.isList && coupon.usedCount === 0 ? 'bg-gradient-to-r from-green-50 to-blue-50 border-green-200' : 'bg-gray-50 border-gray-300' %>">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-gray-800"><%= coupon.couponCode %></h3>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium <%= coupon.isList && coupon.usedCount === 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' %>">
+                                <%= coupon.isList && coupon.usedCount === 0 ? 'Active' : 'Used' %>
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-2">
+                            <i class="fas fa-percentage mr-2"></i><%= coupon.offerPrice %>% OFF
+                        </p>
+                        <p class="text-gray-600 text-sm">
+                            <i class="fas fa-calendar mr-2"></i>Expires: <%= new Date(coupon.expireOn).toLocaleDateString() %>
+                        </p>
+                    </div>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            element.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Copied!',
+                text: 'Copied to clipboard successfully',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
+        function shareWhatsApp() {
+            const referralCode = document.getElementById('referralCode').value;
+            const message = `Hey! Join Shoten using my referral code "${referralCode}" and get amazing discounts! ${document.getElementById('referralLink').value}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function shareTwitter() {
+            const referralCode = document.getElementById('referralCode').value;
+            const message = `Join Shoten using my referral code "${referralCode}" and get amazing discounts!`;
+            const url = document.getElementById('referralLink').value;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(url)}`, '_blank');
+        }
+
+        function shareFacebook() {
+            const url = document.getElementById('referralLink').value;
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        }
+
+        function shareEmail() {
+            const referralCode = document.getElementById('referralCode').value;
+            const subject = 'Join Shoten and get amazing discounts!';
+            const body = `Hey!\n\nI wanted to share something awesome with you! I've been using Shoten for my shopping and it's amazing.\n\nUse my referral code "${referralCode}" when you sign up and you'll get special discounts on your purchases!\n\nSign up here: ${document.getElementById('referralLink').value}\n\nHappy shopping!`;
+            
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+    </script>
+</body>
+</html>

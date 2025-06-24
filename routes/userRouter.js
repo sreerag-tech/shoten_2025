@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const userController = require("../controllers/user/userController");
+const authController = require("../controllers/user/authController");
+const referralController = require("../controllers/user/referralController");
 const  {userAuth}  = require("../middlewares/auth"); // Import userAuth middleware
 
 // Import existing multer configuration for profile uploads
@@ -41,6 +43,7 @@ router.get("/home",userController.loadHome);
 router.post("/signup", userController.signup);
 router.post("/verify-otp", userController.verifyOtp);
 router.post("/resend-otp", userController.resendOtp);
+router.post("/validate-referral-code", authController.validateReferralCode);
 router.post("/login", userController.login);
 router.post("/logout", userController.logout);
 router.get("/pageNotFound", userController.pageNotFound);
@@ -129,6 +132,11 @@ router.get(
   // }
    userController.googleCallbackHandler
 );
+
+// Referral routes
+router.get("/referral", userAuth, referralController.loadReferralDashboard);
+router.post("/referral/generate-code", userAuth, referralController.generateReferralCode);
+router.get("/referral/stats", userAuth, referralController.getReferralStats);
 
 module.exports = router;
 
