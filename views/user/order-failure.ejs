@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - Shoten</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .anime-bg {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .anime-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+        
+        @keyframes cross {
+            0% { stroke-dashoffset: 100; }
+            100% { stroke-dashoffset: 0; }
+        }
+        
+        .error-cross {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 3;
+            stroke: #ef4444;
+            stroke-miterlimit: 10;
+            margin: 10% auto;
+            box-shadow: inset 0px 0px 0px #ef4444;
+            animation: shake 1s ease-in-out;
+        }
+        
+        .error-cross__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 3;
+            stroke-miterlimit: 10;
+            stroke: #ef4444;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        
+        .error-cross__cross {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+        
+        .failure-card {
+            background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+            border: 2px solid #ef4444;
+            box-shadow: 0 20px 40px rgba(239, 68, 68, 0.1);
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        .btn-retry {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-retry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(107, 114, 128, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <%- include('partials/header') %>
+
+    <div class="min-h-screen anime-bg py-8">
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="max-w-2xl mx-auto">
+                <!-- Failure Card -->
+                <div class="failure-card rounded-3xl p-8 text-center">
+                    <!-- Error Animation -->
+                    <div class="mb-6">
+                        <svg class="error-cross" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                            <circle class="error-cross__circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path class="error-cross__cross" fill="none" d="m16 16 20 20 m0-20-20 20"/>
+                        </svg>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div class="mb-8">
+                        <h1 class="text-4xl font-bold text-red-600 mb-4">
+                            ❌ Payment Failed
+                        </h1>
+                        <p class="text-lg text-gray-700 mb-2">
+                            We're sorry, but your payment could not be processed.
+                        </p>
+                        <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                        <p class="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                            <i class="fas fa-exclamation-triangle mr-2"></i><%= errorMessage %>
+                        </p>
+                        <% } %>
+                    </div>
+
+                    <!-- Order Details (if available) -->
+                    <% if (typeof orderDetails !== 'undefined') { %>
+                    <div class="bg-gray-50 rounded-2xl p-6 mb-8 text-left">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">
+                            <i class="fas fa-receipt mr-2"></i>Order Details
+                        </h3>
+                        
+                        <div class="space-y-3">
+                            <% if (orderDetails.orderId) { %>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Order ID:</span>
+                                <span class="font-mono font-semibold text-blue-600">#<%= orderDetails.orderId %></span>
+                            </div>
+                            <% } %>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Amount:</span>
+                                <span class="font-bold text-lg">₹<%= orderDetails.totalAmount %></span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Payment Method:</span>
+                                <span class="font-semibold">
+                                    <i class="fas fa-credit-card mr-1"></i>Online Payment
+                                </span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="font-semibold text-red-600">
+                                    <i class="fas fa-times-circle mr-1"></i>Payment Failed
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Common Reasons -->
+                    <div class="bg-yellow-50 rounded-2xl p-6 mb-8 text-left">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">
+                            <i class="fas fa-info-circle mr-2 text-yellow-600"></i>Common Reasons for Payment Failure
+                        </h3>
+                        
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li class="flex items-start">
+                                <i class="fas fa-circle text-yellow-500 text-xs mt-2 mr-3"></i>
+                                <span>Insufficient balance in your account</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-circle text-yellow-500 text-xs mt-2 mr-3"></i>
+                                <span>Incorrect card details or expired card</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-circle text-yellow-500 text-xs mt-2 mr-3"></i>
+                                <span>Network connectivity issues</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-circle text-yellow-500 text-xs mt-2 mr-3"></i>
+                                <span>Bank server temporarily unavailable</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-circle text-yellow-500 text-xs mt-2 mr-3"></i>
+                                <span>Transaction limit exceeded</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="space-y-4">
+                        <!-- Primary Actions -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <% if (typeof orderDetails !== 'undefined' && orderDetails.orderId) { %>
+                            <button onclick="retryPayment('<%= orderDetails.orderId %>')" 
+                                    class="btn-retry text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300">
+                                <i class="fas fa-redo mr-2"></i>Retry Payment
+                            </button>
+                            
+                            <a href="/order-detail/<%= orderDetails.orderId %>" 
+                               class="btn-secondary text-white py-4 px-6 rounded-xl font-semibold text-center block hover:text-white transition-all duration-300">
+                                <i class="fas fa-eye mr-2"></i>View Order Details
+                            </a>
+                            <% } else { %>
+                            <a href="/checkout" 
+                               class="btn-retry text-white py-4 px-6 rounded-xl font-semibold text-center block hover:text-white transition-all duration-300">
+                                <i class="fas fa-redo mr-2"></i>Try Again
+                            </a>
+                            
+                            <a href="/cart" 
+                               class="btn-secondary text-white py-4 px-6 rounded-xl font-semibold text-center block hover:text-white transition-all duration-300">
+                                <i class="fas fa-shopping-cart mr-2"></i>Back to Cart
+                            </a>
+                            <% } %>
+                        </div>
+
+                        <!-- Secondary Actions -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+                            <a href="/home" 
+                               class="bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium text-center block hover:bg-gray-200 transition-colors">
+                                <i class="fas fa-home mr-2"></i>Home
+                            </a>
+                            
+                            <a href="/shop" 
+                               class="bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium text-center block hover:bg-gray-200 transition-colors">
+                                <i class="fas fa-shopping-bag mr-2"></i>Continue Shopping
+                            </a>
+                            
+                            <a href="/orders" 
+                               class="bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium text-center block hover:bg-gray-200 transition-colors">
+                                <i class="fas fa-list mr-2"></i>My Orders
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Help Section -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Need Help?</h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-headset text-blue-500 mr-2"></i>
+                                    <span class="font-semibold">Contact Support</span>
+                                </div>
+                                <p class="text-gray-600 mb-2">Our team is here to help you</p>
+                                <a href="mailto:support@shoten.com" class="text-blue-600 hover:underline">
+                                    support@shoten.com
+                                </a>
+                            </div>
+                            
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-money-bill-wave text-green-500 mr-2"></i>
+                                    <span class="font-semibold">Try COD</span>
+                                </div>
+                                <p class="text-gray-600 mb-2">Pay when you receive</p>
+                                <a href="/checkout?payment=cod" class="text-green-600 hover:underline">
+                                    Switch to COD
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Tips -->
+                <div class="text-center mt-6">
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-6">
+                        <h4 class="text-white font-semibold mb-3">💡 Tips for Successful Payment</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-white/90">
+                            <div>• Ensure stable internet connection</div>
+                            <div>• Check your card details carefully</div>
+                            <div>• Verify sufficient account balance</div>
+                            <div>• Try a different payment method</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        function retryPayment(orderId) {
+            Swal.fire({
+                title: 'Retry Payment',
+                text: 'Do you want to retry the payment for this order?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, retry payment',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect to payment page with order ID
+                    window.location.href = `/retry-payment/${orderId}`;
+                }
+            });
+        }
+
+        // Auto-redirect after 30 seconds (optional)
+        let countdown = 30;
+        function startCountdown() {
+            const countdownElement = document.createElement('div');
+            countdownElement.className = 'fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg';
+            countdownElement.innerHTML = `
+                <div class="text-sm text-gray-600">
+                    Auto-redirecting to cart in <span id="countdown">${countdown}</span>s
+                    <button onclick="clearInterval(countdownInterval); this.parentElement.parentElement.remove();" 
+                            class="ml-2 text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(countdownElement);
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                const countdownSpan = document.getElementById('countdown');
+                if (countdownSpan) {
+                    countdownSpan.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = '/cart';
+                }
+            }, 1000);
+
+            // Make interval accessible globally
+            window.countdownInterval = countdownInterval;
+        }
+
+        // Start countdown after 5 seconds
+        setTimeout(startCountdown, 5000);
+    </script>
+</body>
+</html>

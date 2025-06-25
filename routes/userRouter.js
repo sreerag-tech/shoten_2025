@@ -5,6 +5,7 @@ const userController = require("../controllers/user/userController");
 const authController = require("../controllers/user/authController");
 const referralController = require("../controllers/user/referralController");
 const couponController = require("../controllers/user/couponController");
+const orderController = require("../controllers/user/orderController");
 const  {userAuth}  = require("../middlewares/auth"); // Import userAuth middleware
 
 // Import existing multer configuration for profile uploads
@@ -125,13 +126,11 @@ router.get(
 );
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/signup" }),
-  
-  // (req, res) => {
-  //   req.session.user = req.user._id;
-  //   res.redirect("/home");
-  // }
-   userController.googleCallbackHandler
+  passport.authenticate("google", {
+    failureRedirect: "/login",
+    failureMessage: true
+  }),
+  userController.googleCallbackHandler
 );
 
 // Referral routes
@@ -143,6 +142,28 @@ router.get("/referral/stats", userAuth, referralController.getReferralStats);
 router.get("/coupons", userAuth, couponController.loadUserCoupons);
 router.get("/coupon/:couponCode", userAuth, couponController.getCouponDetails);
 router.post("/validate-coupon", userAuth, couponController.validateCouponForCheckout);
+
+// Payment verification routes (keep the new payment system)
+router.post("/verify-payment", userAuth, orderController.verifyPayment);
+router.post("/payment-failure", userAuth, orderController.handlePaymentFailure);
+router.post("/cancel-order", userAuth, orderController.cancelOrder);
+router.post("/return-order", userAuth, orderController.returnOrder);
+
+// Failed orders and retry payment routes
+router.get("/failed-orders", userAuth, orderController.loadFailedOrders);
+router.post("/retry-payment/:failedOrderId", userAuth, orderController.retryPayment);
+router.delete("/failed-orders/:failedOrderId", userAuth, orderController.deleteFailedOrder);
+
+// Order success/failure pages
+router.get("/order-success/:orderId?", userAuth, (req, res) => {
+  const orderId = req.params.orderId;
+  res.render("order-success", { orderId: orderId });
+});
+
+router.get("/order-failure", userAuth, (req, res) => {
+  const errorMessage = req.query.error || null;
+  res.render("order-failure", { errorMessage: errorMessage });
+});
 
 module.exports = router;
 

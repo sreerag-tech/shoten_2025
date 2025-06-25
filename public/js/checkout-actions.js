@@ -122,16 +122,32 @@ function placeOrder() {
     if (!validateCheckout()) {
         return;
     }
-    
+
     // Get selected address and payment method
     const selectedAddress = document.querySelector('.address-radio:checked');
     const selectedPayment = document.querySelector('.payment-radio:checked');
-    
+
+    // Get order totals
+    const subtotalElement = document.querySelector('.subtotal-amount');
+    const shippingElement = document.querySelector('.shipping-amount');
+    const discountElement = document.querySelector('.discount-amount');
+    const totalElement = document.querySelector('.total-amount');
+
+    const subtotal = parseFloat(subtotalElement?.textContent?.replace('₹', '').replace(',', '') || '0');
+    const shipping = parseFloat(shippingElement?.textContent?.replace('₹', '').replace(',', '') || '0');
+    const discount = parseFloat(discountElement?.textContent?.replace('₹', '').replace(',', '') || '0');
+    const total = parseFloat(totalElement?.textContent?.replace('₹', '').replace(',', '') || '0');
+
     const orderData = {
         addressId: selectedAddress.value,
-        paymentMethod: selectedPayment.value
+        paymentMethod: selectedPayment.value,
+        subtotal: subtotal,
+        shippingCharge: shipping,
+        discount: discount,
+        totalAmount: total,
+        couponCode: appliedCoupon?.code || null
     };
-    
+
     // Show confirmation modal
     Swal.fire({
         title: '🛒 Confirm Order',
@@ -185,7 +201,7 @@ function submitOrder(orderData) {
             Swal.showLoading();
         }
     });
-    
+
     fetch('/checkout/place-order', {
         method: 'POST',
         headers: {
@@ -196,12 +212,17 @@ function submitOrder(orderData) {
     .then(response => response.json())
     .then(data => {
         Swal.close();
-        
+
         if (data.success) {
-            // Show success message and redirect
-            Swal.fire({
-                title: '🎉 Order Placed!',
-                text: data.message,
+            if (data.paymentRequired) {
+                // Online payment - Initialize Razorpay
+                const orderIdForTracking = data.tempOrderId || data.orderId;
+                initiateRazorpayPayment(data.paymentOptions, orderIdForTracking);
+            } else {
+                // COD order - Show success and redirect
+                Swal.fire({
+                    title: '🎉 Order Placed!',
+                    text: 'Your order has been placed successfully!',
                 icon: 'success',
                 confirmButtonColor: '#00ffff',
                 background: '#1f2937',
@@ -212,6 +233,7 @@ function submitOrder(orderData) {
                 // Redirect to order success page
                 window.location.href = `/order-success/${data.orderId}`;
             });
+            }
         } else {
             Swal.fire({
                 title: '❌ Order Failed',
@@ -268,4 +290,122 @@ document.addEventListener('DOMContentLoaded', function() {
             updateAddressSelection();
         }
     }
+
+    // Place order button event listener
+    document.querySelector('.place-order-btn')?.addEventListener('click', function() {
+        placeOrder();
+    });
 });
+
+// Initialize Razorpay payment
+function initiateRazorpayPayment(paymentOptions, orderId) {
+    const options = {
+        ...paymentOptions,
+        handler: function(response) {
+            // Payment successful - verify with server
+            verifyPayment(response, orderId);
+        },
+        modal: {
+            ondismiss: function() {
+                // Payment cancelled
+                handlePaymentFailure(orderId, 'Payment cancelled by user');
+            }
+        }
+    };
+
+    const rzp = new Razorpay(options);
+
+    rzp.on('payment.failed', function(response) {
+        // Payment failed
+        handlePaymentFailure(orderId, response.error.description);
+    });
+
+    rzp.open();
+}
+
+// Verify payment with server
+function verifyPayment(paymentResponse, orderId) {
+    Swal.fire({
+        title: '🔄 Verifying Payment...',
+        text: 'Please wait while we verify your payment.',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: '#1f2937',
+        color: '#ffffff',
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    fetch('/verify-payment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            ...paymentResponse,
+            orderId: orderId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+
+        if (data.success) {
+            // Payment verified - redirect to success page
+            window.location.href = `/order-success/${data.orderId}`;
+        } else {
+            // Verification failed
+            handlePaymentFailure(orderId, data.message);
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        console.error('Payment verification error:', error);
+        handlePaymentFailure(orderId, 'Payment verification failed');
+    });
+}
+
+// Handle payment failure
+function handlePaymentFailure(orderId, errorMessage) {
+    // Record payment failure
+    fetch('/payment-failure', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            orderId: orderId,
+            error: errorMessage
+        })
+    })
+    .then(() => {
+        // Show error message and redirect back to checkout
+        Swal.fire({
+            title: '❌ Payment Failed',
+            text: `Payment failed: ${errorMessage}. You can try again.`,
+            icon: 'error',
+            confirmButtonColor: '#ef4444',
+            background: '#1f2937',
+            color: '#ffffff',
+            confirmButtonText: 'Try Again'
+        }).then(() => {
+            // Redirect back to checkout to try again
+            window.location.href = '/checkout';
+        });
+    })
+    .catch(() => {
+        // Even if recording fails, show error and redirect
+        Swal.fire({
+            title: '❌ Payment Failed',
+            text: 'Payment failed. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#ef4444',
+            background: '#1f2937',
+            color: '#ffffff',
+            confirmButtonText: 'Try Again'
+        }).then(() => {
+            window.location.href = '/checkout';
+        });
+    });
+}

@@ -1,5 +1,10 @@
 const User = require("../../models/userSchema");
 const Order = require("../../models/orderSchema");
+const Product = require("../../models/productSchema");
+const Cart = require("../../models/cartSchema");
+const Coupon = require("../../models/couponSchema");
+const FailedOrder = require("../../models/failedOrderSchema");
+const PaymentService = require("../../services/paymentService");
 
 // Load Orders List Page
 const loadOrders = async (req, res) => {
@@ -216,8 +221,638 @@ const getOrderDetailsAPI = async (req, res) => {
   }
 };
 
+// Create order with payment integration
+const createOrderWithPayment = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const {
+      addressId,
+      paymentMethod,
+      couponCode,
+      totalAmount,
+      subtotal,
+      shippingCharge,
+      discount
+    } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Please login first' });
+    }
+
+    // Get user and cart
+    const user = await User.findById(userId).populate('cart');
+    if (!user || !user.cart || user.cart.length === 0) {
+      return res.status(400).json({ success: false, message: 'Cart is empty' });
+    }
+
+    // Get cart details
+    const cart = await Cart.findById(user.cart[0]).populate('items.productId');
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Cart is empty' });
+    }
+
+    // Validate stock availability
+    for (const item of cart.items) {
+      if (item.productId.quantity < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${item.productId.productName}`
+        });
+      }
+    }
+
+    // Create order
+    const orderId = 'ORD' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
+
+    const orderData = {
+      orderId: orderId,
+      userId: userId,
+      orderedItems: cart.items.map(item => ({
+        product: item.productId._id,
+        quantity: item.quantity,
+        price: item.price,
+        status: 'Pending'
+      })),
+      totalPrice: totalAmount,
+      address: user.address.find(addr => addr._id.toString() === addressId),
+      paymentMethod: paymentMethod === 'COD' ? 'cod' : 'razorpay',
+      paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Pending',
+      status: 'Pending',
+      createdOn: new Date(),
+      couponApplied: couponCode || null,
+      discount: discount || 0
+    };
+
+    if (paymentMethod === 'Online') {
+      // Create Razorpay order
+      const razorpayResult = await PaymentService.createRazorpayOrder({
+        orderId: orderId,
+        totalAmount: totalAmount,
+        userId: userId,
+        customerName: user.name,
+        customerEmail: user.email
+      });
+
+      if (!razorpayResult.success) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create payment order'
+        });
+      }
+
+      // Save order with pending payment
+      const order = new Order(orderData);
+      order.razorpayOrderId = razorpayResult.razorpayOrderId;
+      await order.save();
+
+      // Generate payment options
+      const paymentOptions = PaymentService.generatePaymentOptions(
+        {
+          orderId: orderId,
+          totalAmount: totalAmount,
+          customerName: user.name,
+          customerEmail: user.email,
+          customerPhone: user.phone
+        },
+        razorpayResult.razorpayOrderId
+      );
+
+      return res.json({
+        success: true,
+        paymentRequired: true,
+        orderId: order._id,
+        razorpayOrderId: razorpayResult.razorpayOrderId,
+        paymentOptions: paymentOptions
+      });
+
+    } else {
+      // COD Order - Process immediately
+      const order = new Order(orderData);
+      await order.save();
+
+      // Update stock and clear cart
+      await updateStockAndClearCart(cart, userId);
+
+      // Use coupon if provided
+      if (couponCode) {
+        await useCoupon(couponCode, userId);
+      }
+
+      return res.json({
+        success: true,
+        paymentRequired: false,
+        orderId: order._id,
+        message: 'Order placed successfully'
+      });
+    }
+
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ success: false, message: 'Error creating order' });
+  }
+};
+
+// Verify payment and complete order
+const verifyPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      orderId
+    } = req.body;
+
+    // Verify payment signature
+    const isValidSignature = PaymentService.verifyPaymentSignature({
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    });
+
+    if (!isValidSignature) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment signature'
+      });
+    }
+
+    // Get payment details
+    const paymentDetails = await PaymentService.getPaymentDetails(razorpay_payment_id);
+
+    if (!paymentDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to verify payment'
+      });
+    }
+
+    // Get pending order data from session
+    const pendingOrder = req.session.pendingOrder;
+    if (!pendingOrder) {
+      return res.status(404).json({
+        success: false,
+        message: 'No pending order found. Please try placing the order again.'
+      });
+    }
+
+    // Create the order now that payment is successful
+    const orderData = pendingOrder.orderData;
+    orderData.paymentStatus = 'Completed';
+    orderData.razorpayPaymentId = razorpay_payment_id;
+    orderData.razorpayOrderId = razorpay_order_id;
+    orderData.paymentDetails = {
+      method: PaymentService.getPaymentMethod(paymentDetails.payment),
+      transactionId: razorpay_payment_id,
+      paidAmount: paymentDetails.payment.amount / 100,
+      paidAt: new Date()
+    };
+
+    const order = new Order(orderData);
+    await order.save();
+
+    // Update product stock now that payment is confirmed
+    for (const item of pendingOrder.orderedItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { quantity: -item.quantity }
+      });
+    }
+
+    // Clear cart
+    await Cart.deleteMany({ userId: pendingOrder.userId });
+    await User.findByIdAndUpdate(pendingOrder.userId, { $unset: { cart: 1 } });
+
+    // Use coupon if provided
+    if (pendingOrder.couponApplied && pendingOrder.couponCode) {
+      await useCoupon(pendingOrder.couponCode, pendingOrder.userId);
+    }
+
+    // If this was a retry payment, mark the failed order as completed
+    if (pendingOrder.failedOrderId) {
+      await FailedOrder.findByIdAndUpdate(pendingOrder.failedOrderId, {
+        status: 'Completed'
+      });
+    }
+
+    // Clear pending order from session
+    req.session.pendingOrder = null;
+
+    res.json({
+      success: true,
+      message: 'Payment verified successfully',
+      orderId: order._id
+    });
+
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    res.status(500).json({ success: false, message: 'Error verifying payment' });
+  }
+};
+
+// Handle payment failure
+const handlePaymentFailure = async (req, res) => {
+  try {
+    const { orderId, error } = req.body;
+    const userId = req.session.user;
+
+    // Log the payment failure for debugging
+    console.log(`Payment failed for order ${orderId}: ${error}`);
+
+    // Save failed order for retry option only if we have pending order data
+    if (req.session.pendingOrder) {
+      const pendingOrder = req.session.pendingOrder;
+
+      // Ensure we have the required data
+      const tempOrderId = orderId || pendingOrder.orderData?.orderId || `temp_${Date.now()}`;
+      const razorpayOrderId = pendingOrder.razorpayOrderId || orderId || tempOrderId;
+
+      // Check if failed order already exists
+      let failedOrder = await FailedOrder.findOne({ tempOrderId: tempOrderId });
+
+      if (failedOrder) {
+        // Update existing failed order
+        failedOrder.attemptCount += 1;
+        failedOrder.lastAttempt = new Date();
+        failedOrder.failureReason = error;
+        await failedOrder.save();
+      } else {
+        // Create new failed order only if we have valid data
+        if (pendingOrder.orderData && pendingOrder.orderedItems) {
+          failedOrder = new FailedOrder({
+            userId: userId,
+            tempOrderId: tempOrderId,
+            razorpayOrderId: razorpayOrderId,
+            orderData: pendingOrder.orderData,
+            orderedItems: pendingOrder.orderedItems,
+            totalAmount: pendingOrder.orderData.finalAmount || 0,
+            failureReason: error,
+            attemptCount: 1
+          });
+          await failedOrder.save();
+        } else {
+          console.log('Insufficient data to create failed order, skipping...');
+        }
+      }
+
+      // Clear pending order from session
+      req.session.pendingOrder = null;
+    } else {
+      console.log('No pending order found in session, payment failure not saved for retry');
+    }
+
+    res.json({
+      success: true,
+      message: 'Payment failure handled. You can try placing the order again.'
+    });
+
+  } catch (error) {
+    console.error('Error handling payment failure:', error);
+
+    // Clear pending order from session even if there's an error
+    if (req.session.pendingOrder) {
+      req.session.pendingOrder = null;
+    }
+
+    res.json({
+      success: true,
+      message: 'Payment failed. Please try placing the order again.'
+    });
+  }
+};
+
+// Cancel order or specific items
+const cancelOrder = async (req, res) => {
+  try {
+    const { orderId, itemId, reason } = req.body;
+    const userId = req.session.user;
+
+    const order = await Order.findOne({ _id: orderId, userId: userId })
+      .populate('orderedItems.product');
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (itemId) {
+      // Cancel specific item
+      const item = order.orderedItems.find(item => item._id.toString() === itemId);
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found' });
+      }
+
+      if (item.status === 'Cancelled') {
+        return res.status(400).json({ success: false, message: 'Item already cancelled' });
+      }
+
+      // Update item status
+      item.status = 'Cancelled';
+      item.cancelReason = reason || 'No reason provided';
+      item.cancelledAt = new Date();
+
+      // Restore stock
+      await Product.findByIdAndUpdate(
+        item.product._id,
+        { $inc: { quantity: item.quantity } }
+      );
+
+    } else {
+      // Cancel entire order
+      if (order.status === 'Cancelled') {
+        return res.status(400).json({ success: false, message: 'Order already cancelled' });
+      }
+
+      // Update order status
+      order.status = 'Cancelled';
+      order.cancelReason = reason || 'No reason provided';
+      order.cancelledAt = new Date();
+
+      // Update all items status and restore stock
+      for (const item of order.orderedItems) {
+        if (item.status !== 'Cancelled') {
+          item.status = 'Cancelled';
+          item.cancelReason = reason || 'No reason provided';
+          item.cancelledAt = new Date();
+
+          // Restore stock
+          await Product.findByIdAndUpdate(
+            item.product._id,
+            { $inc: { quantity: item.quantity } }
+          );
+        }
+      }
+    }
+
+    await order.save();
+
+    // Process refund if payment was made
+    if (order.paymentStatus === 'Completed' && order.razorpayPaymentId) {
+      const refundAmount = itemId ?
+        order.orderedItems.find(item => item._id.toString() === itemId).price *
+        order.orderedItems.find(item => item._id.toString() === itemId).quantity :
+        order.totalPrice;
+
+      const refundResult = await PaymentService.createRefund(
+        order.razorpayPaymentId,
+        refundAmount,
+        reason || 'Order cancellation'
+      );
+
+      if (refundResult.success) {
+        order.refundStatus = 'Processed';
+        order.refundAmount = refundAmount;
+        await order.save();
+      }
+    }
+
+    res.json({
+      success: true,
+      message: itemId ? 'Item cancelled successfully' : 'Order cancelled successfully'
+    });
+
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    res.status(500).json({ success: false, message: 'Error cancelling order' });
+  }
+};
+
+// Return order
+const returnOrder = async (req, res) => {
+  try {
+    const { orderId, itemId, reason } = req.body;
+    const userId = req.session.user;
+
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Return reason is required' });
+    }
+
+    const order = await Order.findOne({ _id: orderId, userId: userId })
+      .populate('orderedItems.product');
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (itemId) {
+      // Return specific item
+      const item = order.orderedItems.find(item => item._id.toString() === itemId);
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found' });
+      }
+
+      if (item.status !== 'Delivered') {
+        return res.status(400).json({ success: false, message: 'Only delivered items can be returned' });
+      }
+
+      // Update item status
+      item.status = 'Return Requested';
+      item.returnReason = reason;
+      item.returnRequestedAt = new Date();
+
+    } else {
+      // Return entire order
+      if (order.status !== 'Delivered') {
+        return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
+      }
+
+      // Update order status
+      order.status = 'Return Requested';
+      order.returnReason = reason;
+      order.returnRequestedAt = new Date();
+
+      // Update all delivered items
+      for (const item of order.orderedItems) {
+        if (item.status === 'Delivered') {
+          item.status = 'Return Requested';
+          item.returnReason = reason;
+          item.returnRequestedAt = new Date();
+        }
+      }
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: itemId ? 'Return request submitted for item' : 'Return request submitted for order'
+    });
+
+  } catch (error) {
+    console.error('Error processing return request:', error);
+    res.status(500).json({ success: false, message: 'Error processing return request' });
+  }
+};
+
+// Helper function to update stock and clear cart
+async function updateStockAndClearCart(cart, userId) {
+  // Check if cart exists and has items
+  if (cart && cart.items && cart.items.length > 0) {
+    // Update product stock
+    for (const item of cart.items) {
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { quantity: -item.quantity } }
+      );
+    }
+  }
+
+  // Clear cart (if it exists)
+  if (cart && cart._id) {
+    await Cart.findByIdAndDelete(cart._id);
+  }
+
+  // Clear cart reference from user
+  await Cart.deleteMany({ userId: userId });
+  await User.findByIdAndUpdate(userId, { $unset: { cart: 1 } });
+}
+
+// Helper function to use coupon
+async function useCoupon(couponCode, userId) {
+  // Safety check: ensure couponCode is a string
+  if (!couponCode || typeof couponCode !== 'string') {
+    return;
+  }
+
+  const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+  if (coupon && coupon.canUserUseCoupon(userId)) {
+    await coupon.useCoupon(userId);
+  }
+}
+
+// Load failed orders page
+const loadFailedOrders = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId);
+
+    // Get failed orders for the user
+    const failedOrders = await FailedOrder.find({
+      userId: userId,
+      status: { $in: ['Failed', 'Retrying'] }
+    })
+    .populate('orderedItems.product')
+    .sort({ createdAt: -1 });
+
+    res.render("failed-orders", {
+      user: userData,
+      failedOrders: failedOrders
+    });
+
+  } catch (error) {
+    console.error('Error loading failed orders:', error);
+    res.redirect("/pageNotFound");
+  }
+};
+
+// Retry payment for failed order
+const retryPayment = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { failedOrderId } = req.params;
+
+    const failedOrder = await FailedOrder.findOne({
+      _id: failedOrderId,
+      userId: userId,
+      status: { $in: ['Failed', 'Retrying'] }
+    });
+
+    if (!failedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Failed order not found or expired'
+      });
+    }
+
+    // Create new Razorpay order for retry
+    const user = await User.findById(userId);
+    const razorpayResult = await PaymentService.createRazorpayOrder({
+      orderId: failedOrder.tempOrderId + '_retry_' + Date.now(),
+      totalAmount: failedOrder.totalAmount,
+      userId: userId,
+      customerName: user.name,
+      customerEmail: user.email
+    });
+
+    if (!razorpayResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create payment order for retry'
+      });
+    }
+
+    // Update failed order status and store new Razorpay order ID
+    failedOrder.status = 'Retrying';
+    failedOrder.razorpayOrderId = razorpayResult.razorpayOrderId;
+    failedOrder.attemptCount += 1;
+    failedOrder.lastAttempt = new Date();
+    await failedOrder.save();
+
+    // Store in session for payment verification
+    req.session.pendingOrder = {
+      orderData: failedOrder.orderData,
+      orderedItems: failedOrder.orderedItems,
+      userId: userId,
+      couponCode: failedOrder.orderData.couponCode,
+      couponApplied: failedOrder.orderData.couponApplied,
+      failedOrderId: failedOrder._id
+    };
+
+    // Generate payment options
+    const paymentOptions = PaymentService.generatePaymentOptions(
+      {
+        orderId: failedOrder.tempOrderId,
+        totalAmount: failedOrder.totalAmount,
+        customerName: user.name,
+        customerEmail: user.email,
+        customerPhone: user.phone
+      },
+      razorpayResult.razorpayOrderId
+    );
+
+    res.json({
+      success: true,
+      paymentRequired: true,
+      tempOrderId: failedOrder.tempOrderId,
+      razorpayOrderId: razorpayResult.razorpayOrderId,
+      paymentOptions: paymentOptions
+    });
+
+  } catch (error) {
+    console.error('Error retrying payment:', error);
+    res.status(500).json({ success: false, message: 'Error retrying payment' });
+  }
+};
+
+// Delete failed order
+const deleteFailedOrder = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { failedOrderId } = req.params;
+
+    await FailedOrder.findOneAndDelete({
+      _id: failedOrderId,
+      userId: userId
+    });
+
+    res.json({
+      success: true,
+      message: 'Failed order removed successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting failed order:', error);
+    res.status(500).json({ success: false, message: 'Error deleting failed order' });
+  }
+};
+
 module.exports = {
   loadOrders,
   loadOrderDetail,
-  getOrderDetailsAPI
+  getOrderDetailsAPI,
+  createOrderWithPayment,
+  verifyPayment,
+  handlePaymentFailure,
+  cancelOrder,
+  returnOrder,
+  loadFailedOrders,
+  retryPayment,
+  deleteFailedOrder
 };

@@ -2,6 +2,8 @@
 
 <!-- SweetAlert2 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Razorpay Checkout -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <!-- Checkout Page -->
 <div class="min-h-screen bg-black">
@@ -118,15 +120,19 @@
                             </div>
                         </div>
                         
-                        <!-- Future payment methods can be added here -->
-                        <div class="payment-option border border-gray-700 rounded-lg p-4 opacity-50 cursor-not-allowed">
+                        <!-- Online Payment -->
+                        <div class="payment-option border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50">
                             <div class="flex items-center gap-3">
-                                <input type="radio" name="paymentMethod" value="ONLINE" disabled>
+                                <input type="radio" name="paymentMethod" value="Online" class="payment-radio">
                                 <div>
-                                    <h3 class="text-gray-400 font-semibold text-lg flex items-center gap-2">
+                                    <h3 class="text-white font-semibold text-lg flex items-center gap-2">
                                         <i class="fas fa-credit-card"></i> Online Payment
                                     </h3>
-                                    <p class="text-gray-500 text-sm">Coming Soon - UPI, Cards, Net Banking</p>
+                                    <p class="text-gray-400 text-sm">UPI, Cards, Net Banking, Wallets</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <img src="https://razorpay.com/assets/razorpay-glyph.svg" alt="Razorpay" class="h-4">
+                                        <span class="text-xs text-gray-500">Powered by Razorpay</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -316,6 +322,17 @@
         type: '<%= checkoutMessage.type %>',
         text: '<%= checkoutMessage.text %>'
     };
+<% } %>
+
+// Applied coupon data
+<% if (typeof appliedCoupon !== 'undefined' && appliedCoupon) { %>
+    const appliedCoupon = {
+        code: '<%= appliedCoupon.code %>',
+        discount: <%= appliedCoupon.discount %>,
+        name: '<%= appliedCoupon.name %>'
+    };
+<% } else { %>
+    const appliedCoupon = null;
 <% } %>
 
 // Coupon functionality

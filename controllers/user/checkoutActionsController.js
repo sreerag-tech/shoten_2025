@@ -6,13 +6,23 @@ const Order = require("../../models/orderSchema");
 const Coupon = require("../../models/couponSchema");
 const offerService = require("../../services/offerService");
 const couponService = require("../../services/couponService");
+const PaymentService = require("../../services/paymentService");
 const { v4: uuidv4 } = require('uuid');
 
 // Place Order
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
-    const { addressId, paymentMethod = 'COD' } = req.body;
+    const {
+      addressId,
+      paymentMethod = 'COD',
+      subtotal,
+      shippingCharge,
+      discount,
+      totalAmount
+    } = req.body;
+
+
     
     if (!addressId) {
       return res.json({ success: false, message: 'Please select a delivery address' });
@@ -57,7 +67,7 @@ const placeOrder = async (req, res) => {
     }
     
     // Calculate order totals with offers
-    let subtotal = 0;
+    let calculatedSubtotal = 0;
     const orderedItems = [];
 
     for (const item of validCartItems) {
@@ -70,7 +80,7 @@ const placeOrder = async (req, res) => {
       }
 
       const itemTotal = finalPrice * item.quantity;
-      subtotal += itemTotal;
+      calculatedSubtotal += itemTotal;
 
       orderedItems.push({
         product: item.productId._id,
@@ -86,19 +96,19 @@ const placeOrder = async (req, res) => {
     }
     
     // Calculate shipping charge
-    const shippingCharge = subtotal >= 500 ? 0 : 50;
+    const calculatedShippingCharge = calculatedSubtotal >= 500 ? 0 : 50;
 
     // Handle coupon discount
-    let discount = 0;
+    let calculatedDiscount = 0;
     let couponCode = null;
     let couponApplied = false;
 
     if (req.session.appliedCoupon) {
       // Use coupon service to validate and apply coupon
-      const couponResult = await couponService.applyCoupon(req.session.appliedCoupon.code, userId, subtotal);
+      const couponResult = await couponService.applyCoupon(req.session.appliedCoupon.code, userId, calculatedSubtotal);
 
       if (couponResult.isValid) {
-        discount = couponResult.discount;
+        calculatedDiscount = couponResult.discount;
         couponCode = couponResult.coupon.code;
         couponApplied = true;
 
@@ -110,7 +120,7 @@ const placeOrder = async (req, res) => {
       req.session.appliedCoupon = null;
     }
 
-    const finalTotal = subtotal + shippingCharge - discount;
+    const finalTotal = calculatedSubtotal + calculatedShippingCharge - calculatedDiscount;
     
     // Generate unique order ID
     const orderId = 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -120,9 +130,9 @@ const placeOrder = async (req, res) => {
       orderId: orderId,
       userId: userId,
       orderedItems: orderedItems,
-      totalPrice: subtotal, // Subtotal (sum of item prices after offers)
-      shippingCharge: shippingCharge, // Shipping charge
-      discount: discount, // Coupon discount
+      totalPrice: calculatedSubtotal, // Subtotal (sum of item prices after offers)
+      shippingCharge: calculatedShippingCharge, // Shipping charge
+      discount: calculatedDiscount, // Coupon discount
       finalAmount: finalTotal, // Final amount: subtotal + shipping - discount
       shippingAddress: {
         fullName: selectedAddress.name,
@@ -133,7 +143,7 @@ const placeOrder = async (req, res) => {
         pincode: selectedAddress.pincode,
         phone: parseInt(selectedAddress.phone)
       },
-      paymentMethod: paymentMethod === 'COD' ? 'cod' : paymentMethod.toLowerCase(),
+      paymentMethod: paymentMethod === 'COD' ? 'cod' : 'razorpay',
       paymentGateway: paymentMethod === 'COD' ? 'Other' : 'Razorpay',
       orderDate: new Date(),
       deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
@@ -142,22 +152,74 @@ const placeOrder = async (req, res) => {
       couponCode: couponCode,
       status: 'Processing'
     });
-    
-    await newOrder.save();
-    
-    // Clear cart
-    await Cart.deleteMany({ userId: userId });
-    
-    // Update user order history
-    await User.findByIdAndUpdate(userId, {
-      $push: { orderHistory: newOrder._id }
-    });
-    
-    res.json({ 
-      success: true, 
-      message: 'Order placed successfully!',
-      orderId: newOrder._id
-    });
+
+    if (paymentMethod === 'Online') {
+      // Create Razorpay order for online payment (but don't save our order yet)
+      const user = await User.findById(userId);
+      const razorpayResult = await PaymentService.createRazorpayOrder({
+        orderId: orderId,
+        totalAmount: finalTotal,
+        userId: userId,
+        customerName: user.name,
+        customerEmail: user.email
+      });
+
+      if (!razorpayResult.success) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create payment order'
+        });
+      }
+
+      // Store order data in session for later use (after payment success)
+      req.session.pendingOrder = {
+        orderData: newOrder.toObject(),
+        orderedItems: orderedItems,
+        userId: userId,
+        couponCode: couponCode,
+        couponApplied: couponApplied,
+        razorpayOrderId: razorpayResult.razorpayOrderId,
+        tempOrderId: orderId
+      };
+
+      // Generate payment options for frontend
+      const paymentOptions = PaymentService.generatePaymentOptions(
+        {
+          orderId: orderId,
+          totalAmount: finalTotal,
+          customerName: user.name,
+          customerEmail: user.email,
+          customerPhone: user.phone
+        },
+        razorpayResult.razorpayOrderId
+      );
+
+      return res.json({
+        success: true,
+        paymentRequired: true,
+        tempOrderId: orderId, // Temporary order ID for tracking
+        razorpayOrderId: razorpayResult.razorpayOrderId,
+        paymentOptions: paymentOptions
+      });
+
+    } else {
+      // COD Order - Process immediately
+      await newOrder.save();
+
+      // Clear cart
+      await Cart.deleteMany({ userId: userId });
+
+      // Update user order history
+      await User.findByIdAndUpdate(userId, {
+        $push: { orderHistory: newOrder._id }
+      });
+
+      res.json({
+        success: true,
+        message: 'Order placed successfully!',
+        orderId: newOrder._id
+      });
+    }
     
   } catch (error) {
     console.error('Error placing order:', error);

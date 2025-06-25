@@ -73,10 +73,7 @@ function setupCheckoutActions() {
         });
     });
     
-    // Place order button
-    document.querySelector('.place-order-btn')?.addEventListener('click', function() {
-        placeOrder();
-    });
+    // Place order button event listener moved to checkout-actions.js
 }
 
 function updateAddressSelection() {
