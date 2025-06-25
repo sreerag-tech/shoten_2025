@@ -6,10 +6,11 @@ require("dotenv").config();
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: 'http://localhost:4200/google/callback'
+  callbackURL: 'http://localhost:4200/auth/google/callback'
 },
 async (accessToken, refreshToken, profile, done) => {
   try {
+    console.log('Google OAuth callback received for user:', profile.id);
     let user = await User.findOne({ googleId: profile.id });
     if (user) {
       return done(null, user);
