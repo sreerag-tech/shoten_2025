@@ -152,6 +152,7 @@ router.post("/return-order", userAuth, orderController.returnOrder);
 // Failed orders and retry payment routes
 router.get("/failed-orders", userAuth, orderController.loadFailedOrders);
 router.post("/retry-payment/:failedOrderId", userAuth, orderController.retryPayment);
+router.post("/retry-payment-from-order/:orderId", userAuth, orderController.retryPaymentFromOrder);
 router.delete("/failed-orders/:failedOrderId", userAuth, orderController.deleteFailedOrder);
 
 // Order success/failure pages
@@ -163,6 +164,24 @@ router.get("/order-success/:orderId?", userAuth, (req, res) => {
 router.get("/order-failure", userAuth, (req, res) => {
   const errorMessage = req.query.error || null;
   res.render("order-failure", { errorMessage: errorMessage });
+});
+
+// API Routes
+// Session status API route
+router.get("/api/session-status", userController.getSessionStatus);
+
+// Placeholder image API route
+router.get("/api/placeholder/:width/:height", (req, res) => {
+  const { width, height } = req.params;
+  const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100%" height="100%" fill="#f3f4f6"/>
+    <text x="50%" y="50%" font-family="Arial" font-size="14" fill="#9ca3af" text-anchor="middle" dy=".3em">
+      ${width}x${height}
+    </text>
+  </svg>`;
+
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(svg);
 });
 
 module.exports = router;

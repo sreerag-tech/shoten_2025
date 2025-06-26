@@ -380,32 +380,52 @@ function handlePaymentFailure(orderId, errorMessage) {
         })
     })
     .then(() => {
-        // Show error message and redirect back to checkout
+        // Show error message and redirect to orders
         Swal.fire({
             title: '❌ Payment Failed',
-            text: `Payment failed: ${errorMessage}. You can try again.`,
+            text: `Payment failed: ${errorMessage}. Order created in your order history. Items removed from cart. You can retry payment from your orders.`,
             icon: 'error',
             confirmButtonColor: '#ef4444',
             background: '#1f2937',
             color: '#ffffff',
-            confirmButtonText: 'Try Again'
-        }).then(() => {
-            // Redirect back to checkout to try again
-            window.location.href = '/checkout';
+            confirmButtonText: 'View Orders',
+            showCancelButton: true,
+            cancelButtonText: 'Continue Shopping',
+            cancelButtonColor: '#6b7280'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Go to orders page to retry
+                window.location.href = '/orders';
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                // Continue shopping
+                window.location.href = '/shop';
+            } else {
+                // Default to orders
+                window.location.href = '/orders';
+            }
         });
     })
     .catch(() => {
         // Even if recording fails, show error and redirect
         Swal.fire({
             title: '❌ Payment Failed',
-            text: 'Payment failed. Please try again.',
+            text: 'Payment failed. Please retry from your orders.',
             icon: 'error',
             confirmButtonColor: '#ef4444',
             background: '#1f2937',
             color: '#ffffff',
-            confirmButtonText: 'Try Again'
-        }).then(() => {
-            window.location.href = '/checkout';
+            confirmButtonText: 'View Orders',
+            showCancelButton: true,
+            cancelButtonText: 'Continue Shopping',
+            cancelButtonColor: '#6b7280'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/orders';
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.href = '/shop';
+            } else {
+                window.location.href = '/orders';
+            }
         });
     });
 }

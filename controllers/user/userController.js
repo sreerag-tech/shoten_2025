@@ -223,5 +223,68 @@ module.exports = {
   addCheckoutAddress,
   setDefaultCheckoutAddress,
   applyCoupon,
-  removeCoupon
+  removeCoupon,
+
+  // Session status function
+  getSessionStatus: async (req, res) => {
+    try {
+      if (req.session.user) {
+        // User is logged in, get user data
+        const User = require("../../models/userSchema");
+        const user = await User.findById(req.session.user).select('name email isBlocked');
+
+        if (user) {
+          if (user.isBlocked) {
+            // User is blocked, destroy session immediately
+            req.session.destroy((err) => {
+              if (err) {
+                console.error('Error destroying session for blocked user:', err);
+              }
+            });
+            return res.json({
+              isLoggedIn: false,
+              reason: 'User is blocked',
+              message: 'Your account has been blocked by the administrator.'
+            });
+          } else {
+            // User is active
+            return res.json({
+              isLoggedIn: true,
+              user: {
+                id: user._id,
+                name: user.name,
+                email: user.email
+              }
+            });
+          }
+        } else {
+          // User not found, destroy session
+          req.session.destroy((err) => {
+            if (err) {
+              console.error('Error destroying session for non-existent user:', err);
+            }
+          });
+          return res.json({
+            isLoggedIn: false,
+            reason: 'User not found',
+            message: 'User account no longer exists.'
+          });
+        }
+      } else {
+        // No session
+        return res.json({
+          isLoggedIn: false,
+          reason: 'No session',
+          message: 'Please login to continue.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking session status:', error);
+      return res.json({
+        isLoggedIn: false,
+        reason: 'Server error',
+        message: 'An error occurred. Please try again.'
+      });
+    }
+  }
 };

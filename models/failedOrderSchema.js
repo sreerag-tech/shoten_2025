@@ -70,6 +70,11 @@ const failedOrderSchema = new Schema({
     type: String,
     enum: ['Failed', 'Retrying', 'Expired', 'Completed'],
     default: 'Failed'
+  },
+  actualOrderId: {
+    type: Schema.Types.ObjectId,
+    ref: "Order",
+    default: null
   }
 });
 

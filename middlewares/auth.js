@@ -33,7 +33,7 @@ const adminAuth = (req, res, next) => {
         } else {
           res.redirect("/admin/login");
         }
-      
+
 };
 
 module.exports={
