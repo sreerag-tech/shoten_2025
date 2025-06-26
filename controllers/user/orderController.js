@@ -388,12 +388,11 @@ const verifyPayment = async (req, res) => {
 
     // Check if this is a retry payment from order history
     if (req.session.retryOrderData) {
-      console.log('Processing retry payment verification');
       const retryData = req.session.retryOrderData;
 
-      // Update the original order status
+      // Update the original order status to Processing (like COD orders)
       await Order.findByIdAndUpdate(retryData.actualOrderId, {
-        status: 'Confirmed',
+        status: 'Processing',
         paymentStatus: 'Completed',
         razorpayPaymentId: razorpay_payment_id,
         razorpayOrderId: razorpay_order_id,
@@ -403,7 +402,7 @@ const verifyPayment = async (req, res) => {
           paidAmount: paymentDetails.payment.amount / 100,
           paidAt: new Date()
         },
-        'orderedItems.$[].status': 'Confirmed'
+        'orderedItems.$[].status': 'Processing'
       });
 
       // Clear retry data from session
@@ -411,7 +410,7 @@ const verifyPayment = async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Payment completed successfully',
+        message: 'Payment completed successfully. Order is now being processed.',
         orderId: retryData.orderId,
         isRetry: true
       });

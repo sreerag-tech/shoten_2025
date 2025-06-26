@@ -223,7 +223,7 @@ const updateOrderStatus = async (req, res) => {
     const orderId = req.params.id;
     const { status } = req.body;
 
-    const validStatuses = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    const validStatuses = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Payment Failed'];
 
     if (!validStatuses.includes(status)) {
       return res.json({ success: false, message: 'Invalid status' });
@@ -247,13 +247,15 @@ const updateOrderStatus = async (req, res) => {
     }
 
     // Validate logical status progression
-    const statusOrder = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+    const statusOrder = ['Payment Failed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
     const currentIndex = statusOrder.indexOf(currentStatus);
     const newIndex = statusOrder.indexOf(status);
 
     // Allow cancellation from any status except delivered
     if (status === 'Cancelled') {
       // Allow cancellation
+    } else if (status === 'Processing' && currentStatus === 'Payment Failed') {
+      // Allow moving from Payment Failed to Processing (after retry payment)
     } else if (newIndex < currentIndex && status !== 'Processing') {
       return res.json({ success: false, message: 'Cannot move order backwards in status' });
     }
@@ -284,7 +286,7 @@ const updateItemStatus = async (req, res) => {
     const itemIndex = parseInt(req.params.itemIndex);
     const { status } = req.body;
 
-    const validStatuses = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    const validStatuses = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Payment Failed'];
 
     if (!validStatuses.includes(status)) {
       return res.json({ success: false, message: 'Invalid status' });

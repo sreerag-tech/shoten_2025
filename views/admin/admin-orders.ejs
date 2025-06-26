@@ -78,6 +78,7 @@
                             <option value="Out for Delivery" <%= status === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
                             <option value="Delivered" <%= status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
                             <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                            <option value="Payment Failed" <%= status === 'Payment Failed' ? 'selected' : '' %>>Payment Failed</option>
                             <option value="Returned" <%= status === 'Returned' ? 'selected' : '' %>>📦 Returned Items</option>
                         </select>
                     </div>
@@ -201,6 +202,8 @@
                                             statusClass = 'bg-success';
                                         } else if (order.status === 'Cancelled') {
                                             statusClass = 'bg-danger';
+                                        } else if (order.status === 'Payment Failed') {
+                                            statusClass = 'bg-warning text-dark';
                                         }
                                         %>
                                         <span class="badge <%= statusClass %>"><%= statusText %></span>
