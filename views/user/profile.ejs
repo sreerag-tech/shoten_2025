@@ -439,6 +439,10 @@
                                                 <i class="requirement-icon fa fa-times text-red-500"></i>
                                                 <span>Contains letters and numbers</span>
                                             </div>
+                                            <div class="requirement-item flex items-center gap-2 text-gray-400" data-requirement="different">
+                                                <i class="requirement-icon fa fa-times text-red-500"></i>
+                                                <span>Different from current password</span>
+                                            </div>
                                         </div>
                                         <div id="new-password-error" class="text-red-400 text-xs mt-1 hidden"></div>
                                     </div>
@@ -655,6 +659,7 @@ function setupPasswordChange() {
     // Real-time validation
     currentPasswordInput.addEventListener('input', function() {
         validateCurrentPassword();
+        validateNewPassword(); // Re-validate new password when current password changes
         validateAllPasswordFields();
     });
     newPasswordInput.addEventListener('input', function() {
@@ -695,6 +700,7 @@ function setupPasswordChange() {
 
     function validateNewPassword() {
         const value = newPasswordInput.value.trim();
+        const currentPassword = currentPasswordInput.value.trim();
         const errorDiv = document.getElementById('new-password-error');
         const passPattern = /^(?=.*[A-Za-z])(?=.*\d).+$/;
 
@@ -706,6 +712,10 @@ function setupPasswordChange() {
         const lettersValid = passPattern.test(value);
         updateRequirement('letters', lettersValid);
 
+        // Different from current password validation
+        const differentValid = value !== currentPassword || currentPassword === '';
+        updateRequirement('different', differentValid);
+
         if (value === '') {
             showFieldError(errorDiv, 'New password is required');
             return false;
@@ -714,6 +724,9 @@ function setupPasswordChange() {
             return false;
         } else if (!lettersValid) {
             showFieldError(errorDiv, 'Password must contain both letters and numbers');
+            return false;
+        } else if (value === currentPassword && currentPassword !== '') {
+            showFieldError(errorDiv, 'New password cannot be the same as current password');
             return false;
         } else {
             hideFieldError(errorDiv);
