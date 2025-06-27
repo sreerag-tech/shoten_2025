@@ -136,6 +136,7 @@
                         <tr>
                             <th>Order ID</th>
                             <th>Customer</th>
+                            <th>Shipping Address</th>
                             <th>Date</th>
                             <th>Items</th>
                             <th>Amount</th>
@@ -165,6 +166,21 @@
                                                 <small class="text-muted"><%= order.userId?.email || 'N/A' %></small>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <% if (order.shippingAddress) { %>
+                                            <div class="small">
+                                                <div class="fw-medium"><%= order.shippingAddress.fullName %></div>
+                                                <div class="text-muted">
+                                                    <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %>
+                                                </div>
+                                                <div class="text-muted">
+                                                    <i class="fas fa-phone me-1"></i><%= order.shippingAddress.phone %>
+                                                </div>
+                                            </div>
+                                        <% } else { %>
+                                            <span class="text-muted small">No address</span>
+                                        <% } %>
                                     </td>
                                     <td>
                                         <div><%= new Date(order.createdOn).toLocaleDateString() %></div>
@@ -227,7 +243,7 @@
                             <% }) %>
                         <% } else { %>
                             <tr>
-                                <td colspan="7" class="text-center py-4">
+                                <td colspan="8" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="fas fa-shopping-cart fa-3x mb-3"></i>
                                         <p>No orders found</p>

@@ -163,7 +163,17 @@ router.get("/order-success/:orderId?", userAuth, (req, res) => {
 
 router.get("/order-failure", userAuth, (req, res) => {
   const errorMessage = req.query.error || null;
-  res.render("order-failure", { errorMessage: errorMessage });
+  const orderDetails = req.session.failureOrderDetails || null;
+
+  // Clear the session data after using it
+  if (req.session.failureOrderDetails) {
+    req.session.failureOrderDetails = null;
+  }
+
+  res.render("order-failure", {
+    errorMessage: errorMessage,
+    orderDetails: orderDetails
+  });
 });
 
 // API Routes

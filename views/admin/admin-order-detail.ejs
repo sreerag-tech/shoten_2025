@@ -224,6 +224,54 @@
                 </div>
             </div>
 
+            <!-- Shipping Address -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shipping-fast me-2"></i>Shipping Address
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <% if (order.shippingAddress) { %>
+                        <div class="shipping-address">
+                            <h6 class="mb-2">
+                                <i class="fas fa-user me-1"></i>
+                                <%= order.shippingAddress.fullName %>
+                            </h6>
+                            <p class="mb-1">
+                                <i class="fas fa-home me-1"></i>
+                                <span class="badge bg-light text-dark"><%= order.shippingAddress.addressType %></span>
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %>
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-mail-bulk me-1"></i>
+                                PIN: <%= order.shippingAddress.pincode %>
+                            </p>
+                            <% if (order.shippingAddress.landmark) { %>
+                                <p class="mb-1">
+                                    <i class="fas fa-map-signs me-1"></i>
+                                    Landmark: <%= order.shippingAddress.landmark %>
+                                </p>
+                            <% } %>
+                            <p class="mb-0">
+                                <i class="fas fa-phone me-1"></i>
+                                <a href="tel:<%= order.shippingAddress.phone %>" class="text-decoration-none">
+                                    <%= order.shippingAddress.phone %>
+                                </a>
+                            </p>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center text-muted">
+                            <i class="fas fa-exclamation-triangle mb-2"></i>
+                            <p class="mb-0">No shipping address available</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
             <!-- Order Summary -->
             <div class="card">
                 <div class="card-header">

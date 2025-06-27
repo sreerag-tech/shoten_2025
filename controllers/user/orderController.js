@@ -512,20 +512,14 @@ const handlePaymentFailure = async (req, res) => {
         totalPrice: pendingOrder.orderData.totalPrice,
         discount: pendingOrder.orderData.discount || 0,
         finalAmount: pendingOrder.orderData.finalAmount,
-        shippingAddress: {
-          fullName: pendingOrder.orderData.address?.name ||
-                   pendingOrder.orderData.address?.fullName ||
-                   'Customer',
-          addressType: pendingOrder.orderData.address?.addressType || 'Home',
-          landmark: pendingOrder.orderData.address?.landmark || '',
-          city: pendingOrder.orderData.address?.city || 'Unknown',
-          state: pendingOrder.orderData.address?.state || 'Unknown',
-          pincode: pendingOrder.orderData.address?.pincode ||
-                  pendingOrder.orderData.address?.zipCode ||
-                  '000000',
-          phone: pendingOrder.orderData.address?.phone ||
-                pendingOrder.orderData.address?.phoneNumber ||
-                1234567890
+        shippingAddress: pendingOrder.orderData.shippingAddress || {
+          fullName: 'Customer',
+          addressType: 'Home',
+          landmark: '',
+          city: 'Unknown',
+          state: 'Unknown',
+          pincode: '000000',
+          phone: 1234567890
         },
         orderDate: currentDate,
         deliveryDate: deliveryDate,
@@ -577,19 +571,24 @@ const handlePaymentFailure = async (req, res) => {
 
       console.log(`Order created with Payment Failed status: ${newOrder.orderId}`);
 
-      res.json({
-        success: true,
-        message: 'Order created with payment failed status. Items removed from cart. You can retry payment from your orders.',
+      // Redirect to order failure page with order details
+      const orderDetails = {
         orderId: newOrder.orderId,
-        showInOrders: true
-      });
+        totalAmount: newOrder.finalAmount,
+        paymentMethod: 'Online Payment',
+        status: 'Payment Failed'
+      };
+
+      // Store order details in session for the failure page
+      req.session.failureOrderDetails = orderDetails;
+
+      // Redirect to order failure page
+      return res.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
 
     } else {
       console.log('No pending order found in session, payment failure not saved');
-      res.json({
-        success: true,
-        message: 'Payment failed. Please try placing the order again.'
-      });
+      // Redirect to order failure page without order details
+      return res.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
     }
 
   } catch (error) {
@@ -600,10 +599,8 @@ const handlePaymentFailure = async (req, res) => {
       req.session.pendingOrder = null;
     }
 
-    res.json({
-      success: true,
-      message: 'Payment failed. Please try placing the order again.'
-    });
+    // Redirect to order failure page
+    return res.redirect('/order-failure?error=' + encodeURIComponent('Payment processing failed'));
   }
 };
 

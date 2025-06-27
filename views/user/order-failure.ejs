@@ -127,6 +127,11 @@
                         <p class="text-lg text-gray-700 mb-2">
                             We're sorry, but your payment could not be processed.
                         </p>
+                        <% if (typeof orderDetails !== 'undefined' && orderDetails.orderId) { %>
+                        <p class="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                            <i class="fas fa-info-circle mr-2"></i>Your order has been saved. You can retry payment from your Order History.
+                        </p>
+                        <% } %>
                         <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
                         <p class="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
                             <i class="fas fa-exclamation-triangle mr-2"></i><%= errorMessage %>
@@ -206,22 +211,22 @@
                         <!-- Primary Actions -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <% if (typeof orderDetails !== 'undefined' && orderDetails.orderId) { %>
-                            <button onclick="retryPayment('<%= orderDetails.orderId %>')" 
-                                    class="btn-retry text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300">
-                                <i class="fas fa-redo mr-2"></i>Retry Payment
-                            </button>
-                            
-                            <a href="/order-detail/<%= orderDetails.orderId %>" 
+                            <a href="/orders"
+                               class="btn-retry text-white py-4 px-6 rounded-xl font-semibold text-center block hover:text-white transition-all duration-300">
+                                <i class="fas fa-list mr-2"></i>Go to Order History
+                            </a>
+
+                            <a href="/orders"
                                class="btn-secondary text-white py-4 px-6 rounded-xl font-semibold text-center block hover:text-white transition-all duration-300">
-                                <i class="fas fa-eye mr-2"></i>View Order Details
+                                <i class="fas fa-redo mr-2"></i>Retry Payment
                             </a>
                             <% } else { %>
-                            <a href="/checkout" 
+                            <a href="/checkout"
                                class="btn-retry text-white py-4 px-6 rounded-xl font-semibold text-center block hover:text-white transition-all duration-300">
                                 <i class="fas fa-redo mr-2"></i>Try Again
                             </a>
-                            
-                            <a href="/cart" 
+
+                            <a href="/cart"
                                class="btn-secondary text-white py-4 px-6 rounded-xl font-semibold text-center block hover:text-white transition-all duration-300">
                                 <i class="fas fa-shopping-cart mr-2"></i>Back to Cart
                             </a>
