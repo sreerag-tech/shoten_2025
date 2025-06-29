@@ -52,6 +52,14 @@ const orderSchema = new Schema({
         type: String,
         default: null,
       },
+      cancelReason: {
+        type: String,
+        default: null,
+      },
+      cancelledAt: {
+        type: Date,
+        default: null,
+      },
     },
   ],
   status: {
@@ -157,6 +165,40 @@ const orderSchema = new Schema({
   },
   return_reason: {
     type: String,
+    default: null,
+  },
+  paymentStatus: {
+    type: String,
+    enum: ["Pending", "Completed", "Failed", "Refunded"],
+    default: "Pending",
+  },
+  razorpayOrderId: {
+    type: String,
+    default: null,
+  },
+  razorpayPaymentId: {
+    type: String,
+    default: null,
+  },
+  refundStatus: {
+    type: String,
+    enum: ["None", "Partial", "Completed"],
+    default: "None",
+  },
+  refundAmount: {
+    type: Number,
+    default: 0,
+  },
+  refundDate: {
+    type: Date,
+    default: null,
+  },
+  cancelReason: {
+    type: String,
+    default: null,
+  },
+  cancelledAt: {
+    type: Date,
     default: null,
   },
 });

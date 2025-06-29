@@ -8,41 +8,137 @@ const cancelOrder = async (req, res) => {
     const userId = req.session.user;
     const orderId = req.params.id;
     const { reason } = req.body;
-    
+
     const order = await Order.findOne({ _id: orderId, userId: userId })
       .populate('orderedItems.product');
-    
+
     if (!order) {
       return res.json({ success: false, message: 'Order not found' });
     }
-    
-    // Check if order can be cancelled
-    const canCancel = order.orderedItems.some(item => 
-      item.status === 'Processing' || item.status === 'Shipped'
+
+    // Check if order can be cancelled (allow cancellation of Pending, Processing, Shipped orders)
+    const canCancel = order.orderedItems.some(item =>
+      ['Pending', 'Processing', 'Shipped'].includes(item.status)
     );
-    
+
     if (!canCancel) {
       return res.json({ success: false, message: 'Order cannot be cancelled' });
     }
     
     // Update order status and restore stock
     for (let item of order.orderedItems) {
-      if (item.status === 'Processing' || item.status === 'Shipped') {
+      if (['Pending', 'Processing', 'Shipped'].includes(item.status)) {
         // Restore product stock
         await Product.findByIdAndUpdate(item.product._id, {
           $inc: { quantity: item.quantity }
         });
-        
+
         // Update item status
         item.status = 'Cancelled';
+        item.cancelReason = reason || 'Cancelled by user';
+        item.cancelledAt = new Date();
       }
     }
+
+    // Update main order status
+    order.status = 'Cancelled';
+    order.cancelReason = reason || 'Cancelled by user';
+    order.cancelledAt = new Date();
     
+    // Calculate refund amount - use finalAmount for full order cancellation
+    let refundAmount = order.finalAmount || order.totalPrice || 0;
+
+    console.log('Order payment method:', order.paymentMethod);
+    console.log('Order payment status:', order.paymentStatus);
+    console.log('Calculated refund amount:', refundAmount);
+    console.log('Order final amount:', order.finalAmount);
+    console.log('Order total price:', order.totalPrice);
+
+    // Process refund if this is a paid order (not COD) and there's an amount to refund
+    const isPaidOrder = order.paymentMethod === 'razorpay' ||
+                       order.paymentStatus === 'Completed' ||
+                       order.razorpayPaymentId;
+
+    console.log('Is paid order?', isPaidOrder);
+    console.log('Refund amount > 0?', refundAmount > 0);
+
+    if (isPaidOrder && refundAmount > 0) {
+      try {
+        const User = require("../../models/userSchema");
+        const Wallet = require("../../models/walletSchema");
+
+        console.log('Processing refund for user:', order.userId);
+
+        // Add refund to user's wallet
+        const user = await User.findById(order.userId);
+        if (user) {
+          console.log('User found, current wallet balance:', user.wallet);
+          const oldBalance = user.wallet || 0;
+          user.wallet = oldBalance + refundAmount;
+          await user.save();
+          console.log('User wallet updated from', oldBalance, 'to', user.wallet);
+
+          // Create wallet transaction record
+          try {
+            const wallet = await Wallet.findOne({ user: order.userId });
+            if (wallet) {
+              console.log('Wallet found, adding transaction');
+              await wallet.addMoney(
+                refundAmount,
+                `Refund for cancelled order: ${order.orderId}`,
+                order._id,
+                `CANCEL-${Date.now()}`
+              );
+              console.log('Wallet transaction added successfully');
+              console.log('Wallet balance after transaction:', wallet.balance);
+            } else {
+              console.log('No wallet found for user, creating one');
+              // Create wallet if it doesn't exist
+              const newWallet = new Wallet({
+                user: order.userId,
+                balance: refundAmount,
+                transactions: []
+              });
+              await newWallet.save();
+              await newWallet.addMoney(
+                refundAmount,
+                `Refund for cancelled order: ${order.orderId}`,
+                order._id,
+                `CANCEL-${Date.now()}`
+              );
+              console.log('New wallet created and transaction added');
+              console.log('New wallet balance:', newWallet.balance);
+            }
+          } catch (walletError) {
+            console.error('Wallet transaction record creation failed:', walletError);
+            // Continue even if wallet transaction fails
+          }
+        } else {
+          console.error('User not found for refund processing');
+        }
+
+        // Update order with refund information
+        order.refundStatus = 'Completed';
+        order.refundAmount = refundAmount;
+        order.refundDate = new Date();
+
+        console.log('Order refund information updated');
+
+      } catch (refundError) {
+        console.error('Error processing refund:', refundError);
+        // Continue with cancellation even if refund fails
+      }
+    }
+
     // Save order with cancellation reason
     order.cancellation_reason = reason;
     await order.save();
-    
-    res.json({ success: true, message: 'Order cancelled successfully' });
+
+    const message = refundAmount > 0 ?
+      `Order cancelled successfully. ₹${refundAmount.toLocaleString()} has been added to your wallet.` :
+      'Order cancelled successfully';
+
+    res.json({ success: true, message: message, refundAmount: refundAmount });
   } catch (error) {
     console.error('Error cancelling order:', error);
     res.json({ success: false, message: 'Failed to cancel order' });
@@ -83,10 +179,84 @@ const cancelOrderItem = async (req, res) => {
     // Update item status
     order.orderedItems[itemIndex].status = 'Cancelled';
     order.orderedItems[itemIndex].returnReason = reason;
-    
+
+    // Calculate refund amount for this item
+    const refundAmount = item.price * item.quantity;
+
+    // Process refund if this is a paid order
+    const isPaidOrder = order.paymentMethod === 'razorpay' ||
+                       order.paymentStatus === 'Completed' ||
+                       order.razorpayPaymentId;
+
+    console.log('Item cancellation - Is paid order?', isPaidOrder);
+    console.log('Item cancellation - Refund amount:', refundAmount);
+
+    if (isPaidOrder && refundAmount > 0) {
+      try {
+        const User = require("../../models/userSchema");
+        const Wallet = require("../../models/walletSchema");
+
+        // Add refund to user's wallet
+        const user = await User.findById(order.userId);
+        if (user) {
+          console.log('Item cancellation - User found, current wallet:', user.wallet);
+          const oldBalance = user.wallet || 0;
+          user.wallet = oldBalance + refundAmount;
+          await user.save();
+          console.log('Item cancellation - Wallet updated from', oldBalance, 'to', user.wallet);
+
+          // Create wallet transaction record
+          try {
+            const wallet = await Wallet.findOne({ user: order.userId });
+            if (wallet) {
+              await wallet.addMoney(
+                refundAmount,
+                `Refund for cancelled item: ${item.product.productName} - Order: ${order.orderId}`,
+                order._id,
+                `CANCEL-ITEM-${Date.now()}`
+              );
+              console.log('Item cancellation - Wallet transaction added');
+            } else {
+              console.log('Item cancellation - No wallet found, creating one');
+              // Create wallet if it doesn't exist
+              const newWallet = new Wallet({
+                user: order.userId,
+                balance: 0,
+                transactions: []
+              });
+              await newWallet.save();
+              await newWallet.addMoney(
+                refundAmount,
+                `Refund for cancelled item: ${item.product.productName} - Order: ${order.orderId}`,
+                order._id,
+                `CANCEL-ITEM-${Date.now()}`
+              );
+              console.log('Item cancellation - New wallet created and transaction added');
+            }
+          } catch (walletError) {
+            console.error('Item cancellation - Wallet transaction record creation failed:', walletError);
+            // Continue even if wallet transaction fails
+          }
+        }
+
+        // Update order with refund information
+        order.refundAmount = (order.refundAmount || 0) + refundAmount;
+        order.refundStatus = 'Partial';
+        order.refundDate = new Date();
+
+      } catch (refundError) {
+        console.error('Error processing refund:', refundError);
+        // Continue with cancellation even if refund fails
+      }
+    }
+
     await order.save();
-    
-    res.json({ success: true, message: 'Item cancelled successfully' });
+
+    const message = refundAmount > 0 ?
+      `Item cancelled successfully. ₹${refundAmount.toLocaleString()} has been added to your wallet.` :
+      'Item cancelled successfully';
+
+    res.json({ success: true, message: message, refundAmount: refundAmount });
   } catch (error) {
     console.error('Error cancelling item:', error);
     res.json({ success: false, message: 'Failed to cancel item' });

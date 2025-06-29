@@ -4,6 +4,34 @@ const Product = require("../../models/productSchema");
 const Wallet = require("../../models/walletSchema");
 const offerService = require("../../services/offerService");
 
+// Helper function to calculate order status based on item statuses
+const calculateOrderStatus = (order) => {
+  if (!order.orderedItems || order.orderedItems.length === 0) {
+    return order.status;
+  }
+
+  const itemStatuses = order.orderedItems.map(item => item.status);
+  const uniqueStatuses = [...new Set(itemStatuses)];
+
+  // If all items are cancelled, order is cancelled
+  if (uniqueStatuses.length === 1 && uniqueStatuses[0] === 'Cancelled') {
+    return 'Cancelled';
+  }
+
+  // If all items are delivered, order is delivered
+  if (uniqueStatuses.length === 1 && uniqueStatuses[0] === 'Delivered') {
+    return 'Delivered';
+  }
+
+  // If all items are returned, keep order as delivered (since returns happen after delivery)
+  if (uniqueStatuses.length === 1 && uniqueStatuses[0] === 'Returned') {
+    return 'Delivered';
+  }
+
+  // If mix of statuses, return the main order status
+  return order.status;
+};
+
 // Load Orders Page with Search, Sort, Filter, and Pagination
 const loadOrders = async (req, res) => {
   try {
@@ -264,15 +292,83 @@ const updateOrderStatus = async (req, res) => {
     order.status = status;
 
     // Update all items status if order status is changed
-    order.orderedItems.forEach(item => {
-      if (item.status !== 'Cancelled' && item.status !== 'Returned' && item.status !== 'Return Request') {
-        item.status = status;
+    if (status === 'Cancelled') {
+      // If cancelling order, cancel all non-returned items and process refunds
+      let totalRefundAmount = 0;
+
+      order.orderedItems.forEach(item => {
+        if (item.status !== 'Returned' && item.status !== 'Cancelled') {
+          item.status = 'Cancelled';
+          item.cancelReason = 'Cancelled by admin';
+          item.cancelledAt = new Date();
+          totalRefundAmount += item.price * item.quantity;
+        }
+      });
+
+      // Process wallet refund if payment was completed
+      if (order.paymentStatus === 'Completed' && totalRefundAmount > 0) {
+        try {
+          const User = require("../../models/userSchema");
+          const Wallet = require("../../models/walletSchema");
+
+          // Add refund to user's wallet
+          const user = await User.findById(order.userId);
+          if (user) {
+            user.wallet = (user.wallet || 0) + totalRefundAmount;
+            await user.save();
+
+            // Create wallet transaction record
+            try {
+              const wallet = await Wallet.findOne({ userId: order.userId });
+              if (wallet) {
+                await wallet.addMoney(
+                  totalRefundAmount,
+                  `Admin cancelled order refund: ${order.orderId}`,
+                  order._id,
+                  `ADMIN-CANCEL-${Date.now()}`
+                );
+              }
+            } catch (walletError) {
+              console.log('Wallet transaction record creation failed:', walletError);
+            }
+          }
+
+          // Update order with refund information
+          order.refundStatus = 'Completed';
+          order.refundAmount = totalRefundAmount;
+          order.refundDate = new Date();
+
+        } catch (refundError) {
+          console.error('Error processing admin cancellation refund:', refundError);
+        }
       }
-    });
+
+      order.cancelReason = 'Cancelled by admin';
+      order.cancelledAt = new Date();
+
+    } else {
+      // For other status updates, only update items that aren't cancelled or returned
+      order.orderedItems.forEach(item => {
+        if (item.status !== 'Cancelled' && item.status !== 'Returned' && item.status !== 'Return Request') {
+          item.status = status;
+        }
+      });
+    }
 
     await order.save();
 
-    res.json({ success: true, message: 'Order status updated successfully' });
+    // Recalculate and update order status based on item statuses
+    const calculatedStatus = calculateOrderStatus(order);
+    if (calculatedStatus !== order.status) {
+      order.status = calculatedStatus;
+      await order.save();
+    }
+
+    const message = order.refundAmount > 0 ?
+      `Order status updated successfully. ₹${order.refundAmount.toLocaleString()} refunded to user's wallet.` :
+      'Order status updated successfully';
+
+    res.json({ success: true, message: message });
   } catch (error) {
     console.error('Error updating order status:', error);
     res.json({ success: false, message: 'Failed to update order status' });
@@ -316,21 +412,63 @@ const updateItemStatus = async (req, res) => {
     // Update item status
     order.orderedItems[itemIndex].status = status;
 
-    // Update overall order status based on items
-    const itemStatuses = order.orderedItems.map(item => item.status);
-    if (itemStatuses.every(s => s === 'Delivered')) {
-      order.status = 'Delivered';
-    } else if (itemStatuses.every(s => s === 'Cancelled')) {
-      order.status = 'Cancelled';
-    } else if (itemStatuses.some(s => s === 'Shipped' || s === 'Out for Delivery')) {
-      order.status = 'Shipped';
-    } else if (itemStatuses.some(s => s === 'Processing')) {
-      order.status = 'Processing';
+    // If cancelling item, process refund
+    if (status === 'Cancelled' && order.paymentStatus === 'Completed') {
+      const refundAmount = item.price * item.quantity;
+
+      try {
+        const User = require("../../models/userSchema");
+        const Wallet = require("../../models/walletSchema");
+
+        // Add refund to user's wallet
+        const user = await User.findById(order.userId);
+        if (user) {
+          user.wallet = (user.wallet || 0) + refundAmount;
+          await user.save();
+
+          // Create wallet transaction record
+          try {
+            const wallet = await Wallet.findOne({ userId: order.userId });
+            if (wallet) {
+              await wallet.addMoney(
+                refundAmount,
+                `Admin cancelled item refund: ${item.product?.productName || 'Product'} - Order: ${order.orderId}`,
+                order._id,
+                `ADMIN-CANCEL-ITEM-${Date.now()}`
+              );
+            }
+          } catch (walletError) {
+            console.log('Wallet transaction record creation failed:', walletError);
+          }
+        }
+
+        // Update order with refund information
+        order.refundAmount = (order.refundAmount || 0) + refundAmount;
+        order.refundStatus = 'Partial';
+        order.refundDate = new Date();
+
+        item.cancelReason = 'Cancelled by admin';
+        item.cancelledAt = new Date();
+
+      } catch (refundError) {
+        console.error('Error processing item cancellation refund:', refundError);
+      }
     }
 
     await order.save();
 
-    res.json({ success: true, message: 'Item status updated successfully' });
+    // Recalculate and update order status based on item statuses
+    const calculatedStatus = calculateOrderStatus(order);
+    if (calculatedStatus !== order.status) {
+      order.status = calculatedStatus;
+      await order.save();
+    }
+
+    const message = status === 'Cancelled' && order.paymentStatus === 'Completed' ?
+      `Item cancelled successfully. ₹${(item.price * item.quantity).toLocaleString()} refunded to user's wallet.` :
+      'Item status updated successfully';
+
+    res.json({ success: true, message: message });
   } catch (error) {
     console.error('Error updating item status:', error);
     res.json({ success: false, message: 'Failed to update item status' });

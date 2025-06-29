@@ -796,6 +796,238 @@ function setupPasswordChange() {
     validateAllPasswordFields();
 }
 
+// Address Validation Functions
+function showAddressError(fieldId, message) {
+    const errorDiv = document.getElementById(fieldId + '-error');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+    }
+
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.classList.add('border-red-500');
+        field.classList.remove('border-gray-600');
+    }
+}
+
+function hideAddressError(fieldId) {
+    const errorDiv = document.getElementById(fieldId + '-error');
+    if (errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.classList.add('hidden');
+    }
+
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.classList.remove('border-red-500');
+        field.classList.add('border-gray-600');
+    }
+}
+
+function clearAddressErrors(prefix) {
+    const fields = ['AddressType', 'AddressName', 'AddressPhone', 'AddressPincode', 'AddressAddress', 'AddressLocality', 'AddressCity', 'AddressState', 'AddressLandmark'];
+    fields.forEach(field => {
+        const fieldId = prefix === 'edit' ? 'edit' + field : field.replace('Address', 'address');
+        hideAddressError(fieldId);
+    });
+}
+
+function validateAddressField(fieldId, value, validationType) {
+    hideAddressError(fieldId);
+
+    switch (validationType) {
+        case 'name':
+            if (!value) {
+                showAddressError(fieldId, 'Full name is required');
+                return false;
+            } else if (value.length < 2) {
+                showAddressError(fieldId, 'Name must be at least 2 characters');
+                return false;
+            } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                showAddressError(fieldId, 'Name can only contain letters and spaces');
+                return false;
+            }
+            break;
+
+        case 'phone':
+            if (!value) {
+                showAddressError(fieldId, 'Phone number is required');
+                return false;
+            } else if (!/^[0-9]{10}$/.test(value)) {
+                showAddressError(fieldId, 'Please enter a valid 10-digit phone number');
+                return false;
+            }
+            break;
+
+        case 'pincode':
+            if (!value) {
+                showAddressError(fieldId, 'Pincode is required');
+                return false;
+            } else if (!/^[0-9]{6}$/.test(value)) {
+                showAddressError(fieldId, 'Please enter a valid 6-digit pincode');
+                return false;
+            }
+            break;
+
+        case 'address':
+            if (!value) {
+                showAddressError(fieldId, 'Address is required');
+                return false;
+            } else if (value.length < 10) {
+                showAddressError(fieldId, 'Address must be at least 10 characters');
+                return false;
+            }
+            break;
+
+        case 'text':
+            if (!value) {
+                showAddressError(fieldId, 'This field is required');
+                return false;
+            } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                showAddressError(fieldId, 'This field can only contain letters and spaces');
+                return false;
+            }
+            break;
+
+        case 'landmark':
+            if (value && value.length > 0 && value.length < 3) {
+                showAddressError(fieldId, 'Landmark must be at least 3 characters if provided');
+                return false;
+            }
+            break;
+    }
+
+    return true;
+}
+
+function setupAddAddressValidation() {
+    // Add real-time validation for add address form
+    const fields = [
+        { id: 'addressName', type: 'name' },
+        { id: 'addressPhone', type: 'phone' },
+        { id: 'addressPincode', type: 'pincode' },
+        { id: 'addressFull', type: 'address' },
+        { id: 'addressLocality', type: 'text' },
+        { id: 'addressCity', type: 'text' },
+        { id: 'addressState', type: 'text' },
+        { id: 'addressLandmark', type: 'landmark' }
+    ];
+
+    fields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (element) {
+            element.addEventListener('blur', function() {
+                validateAddressField(field.id, this.value.trim(), field.type);
+            });
+
+            element.addEventListener('input', function() {
+                // Clear error on input
+                hideAddressError(field.id);
+            });
+        }
+    });
+}
+
+function setupEditAddressValidation() {
+    // Add real-time validation for edit address form
+    const fields = [
+        { id: 'editAddressName', type: 'name' },
+        { id: 'editAddressPhone', type: 'phone' },
+        { id: 'editAddressPincode', type: 'pincode' },
+        { id: 'editAddressAddress', type: 'address' },
+        { id: 'editAddressLocality', type: 'text' },
+        { id: 'editAddressCity', type: 'text' },
+        { id: 'editAddressState', type: 'text' },
+        { id: 'editAddressLandmark', type: 'landmark' }
+    ];
+
+    fields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (element) {
+            element.addEventListener('blur', function() {
+                validateAddressField(field.id, this.value.trim(), field.type);
+            });
+
+            element.addEventListener('input', function() {
+                // Clear error on input
+                hideAddressError(field.id);
+            });
+        }
+    });
+}
+
+function validateAddAddressForm() {
+    const addressData = {
+        addressType: document.getElementById('addressType').value,
+        name: document.getElementById('addressName').value.trim(),
+        phone: document.getElementById('addressPhone').value.trim(),
+        pincode: document.getElementById('addressPincode').value.trim(),
+        address: document.getElementById('addressFull').value.trim(),
+        locality: document.getElementById('addressLocality').value.trim(),
+        city: document.getElementById('addressCity').value.trim(),
+        state: document.getElementById('addressState').value.trim(),
+        landMark: document.getElementById('addressLandmark').value.trim(),
+        isDefault: document.getElementById('setAsDefault').checked
+    };
+
+    // Clear previous errors
+    clearAddressErrors('add');
+
+    // Validate all fields
+    let hasErrors = false;
+
+    if (!validateAddressField('addressName', addressData.name, 'name')) hasErrors = true;
+    if (!validateAddressField('addressPhone', addressData.phone, 'phone')) hasErrors = true;
+    if (!validateAddressField('addressPincode', addressData.pincode, 'pincode')) hasErrors = true;
+    if (!validateAddressField('addressFull', addressData.address, 'address')) hasErrors = true;
+    if (!validateAddressField('addressLocality', addressData.locality, 'text')) hasErrors = true;
+    if (!validateAddressField('addressCity', addressData.city, 'text')) hasErrors = true;
+    if (!validateAddressField('addressState', addressData.state, 'text')) hasErrors = true;
+    if (!validateAddressField('addressLandmark', addressData.landMark, 'landmark')) hasErrors = true;
+
+    if (hasErrors) {
+        return false;
+    }
+
+    return addressData;
+}
+
+function validateEditAddressForm() {
+    const addressData = {
+        addressType: document.getElementById('editAddressType').value,
+        name: document.getElementById('editAddressName').value.trim(),
+        phone: document.getElementById('editAddressPhone').value.trim(),
+        pincode: document.getElementById('editAddressPincode').value.trim(),
+        address: document.getElementById('editAddressAddress').value.trim(),
+        locality: document.getElementById('editAddressLocality').value.trim(),
+        city: document.getElementById('editAddressCity').value.trim(),
+        state: document.getElementById('editAddressState').value.trim(),
+        landMark: document.getElementById('editAddressLandmark').value.trim()
+    };
+
+    // Clear previous errors
+    clearAddressErrors('edit');
+
+    // Validate all fields
+    let hasErrors = false;
+
+    if (!validateAddressField('editAddressName', addressData.name, 'name')) hasErrors = true;
+    if (!validateAddressField('editAddressPhone', addressData.phone, 'phone')) hasErrors = true;
+    if (!validateAddressField('editAddressPincode', addressData.pincode, 'pincode')) hasErrors = true;
+    if (!validateAddressField('editAddressAddress', addressData.address, 'address')) hasErrors = true;
+    if (!validateAddressField('editAddressLocality', addressData.locality, 'text')) hasErrors = true;
+    if (!validateAddressField('editAddressCity', addressData.city, 'text')) hasErrors = true;
+    if (!validateAddressField('editAddressState', addressData.state, 'text')) hasErrors = true;
+    if (!validateAddressField('editAddressLandmark', addressData.landMark, 'landmark')) hasErrors = true;
+
+    if (hasErrors) {
+        return false;
+    }
+
+    return addressData;
+}
+
 function setupOrderManagement() {
     // View Order Details Buttons
     document.querySelectorAll('.view-order-btn').forEach(btn => {
@@ -1297,51 +1529,63 @@ function showEditAddressModal(address) {
             <div class="text-left space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Address Type</label>
-                        <select id="editAddressType" class="w-full p-2 border rounded bg-gray-700 text-white">
+                        <label class="block text-sm font-medium mb-1">Address Type <span class="text-red-400">*</span></label>
+                        <select id="editAddressType" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none">
                             <option value="Home" ${address.addressType === 'Home' ? 'selected' : ''}>🏠 Home</option>
                             <option value="Work" ${address.addressType === 'Work' ? 'selected' : ''}>🏢 Work</option>
                             <option value="Other" ${address.addressType === 'Other' ? 'selected' : ''}>📍 Other</option>
                         </select>
+                        <div id="editAddressType-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Full Name</label>
-                        <input type="text" id="editAddressName" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter full name" value="${address.name}">
+                        <label class="block text-sm font-medium mb-1">Full Name <span class="text-red-400">*</span></label>
+                        <input type="text" id="editAddressName" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" placeholder="Enter full name" value="${address.name}" maxlength="50">
+                        <div id="editAddressName-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Phone Number</label>
-                        <input type="tel" id="editAddressPhone" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter phone number" value="${address.phone}">
+                        <label class="block text-sm font-medium mb-1">Phone Number <span class="text-red-400">*</span></label>
+                        <input type="tel" id="editAddressPhone" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" placeholder="Enter 10-digit phone number" value="${address.phone}" maxlength="10">
+                        <div id="editAddressPhone-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Pincode</label>
-                        <input type="text" id="editAddressPincode" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter pincode" value="${address.pincode}">
+                        <label class="block text-sm font-medium mb-1">Pincode <span class="text-red-400">*</span></label>
+                        <input type="text" id="editAddressPincode" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" placeholder="Enter 6-digit pincode" value="${address.pincode}" maxlength="6">
+                        <div id="editAddressPincode-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">Address</label>
-                    <textarea id="editAddressAddress" class="w-full p-2 border rounded bg-gray-700 text-white" rows="2" placeholder="Enter full address">${address.address}</textarea>
+                    <label class="block text-sm font-medium mb-1">Address <span class="text-red-400">*</span></label>
+                    <textarea id="editAddressAddress" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" rows="2" placeholder="Enter full address (House/Flat No, Street, Area)" maxlength="200">${address.address}</textarea>
+                    <div id="editAddressAddress-error" class="text-red-400 text-xs mt-1 hidden"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Locality</label>
-                        <input type="text" id="editAddressLocality" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter locality" value="${address.locality}">
+                        <label class="block text-sm font-medium mb-1">Locality <span class="text-red-400">*</span></label>
+                        <input type="text" id="editAddressLocality" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" placeholder="Enter locality/area" value="${address.locality}" maxlength="50">
+                        <div id="editAddressLocality-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">City</label>
-                        <input type="text" id="editAddressCity" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter city" value="${address.city}">
+                        <label class="block text-sm font-medium mb-1">City <span class="text-red-400">*</span></label>
+                        <input type="text" id="editAddressCity" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" placeholder="Enter city" value="${address.city}" maxlength="50">
+                        <div id="editAddressCity-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">State</label>
-                        <input type="text" id="editAddressState" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter state" value="${address.state}">
+                        <label class="block text-sm font-medium mb-1">State <span class="text-red-400">*</span></label>
+                        <input type="text" id="editAddressState" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" placeholder="Enter state" value="${address.state}" maxlength="50">
+                        <div id="editAddressState-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Landmark (Optional)</label>
-                        <input type="text" id="editAddressLandmark" class="w-full p-2 border rounded bg-gray-700 text-white" placeholder="Enter landmark" value="${address.landMark || ''}">
+                        <input type="text" id="editAddressLandmark" class="w-full p-2 border rounded bg-gray-700 text-white focus:border-[#00ffff] focus:outline-none" placeholder="Enter landmark" value="${address.landMark || ''}" maxlength="100">
+                        <div id="editAddressLandmark-error" class="text-red-400 text-xs mt-1 hidden"></div>
                     </div>
+                </div>
+                <div class="text-xs text-gray-400 mt-2">
+                    <span class="text-red-400">*</span> Required fields
                 </div>
             </div>
         `,
@@ -1353,44 +1597,12 @@ function showEditAddressModal(address) {
         background: '#1f2937',
         color: '#ffffff',
         width: '600px',
+        didOpen: () => {
+            // Add real-time validation for edit address modal
+            setupEditAddressValidation();
+        },
         preConfirm: () => {
-            const addressType = document.getElementById('editAddressType').value;
-            const name = document.getElementById('editAddressName').value.trim();
-            const phone = document.getElementById('editAddressPhone').value.trim();
-            const pincode = document.getElementById('editAddressPincode').value.trim();
-            const addressText = document.getElementById('editAddressAddress').value.trim();
-            const locality = document.getElementById('editAddressLocality').value.trim();
-            const city = document.getElementById('editAddressCity').value.trim();
-            const state = document.getElementById('editAddressState').value.trim();
-            const landmark = document.getElementById('editAddressLandmark').value.trim();
-
-            // Validation
-            if (!name || !phone || !pincode || !addressText || !locality || !city || !state) {
-                Swal.showValidationMessage('Please fill in all required fields');
-                return false;
-            }
-
-            if (!/^[0-9]{10}$/.test(phone)) {
-                Swal.showValidationMessage('Phone number must be 10 digits');
-                return false;
-            }
-
-            if (!/^[0-9]{6}$/.test(pincode)) {
-                Swal.showValidationMessage('Pincode must be 6 digits');
-                return false;
-            }
-
-            return {
-                addressType,
-                name,
-                phone,
-                pincode,
-                address: addressText,
-                locality,
-                city,
-                state,
-                landMark: landmark
-            };
+            return validateEditAddressForm();
         }
     }).then((result) => {
         if (result.isConfirmed) {
@@ -1467,28 +1679,12 @@ function showAddAddressModal() {
         background: '#1f2937',
         color: '#ffffff',
         width: '600px',
+        didOpen: () => {
+            // Add real-time validation for add address modal
+            setupAddAddressValidation();
+        },
         preConfirm: () => {
-            const addressData = {
-                addressType: document.getElementById('addressType').value,
-                name: document.getElementById('addressName').value,
-                phone: document.getElementById('addressPhone').value,
-                pincode: document.getElementById('addressPincode').value,
-                address: document.getElementById('addressFull').value,
-                locality: document.getElementById('addressLocality').value,
-                city: document.getElementById('addressCity').value,
-                state: document.getElementById('addressState').value,
-                landMark: document.getElementById('addressLandmark').value,
-                isDefault: document.getElementById('setAsDefault').checked
-            };
-
-            // Validate required fields
-            if (!addressData.name || !addressData.phone || !addressData.pincode ||
-                !addressData.address || !addressData.locality || !addressData.city || !addressData.state) {
-                Swal.showValidationMessage('Please fill all required fields');
-                return false;
-            }
-
-            return addressData;
+            return validateAddAddressForm();
         }
     }).then((result) => {
         if (result.isConfirmed) {

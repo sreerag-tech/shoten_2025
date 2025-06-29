@@ -422,10 +422,83 @@ const updateProfile = async (req, res) => {
 const addAddress = async (req, res) => {
   try {
     const userId = req.session.user;
-    const addressData = req.body;
+    const { name, addressType, phone, pincode, address, locality, city, state, landMark, isDefault } = req.body;
+
+    // Comprehensive server-side validation
+    const errors = [];
+
+    // Name validation
+    if (!name || name.trim().length === 0) {
+      errors.push('Full name is required');
+    } else if (name.trim().length < 2) {
+      errors.push('Name must be at least 2 characters');
+    } else if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
+      errors.push('Name can only contain letters and spaces');
+    }
+
+    // Phone validation
+    if (!phone || phone.trim().length === 0) {
+      errors.push('Phone number is required');
+    } else if (!/^[0-9]{10}$/.test(phone.trim())) {
+      errors.push('Please enter a valid 10-digit phone number');
+    }
+
+    // Pincode validation
+    if (!pincode || pincode.trim().length === 0) {
+      errors.push('Pincode is required');
+    } else if (!/^[0-9]{6}$/.test(pincode.trim())) {
+      errors.push('Please enter a valid 6-digit pincode');
+    }
+
+    // Address validation
+    if (!address || address.trim().length === 0) {
+      errors.push('Address is required');
+    } else if (address.trim().length < 10) {
+      errors.push('Address must be at least 10 characters');
+    }
+
+    // Locality validation
+    if (!locality || locality.trim().length === 0) {
+      errors.push('Locality is required');
+    } else if (!/^[a-zA-Z\s]+$/.test(locality.trim())) {
+      errors.push('Locality can only contain letters and spaces');
+    }
+
+    // City validation
+    if (!city || city.trim().length === 0) {
+      errors.push('City is required');
+    } else if (!/^[a-zA-Z\s]+$/.test(city.trim())) {
+      errors.push('City can only contain letters and spaces');
+    }
+
+    // State validation
+    if (!state || state.trim().length === 0) {
+      errors.push('State is required');
+    } else if (!/^[a-zA-Z\s]+$/.test(state.trim())) {
+      errors.push('State can only contain letters and spaces');
+    }
+
+    // Landmark validation (optional but if provided, validate)
+    if (landMark && landMark.trim().length > 0 && landMark.trim().length < 3) {
+      errors.push('Landmark must be at least 3 characters if provided');
+    }
+
+    // Address type validation
+    if (!addressType || !['Home', 'Work', 'Other'].includes(addressType)) {
+      errors.push('Please select a valid address type');
+    }
+
+    // Return validation errors
+    if (errors.length > 0) {
+      return res.json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors
+      });
+    }
 
     // If this is set as default, unset other default addresses
-    if (addressData.isDefault) {
+    if (isDefault) {
       await Address.updateMany(
         { userId: userId },
         { $set: { isDefault: false } }
@@ -434,7 +507,16 @@ const addAddress = async (req, res) => {
 
     const newAddress = new Address({
       userId: userId,
-      ...addressData,
+      name: name.trim(),
+      addressType: addressType,
+      phone: phone.trim(),
+      pincode: pincode.trim(),
+      address: address.trim(),
+      locality: locality.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      landMark: landMark ? landMark.trim() : null,
+      isDefault: isDefault || false
     });
 
     await newAddress.save();
@@ -480,6 +562,79 @@ const editAddress = async (req, res) => {
       addressType,
       isDefault,
     } = req.body;
+
+    // Comprehensive server-side validation
+    const errors = [];
+
+    // Name validation
+    if (!name || name.trim().length === 0) {
+      errors.push('Full name is required');
+    } else if (name.trim().length < 2) {
+      errors.push('Name must be at least 2 characters');
+    } else if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
+      errors.push('Name can only contain letters and spaces');
+    }
+
+    // Phone validation
+    if (!phone || phone.trim().length === 0) {
+      errors.push('Phone number is required');
+    } else if (!/^[0-9]{10}$/.test(phone.trim())) {
+      errors.push('Please enter a valid 10-digit phone number');
+    }
+
+    // Pincode validation
+    if (!pincode || pincode.trim().length === 0) {
+      errors.push('Pincode is required');
+    } else if (!/^[0-9]{6}$/.test(pincode.trim())) {
+      errors.push('Please enter a valid 6-digit pincode');
+    }
+
+    // Address validation
+    if (!address || address.trim().length === 0) {
+      errors.push('Address is required');
+    } else if (address.trim().length < 10) {
+      errors.push('Address must be at least 10 characters');
+    }
+
+    // Locality validation
+    if (!locality || locality.trim().length === 0) {
+      errors.push('Locality is required');
+    } else if (!/^[a-zA-Z\s]+$/.test(locality.trim())) {
+      errors.push('Locality can only contain letters and spaces');
+    }
+
+    // City validation
+    if (!city || city.trim().length === 0) {
+      errors.push('City is required');
+    } else if (!/^[a-zA-Z\s]+$/.test(city.trim())) {
+      errors.push('City can only contain letters and spaces');
+    }
+
+    // State validation
+    if (!state || state.trim().length === 0) {
+      errors.push('State is required');
+    } else if (!/^[a-zA-Z\s]+$/.test(state.trim())) {
+      errors.push('State can only contain letters and spaces');
+    }
+
+    // Landmark validation (optional but if provided, validate)
+    if (landMark && landMark.trim().length > 0 && landMark.trim().length < 3) {
+      errors.push('Landmark must be at least 3 characters if provided');
+    }
+
+    // Address type validation
+    if (!addressType || !['Home', 'Work', 'Other'].includes(addressType)) {
+      errors.push('Please select a valid address type');
+    }
+
+    // Return validation errors
+    if (errors.length > 0) {
+      return res.json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors
+      });
+    }
 
     // Find and update the address
     const updatedAddress = await Address.findOneAndUpdate(
