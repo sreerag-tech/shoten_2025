@@ -1,4 +1,4 @@
-            <%- include("../../views/user/partials/header") %>
+<%- include("../../views/user/partials/header") %>
 
             <!-- SweetAlert2 CDN -->
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -108,7 +108,24 @@
                                 </h2>
                                 
                                 <div class="space-y-4">
-                                    <div class="payment-option border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50 border-[#00ffff] bg-[#00ffff]/5">
+                                    <div class="payment-option border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50 <%= walletBalance < finalTotal ? 'opacity-50 cursor-not-allowed' : 'border-[#00ffff] bg-[#00ffff]/5' %>"
+                                        data-payment-method="Wallet">
+                                        <div class="flex items-center gap-3">
+                                            <input type="radio" name="paymentMethod" value="Wallet" class="payment-radio"
+                                                <%= walletBalance < finalTotal ? 'disabled' : '' %>>
+                                            <div>
+                                                <h3 class="text-white font-semibold text-lg flex items-center gap-2">
+                                                    <i class="fas fa-wallet"></i> Wallet Payment
+                                                </h3>
+                                                <p class="text-gray-400 text-sm">
+                                                    Available Balance: ₹<%= walletBalance.toLocaleString() %>
+                                                    <%= walletBalance < finalTotal ? '(Insufficient Balance)' : '' %>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="payment-option border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50">
                                         <div class="flex items-center gap-3">
                                             <input type="radio" name="paymentMethod" value="COD" class="payment-radio" checked>
                                             <div>
@@ -120,7 +137,6 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Online Payment -->
                                     <div class="payment-option border border-gray-700 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ffff]/50">
                                         <div class="flex items-center gap-3">
                                             <input type="radio" name="paymentMethod" value="Online" class="payment-radio">
@@ -153,7 +169,7 @@
                                         <div class="flex items-center gap-3 p-3 bg-gray-700 rounded-lg">
                                             <div class="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
                                                 <% if (item.productId.productImage && item.productId.productImage.length > 0) { %>
-                                                    <img src="/uploads/product-images/<%= item.productId.productImage[0] %>"
+                                                    <img src="/Uploads/product-images/<%= item.productId.productImage[0] %>"
                                                         alt="<%= item.productId.productName %>"
                                                         class="w-full h-full object-cover rounded-lg"
                                                         onerror="this.src='/images/placeholder.jpg'">
@@ -168,7 +184,7 @@
                                                 <div class="flex justify-between items-center">
                                                     <span class="text-gray-400 text-xs">Qty: <%= item.quantity %></span>
                                                     <span class="text-[#00ffff] font-semibold text-sm">
-                                                        ₹<%= (item.productId.salePrice * item.quantity).toLocaleString() %>
+                                                        ₹<%= (item.finalPrice * item.quantity).toLocaleString() %>
                                                     </span>
                                                 </div>
                                             </div>
@@ -335,6 +351,10 @@
                 const appliedCoupon = null;
             <% } %>
 
+            // Wallet balance
+            const walletBalance = <%= walletBalance %>;
+            const finalTotal = <%= finalTotal %>;
+
             // Coupon functionality
             document.addEventListener('DOMContentLoaded', function() {
                 // Apply Coupon
@@ -343,6 +363,7 @@
                 const removeCouponBtn = document.getElementById('removeCouponBtn');
                 const toggleCouponsBtn = document.getElementById('toggleCoupons');
                 const couponsContainer = document.getElementById('availableCouponsContainer');
+                const placeOrderBtn = document.querySelector('.place-order-btn');
 
                 // Toggle available coupons display
                 if (toggleCouponsBtn && couponsContainer) {
@@ -516,6 +537,107 @@
                         });
                     });
                 }
+
+                // Handle place order button
+                placeOrderBtn.addEventListener('click', function() {
+                    const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
+                    const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+
+                    if (!selectedAddress) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Please select a delivery address',
+                            icon: 'error',
+                            confirmButtonColor: '#00ffff'
+                        });
+                        return;
+                    }
+
+                    if (!selectedPaymentMethod) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Please select a payment method',
+                            icon: 'error',
+                            confirmButtonColor: '#00ffff'
+                        });
+                        return;
+                    }
+
+                    const paymentMethod = selectedPaymentMethod.value;
+
+                    if (paymentMethod === 'Wallet' && walletBalance < finalTotal) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Insufficient wallet balance',
+                            icon: 'error',
+                            confirmButtonColor: '#00ffff'
+                        });
+                        return;
+                    }
+
+                    placeOrderBtn.disabled = true;
+                    placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+                    fetch('/checkout/place-order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            addressId: selectedAddress.value,
+                            paymentMethod: paymentMethod,
+                            subtotal: <%= subtotal %>,
+                            shippingCharge: <%= shippingCharge %>,
+                            discount: <%= discount %>,
+                            totalAmount: <%= finalTotal %>
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (data.paymentRequired) {
+                                // Handle Razorpay payment
+                                const options = data.paymentOptions;
+                                options.handler = function(response) {
+                                    // Handle payment success
+                                    window.location.href = `/order-success/${data.tempOrderId}`;
+                                };
+                                const rzp = new Razorpay(options);
+                                rzp.open();
+                            } else {
+                                // Redirect to order success for COD or Wallet
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#00ffff'
+                                }).then(() => {
+                                    window.location.href = `/order-success/${data.orderId}`;
+                                });
+                            }
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message,
+                                icon: 'error',
+                                confirmButtonColor: '#00ffff'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to place order. Please try again.',
+                            icon: 'error',
+                            confirmButtonColor: '#00ffff'
+                        });
+                    })
+                    .finally(() => {
+                        placeOrderBtn.disabled = false;
+                        placeOrderBtn.innerHTML = '<i class="fas fa-check-circle"></i> Place Order';
+                    });
+                });
             });
             </script>
 

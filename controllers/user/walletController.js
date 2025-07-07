@@ -139,39 +139,47 @@ const getTransactionHistory = async (req, res) => {
 
 // Use Wallet for Payment (for checkout)
 const useWalletForPayment = async (req, res) => {
-  try {
-    const userId = req.session.user;
-    const { amount, orderId, description } = req.body;
+    try {
+        const userId = req.session.user;
+        const { amount, orderId, description } = req.body;
 
-    const paymentAmount = parseFloat(amount);
-    if (!paymentAmount || paymentAmount <= 0) {
-      return res.json({ success: false, message: 'Invalid payment amount' });
+        // Validate inputs
+        if (!userId || !amount || !orderId) {
+            return res.json({ success: false, message: 'Missing required fields' });
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+            return res.json({ success: false, message: 'Invalid amount' });
+        }
+
+        // Fetch wallet
+        let wallet = await Wallet.findOne({ user: userId });
+        if (!wallet) {
+            wallet = new Wallet({ user: userId, balance: 0 });
+            await wallet.save();
+        }
+
+        // Use deductMoney method
+        try {
+            await wallet.deductMoney(amount, description || `Payment for order #${orderId}`, orderId);
+        } catch (error) {
+            return res.json({ success: false, message: error.message || 'Failed to deduct wallet balance' });
+        }
+
+        return res.json({
+            success: true,
+            message: 'Payment successful',
+            newBalance: wallet.balance
+        });
+    } catch (error) {
+        console.error('Error in useWalletForPayment:', error);
+        return res.json({ success: false, message: 'Failed to process wallet payment: ' + error.message });
     }
-
-    const wallet = await Wallet.findOne({ user: userId });
-    if (!wallet || wallet.balance < paymentAmount) {
-      return res.json({ 
-        success: false, 
-        message: 'Insufficient wallet balance' 
-      });
-    }
-
-    // Deduct money from wallet
-    await wallet.deductMoney(
-      paymentAmount, 
-      description || `Payment for order #${orderId}`, 
-      orderId
-    );
-
-    res.json({ 
-      success: true, 
-      message: 'Payment successful',
-      newBalance: wallet.balance
-    });
-  } catch (error) {
-    res.json({ success: false, message: error.message || 'Payment failed' });
-  }
 };
+
+
+
+
 
 module.exports = {
   loadWallet,

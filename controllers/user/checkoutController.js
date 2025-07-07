@@ -5,6 +5,7 @@ const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const Coupon = require("../../models/couponSchema");
+const Wallet = require("../../models/walletSchema"); // Add Wallet model
 const offerService = require("../../services/offerService");
 const couponService = require("../../services/couponService");
 
@@ -56,6 +57,13 @@ const loadCheckout = async (req, res) => {
     
     // Get user addresses
     const addresses = await Address.find({ userId: userId }).sort({ isDefault: -1, createdAt: -1 });
+    
+    // Get wallet balance
+    let wallet = await Wallet.findOne({ user: userId });
+    if (!wallet) {
+      wallet = new Wallet({ user: userId, balance: 0 });
+      await wallet.save();
+    }
     
     // Calculate order totals with offers
     let subtotal = 0;
@@ -143,7 +151,8 @@ const loadCheckout = async (req, res) => {
       finalTotal: finalTotal,
       appliedCoupon: appliedCoupon,
       availableCoupons: userAvailableCoupons,
-      checkoutMessage: checkoutMessage
+      checkoutMessage: checkoutMessage,
+      walletBalance: wallet.balance // Pass wallet balance to EJS
     });
   } catch (error) {
     console.error('Error loading checkout:', error);
@@ -164,10 +173,10 @@ const loadOrderSuccess = async (req, res) => {
     const order = await Order.findOne({ _id: orderId, userId: userId })
       .populate('orderedItems.product');
 
-    // if (!order) {
-    //   req.session.checkoutMessage = { type: 'error', text: 'Order not found' };
-    //   return res.redirect('/orders');
-    // }
+    if (!order) {
+      req.session.checkoutMessage = { type: 'error', text: 'Order not found' };
+      return res.redirect('/orders');
+    }
 
     // Use original order data (prices already include offers applied at order time)
     const orderedItemsWithDetails = order.orderedItems.map(item => {
