@@ -106,14 +106,17 @@
                                             data-order-id="<%= order._id %>">
                                         👁️ Quick View
                                     </button>
+                                  
                                     <button class="view-order-btn px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition"
                                             data-order-id="<%= order._id %>">
                                         📋 Full Details
                                     </button>
+                                     <% if (status !== 'Payment Failed') { %>
                                     <button class="download-invoice-btn px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition"
                                             data-order-id="<%= order._id %>">
                                         📄 Invoice
                                     </button>
+                                    <%}%>
                                 </div>
                             </div>
                         </div>

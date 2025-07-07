@@ -1,1105 +1,1105 @@
-<%- include("../../views/user/partials/header") %>
+    <%- include("../../views/user/partials/header") %>
 
-<!-- Hero Section with Background Video -->
-<div class="relative bg-gray-900 py-20 px-8 overflow-hidden">
-    <!-- Background Video -->
-    <video
-        class="absolute inset-0 w-full h-full object-cover z-0"
-        autoplay
-        muted
-        loop
-        playsinline
-        poster="videos/anime_peaceful_moments.mp4"
-    >
-        <!-- Video source removed - add your video file here -->
-        <source src="videos/THIS IS 4K ANIME (Gojo Satoru).mp4" type="video/mp4">
+    <!-- Hero Section with Background Video -->
+    <div class="relative bg-gray-900 py-20 px-8 overflow-hidden">
+        <!-- Background Video -->
+        <video
+            class="absolute inset-0 w-full h-full object-cover z-0"
+            autoplay
+            muted
+            loop
+            playsinline
+            poster="videos/anime_peaceful_moments.mp4"
+        >
+            <!-- Video source removed - add your video file here -->
+            <source src="videos/THIS IS 4K ANIME (Gojo Satoru).mp4" type="video/mp4">
 
-        <!-- Fallback for browsers that don't support video -->
-        Your browser does not support the video tag.
-    </video>
-    
-    <!-- Dark overlay for better text readability -->
-    <div class="absolute inset-0 bg-black bg-opacity-60 z-10000"></div>
-    
-    <!-- Enhanced Content with Professional Animations -->
-    <div class="relative z-20 max-w-7xl mx-auto text-center hero-content">
-        <!-- Floating particles -->
-        <div class="floating-particles" id="shop-particles"></div>
+            <!-- Fallback for browsers that don't support video -->
+            Your browser does not support the video tag.
+        </video>
+        
+        <!-- Dark overlay for better text readability -->
+        <div class="absolute inset-0 bg-black bg-opacity-60 z-10000"></div>
+        
+        <!-- Enhanced Content with Professional Animations -->
+        <div class="relative z-20 max-w-7xl mx-auto text-center hero-content">
+            <!-- Floating particles -->
+            <div class="floating-particles" id="shop-particles"></div>
 
-        <h1 class="text-5xl font-bold mb-4 text-[#00ffff] drop-shadow-lg hover-glow animate-bounce-in">Our Collection</h1>
-        <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto drop-shadow-md animate-fade-in-up" style="animation-delay: 0.5s;">
-            Discover premium anime collectibles that bring your favorite characters to life
-        </p>
+            <h1 class="text-5xl font-bold mb-4 text-[#00ffff] drop-shadow-lg hover-glow animate-bounce-in">Our Collection</h1>
+            <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto drop-shadow-md animate-fade-in-up" style="animation-delay: 0.5s;">
+                Discover premium anime collectibles that bring your favorite characters to life
+            </p>
 
-        <!-- Enhanced animated divider -->
-        <div class="animate-pulse-glow">
-            <div class="w-16 h-1 bg-gradient-to-r from-[#00ffff] to-[#0088ff] mx-auto rounded-full shimmer"></div>
+            <!-- Enhanced animated divider -->
+            <div class="animate-pulse-glow">
+                <div class="w-16 h-1 bg-gradient-to-r from-[#00ffff] to-[#0088ff] mx-auto rounded-full shimmer"></div>
+            </div>
+        </div>
+        
+        <!-- Optional: Video controls overlay (hidden by default) -->
+        <div class="absolute bottom-4 right-4 z-30 opacity-20 hover:opacity-80 transition-opacity duration-300">
+            <button 
+                id="videoToggle" 
+                class="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
+                title="Pause/Play Video"
+            >
+                <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
         </div>
     </div>
-    
-    <!-- Optional: Video controls overlay (hidden by default) -->
-    <div class="absolute bottom-4 right-4 z-30 opacity-20 hover:opacity-80 transition-opacity duration-300">
-        <button 
-            id="videoToggle" 
-            class="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
-            title="Pause/Play Video"
-        >
-            <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        </button>
-    </div>
-</div>
 
-<!-- Search and Filter Section -->
-<section class="bg-black py-10 px-8">
-    <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <!-- Filters Sidebar -->
-            <div class="bg-gray-800 p-6 rounded-lg">
-                <h3 class="text-2xl font-bold mb-6 text-[#00ffff]">Filters</h3>
-                
-                <form id="filterForm" action="/shop" method="GET" class="space-y-8">
-                    <!-- Search -->
-                    <div>
-                        <label for="search" class="block mb-2 font-medium">Search</label>
-                        <div class="relative">
-                            <input 
-                                type="text" 
-                                id="search" 
-                                name="search" 
-                                value="<%= locals.query ? query.search || '' : '' %>"
-                                placeholder="Search products..." 
+    <!-- Search and Filter Section -->
+    <section class="bg-black py-10 px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Filters Sidebar -->
+                <div class="bg-gray-800 p-6 rounded-lg">
+                    <h3 class="text-2xl font-bold mb-6 text-[#00ffff]">Filters</h3>
+                    
+                    <form id="filterForm" action="/shop" method="GET" class="space-y-8">
+                        <!-- Search -->
+                        <div>
+                            <label for="search" class="block mb-2 font-medium">Search</label>
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="search" 
+                                    name="search" 
+                                    value="<%= locals.query ? query.search || '' : '' %>"
+                                    placeholder="Search products..." 
+                                    class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
+                                >
+                                <button 
+                                    type="button" 
+                                    id="clearSearch" 
+                                    class="absolute right-3 top-3 text-gray-400 hover:text-white"
+                                    <%= !locals.query || !query.search ? 'style="display: none;"' : '' %>
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Sort -->
+                        <div>
+                            <label for="sort" class="block mb-2 font-medium">Sort By</label>
+                            <select 
+                                id="sort" 
+                                name="sort" 
                                 class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
                             >
+                                <option value="default" <%= locals.query && query.sort === 'default' ? 'selected' : '' %>>Featured</option>
+                                <option value="price_asc" <%= locals.query && query.sort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
+                                <option value="price_desc" <%= locals.query && query.sort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
+                                <option value="name_asc" <%= locals.query && query.sort === 'name_asc' ? 'selected' : '' %>>Name: A to Z</option>
+                                <option value="name_desc" <%= locals.query && query.sort === 'name_desc' ? 'selected' : '' %>>Name: Z to A</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Category Filter -->
+                        <div>
+                            <h4 class="font-medium mb-2">Categories</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <input 
+                                        type="checkbox" 
+                                        id="category_all" 
+                                        name="category" 
+                                        value="all" 
+                                        class="mr-2 accent-[#00ffff]"
+                                        <%= !locals.query || !query.category || query.category === 'all' ? 'checked' : '' %>
+                                    >
+                                    <label for="category_all">All Categories</label>
+                                </div>
+                                <% if (locals.categories && categories.length > 0) { %>
+                                    <% categories.forEach(cat => { %>
+                                        <div class="flex items-center">
+                                            <input 
+                                                type="checkbox" 
+                                                id="category_<%= cat.name.toLowerCase() %>" 
+                                                name="category" 
+                                                value="<%= cat.name.toLowerCase() %>" 
+                                                class="mr-2 accent-[#00ffff]"
+                                                <%= locals.query && query.category && query.category.includes(cat.name.toLowerCase()) ? 'checked' : '' %>
+                                            >
+                                            <label for="category_<%= cat.name.toLowerCase() %>"><%= cat.name %></label>
+                                        </div>
+                                    <% }); %>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <!-- Price Range Filter -->
+                        <div>
+                            <h4 class="font-medium mb-2">Price Range</h4>
+                            <div class="flex flex-col space-y-4">
+                                <div>
+                                    <label for="min_price" class="text-sm">Min Price (₹)</label>
+                                    <input 
+                                        type="number" 
+                                        id="min_price" 
+                                        name="min_price" 
+                                        min="0" 
+                                        value="<%= locals.query && query.min_price ? query.min_price : '0' %>"
+                                        class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label for="max_price" class="text-sm">Max Price (₹)</label>
+                                    <input 
+                                        type="number" 
+                                        id="max_price" 
+                                        name="max_price" 
+                                        min="0" 
+                                        value="<%= locals.query && query.max_price ? query.max_price : '2000' %>"
+                                        class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
+                                    >
+                                </div>
+                                
+                                <div class="relative pt-5">
+                                    <div class="h-1 bg-gray-600 rounded-full">
+                                        <!-- <div 
+                                            id="priceRangeIndicator" 
+                                            class="absolute h-1 bg-[#00ffff] rounded-full"
+                                        ></div> -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Apply Filters Button -->
+                        <div class="flex space-x-3">
+                            <button 
+                                type="submit" 
+                                class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition w-full"
+                            >
+                                Apply Filters
+                            </button>
+                            
                             <button 
                                 type="button" 
-                                id="clearSearch" 
-                                class="absolute right-3 top-3 text-gray-400 hover:text-white"
-                                <%= !locals.query || !query.search ? 'style="display: none;"' : '' %>
+                                id="resetFilters"
+                                class="px-6 py-3 border border-[#00ffff] text-[#00ffff] font-bold rounded-lg hover:bg-gray-700 transition"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                </svg>
+                                Reset
                             </button>
                         </div>
-                    </div>
-                    
-                    <!-- Sort -->
-                    <div>
-                        <label for="sort" class="block mb-2 font-medium">Sort By</label>
-                        <select 
-                            id="sort" 
-                            name="sort" 
-                            class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
-                        >
-                            <option value="default" <%= locals.query && query.sort === 'default' ? 'selected' : '' %>>Featured</option>
-                            <option value="price_asc" <%= locals.query && query.sort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
-                            <option value="price_desc" <%= locals.query && query.sort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
-                            <option value="name_asc" <%= locals.query && query.sort === 'name_asc' ? 'selected' : '' %>>Name: A to Z</option>
-                            <option value="name_desc" <%= locals.query && query.sort === 'name_desc' ? 'selected' : '' %>>Name: Z to A</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Category Filter -->
-                    <div>
-                        <h4 class="font-medium mb-2">Categories</h4>
-                        <div class="space-y-2">
-                            <div class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    id="category_all" 
-                                    name="category" 
-                                    value="all" 
-                                    class="mr-2 accent-[#00ffff]"
-                                    <%= !locals.query || !query.category || query.category === 'all' ? 'checked' : '' %>
-                                >
-                                <label for="category_all">All Categories</label>
-                            </div>
-                            <% if (locals.categories && categories.length > 0) { %>
-                                <% categories.forEach(cat => { %>
-                                    <div class="flex items-center">
-                                        <input 
-                                            type="checkbox" 
-                                            id="category_<%= cat.name.toLowerCase() %>" 
-                                            name="category" 
-                                            value="<%= cat.name.toLowerCase() %>" 
-                                            class="mr-2 accent-[#00ffff]"
-                                            <%= locals.query && query.category && query.category.includes(cat.name.toLowerCase()) ? 'checked' : '' %>
-                                        >
-                                        <label for="category_<%= cat.name.toLowerCase() %>"><%= cat.name %></label>
-                                    </div>
-                                <% }); %>
-                            <% } %>
-                        </div>
-                    </div>
-                    
-                    <!-- Price Range Filter -->
-                    <div>
-                        <h4 class="font-medium mb-2">Price Range</h4>
-                        <div class="flex flex-col space-y-4">
-                            <div>
-                                <label for="min_price" class="text-sm">Min Price (₹)</label>
-                                <input 
-                                    type="number" 
-                                    id="min_price" 
-                                    name="min_price" 
-                                    min="0" 
-                                    value="<%= locals.query && query.min_price ? query.min_price : '0' %>"
-                                    class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
-                                >
-                            </div>
-                            
-                            <div>
-                                <label for="max_price" class="text-sm">Max Price (₹)</label>
-                                <input 
-                                    type="number" 
-                                    id="max_price" 
-                                    name="max_price" 
-                                    min="0" 
-                                    value="<%= locals.query && query.max_price ? query.max_price : '2000' %>"
-                                    class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-[#00ffff] focus:outline-none"
-                                >
-                            </div>
-                            
-                            <div class="relative pt-5">
-                                <div class="h-1 bg-gray-600 rounded-full">
-                                    <!-- <div 
-                                        id="priceRangeIndicator" 
-                                        class="absolute h-1 bg-[#00ffff] rounded-full"
-                                    ></div> -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Apply Filters Button -->
-                    <div class="flex space-x-3">
-                        <button 
-                            type="submit" 
-                            class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition w-full"
-                        >
-                            Apply Filters
-                        </button>
-                        
-                        <button 
-                            type="button" 
-                            id="resetFilters"
-                            class="px-6 py-3 border border-[#00ffff] text-[#00ffff] font-bold rounded-lg hover:bg-gray-700 transition"
-                        >
-                            Reset
-                        </button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Products Grid -->
-            <div class="lg:col-span-3">
-                <!-- Results Summary -->
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-white">
-                        <% if (locals.products) { %>
-                            <span id="resultsCount"><%= products.length %></span> Products
-                        <% } else { %>
-                            All Products
-                        <% } %>
-                    </h2>
-                    
-                    <% if (locals.query && Object.keys(query).length > 0 && query.search) { %>
-                        <div class="flex items-center bg-gray-800 py-1 px-3 rounded-full">
-                            <span class="text-sm text-gray-300 mr-2">Search: "<%= query.search %>"</span>
-                            <a href="/shop" class="text-[#00ffff] hover:text-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </a>
-                        </div>
-                    <% } %>
+                    </form>
                 </div>
                 
-                <!-- No Results Message -->
-                <% if (locals.products && products.length === 0) { %>
-                    <div class="bg-gray-800 rounded-lg p-8 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3 class="text-xl font-bold mb-2">No Products Found</h3>
-                        <p class="text-gray-400 mb-6">We couldn't find any products matching your current filters.</p>
-                        <a href="/shop" class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition">
-                            Clear All Filters
-                        </a>
+                <!-- Products Grid -->
+                <div class="lg:col-span-3">
+                    <!-- Results Summary -->
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-white">
+                            <% if (locals.products) { %>
+                                <span id="resultsCount"><%= products.length %></span> Products
+                            <% } else { %>
+                                All Products
+                            <% } %>
+                        </h2>
+                        
+                        <% if (locals.query && Object.keys(query).length > 0 && query.search) { %>
+                            <div class="flex items-center bg-gray-800 py-1 px-3 rounded-full">
+                                <span class="text-sm text-gray-300 mr-2">Search: "<%= query.search %>"</span>
+                                <a href="/shop" class="text-[#00ffff] hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </a>
+                            </div>
+                        <% } %>
                     </div>
-                <% } else { %>
-                    <!-- Offer Legend -->
-                    <div class="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mb-6">
-                        <div class="flex items-center gap-4 text-sm flex-wrap">
-                            <span class="text-gray-300 font-medium">Offers:</span>
-                            <div class="flex items-center gap-2">
-                                <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">% OFF</span>
-                                <span class="text-green-400 text-xs">Special Offers</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">% OFF</span>
-                                <span class="text-red-400 text-xs">Regular Discounts</span>
-                            </div>
-                            <span class="text-gray-400 text-xs">🎉 Best offers applied automatically!</span>
+                    
+                    <!-- No Results Message -->
+                    <% if (locals.products && products.length === 0) { %>
+                        <div class="bg-gray-800 rounded-lg p-8 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 class="text-xl font-bold mb-2">No Products Found</h3>
+                            <p class="text-gray-400 mb-6">We couldn't find any products matching your current filters.</p>
+                            <a href="/shop" class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition">
+                                Clear All Filters
+                            </a>
                         </div>
-                    </div>
+                    <% } else { %>
+                        <!-- Offer Legend -->
+                        <div class="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mb-6">
+                            <div class="flex items-center gap-4 text-sm flex-wrap">
+                                <span class="text-gray-300 font-medium">Offers:</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">% OFF</span>
+                                    <span class="text-green-400 text-xs">Special Offers</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">% OFF</span>
+                                    <span class="text-red-400 text-xs">Regular Discounts</span>
+                                </div>
+                                <span class="text-gray-400 text-xs">🎉 Best offers applied automatically!</span>
+                            </div>
+                        </div>
 
-                    <!-- Products Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <% if (locals.products) { %>
-                            <% products.forEach(product => { %>
-                                <a href="/shop/product/<%= product._id %>" class="block group">
-                                    <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 transform group-hover:-translate-y-2 h-full flex flex-col">
-                                        <div class="relative overflow-hidden">
-                                            <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
+                        <!-- Products Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <% if (locals.products) { %>
+                                <% products.forEach(product => { %>
+                                    <a href="/shop/product/<%= product._id %>" class="block group">
+                                        <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 transform group-hover:-translate-y-2 h-full flex flex-col">
+                                            <div class="relative overflow-hidden">
+                                                <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
 
-                                            <!-- Gradient overlay -->
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                                <!-- Gradient overlay -->
+                                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                                            <!-- Status badges -->
-                                            <div class="absolute top-3 right-3 flex flex-col gap-2">
-                                                <% if (product.isNew) { %>
-                                                    <div class="bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                                                        NEW
-                                                    </div>
-                                                <% } %>
-                                                <% if (product.hasOffer && product.discount > 0) { %>
-                                                    <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                                                        -<%= product.discount %>% OFF
-                                                    </div>
-                                                <% } else if (product.discount > 0) { %>
-                                                    <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                                                        -<%= product.discount %>% OFF
-                                                    </div>
-                                                <% } %>
-                                            </div>
-
-                                            <!-- Quick actions overlay -->
-                                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <div class="flex gap-3">
-                                                    <button class="bg-white/90 backdrop-blur-sm text-gray-800 p-3 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 hover:bg-white">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                        </svg>
-                                                    </button>
-                                                    <button class="bg-[#00ffff]/90 backdrop-blur-sm text-black p-3 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75 hover:bg-[#00ffff]">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="p-5 flex-1 flex flex-col">
-                                            <div class="mb-3">
-                                                <h3 class="text-lg font-bold text-white mb-1 line-clamp-1 group-hover:text-[#00ffff] transition-colors duration-300">
-                                                    <%= product.name %>
-                                                </h3>
-                                                <p class="text-gray-400 text-sm capitalize">
-                                                    <%= product.category %>
-                                                </p>
-                                            </div>
-
-                                            <div class="flex justify-between items-center mt-auto">
-                                                <div class="flex flex-col">
-                                                    <span class="text-[#00ffff] font-bold text-lg">₹<%= product.price.toLocaleString() %></span>
-                                                    <% if (product.originalPrice && product.originalPrice > product.price) { %>
-                                                        <span class="text-gray-500 text-sm line-through">₹<%= product.originalPrice.toLocaleString() %></span>
+                                                <!-- Status badges -->
+                                                <div class="absolute top-3 right-3 flex flex-col gap-2">
+                                                    <% if (product.isNew) { %>
+                                                        <div class="bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                                            NEW
+                                                        </div>
                                                     <% } %>
                                                     <% if (product.hasOffer && product.discount > 0) { %>
-                                                        <div class="flex items-center gap-1 mt-1">
-                                                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                                                                <%= product.discount %>% OFF
-                                                            </span>
-                                                            <% if (product.offerInfo) { %>
-                                                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                                                                    <%= product.offerInfo.type.charAt(0).toUpperCase() + product.offerInfo.type.slice(1) %> Offer
-                                                                </span>
-                                                            <% } %>
+                                                        <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                                                            -<%= product.discount %>% OFF
                                                         </div>
-                                                        <% if (product.offerInfo && product.offerInfo.name) { %>
-                                                            <div class="text-green-400 text-xs mt-1 font-medium">
-                                                                🎉 <%= product.offerInfo.name %>
-                                                            </div>
-                                                        <% } %>
+                                                    <% } else if (product.discount > 0) { %>
+                                                        <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                                                            -<%= product.discount %>% OFF
+                                                        </div>
                                                     <% } %>
                                                 </div>
 
-                                                <!-- Rating stars (placeholder) -->
-                                                <div class="flex items-center gap-1">
-                                                    <% for (let i = 1; i <= 5; i++) { %>
-                                                        <svg class="w-4 h-4 <%= i <= 4 ? 'text-yellow-400' : 'text-gray-600' %>" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                                                        </svg>
-                                                    <% } %>
+                                                <!-- Quick actions overlay -->
+                                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                    <div class="flex gap-3">
+                                                        <button class="bg-white/90 backdrop-blur-sm text-gray-800 p-3 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 hover:bg-white">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button class="bg-[#00ffff]/90 backdrop-blur-sm text-black p-3 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75 hover:bg-[#00ffff]">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-5 flex-1 flex flex-col">
+                                                <div class="mb-3">
+                                                    <h3 class="text-lg font-bold text-white mb-1 line-clamp-1 group-hover:text-[#00ffff] transition-colors duration-300">
+                                                        <%= product.name %>
+                                                    </h3>
+                                                    <p class="text-gray-400 text-sm capitalize">
+                                                        <%= product.category %>
+                                                    </p>
+                                                </div>
+
+                                                <div class="flex justify-between items-center mt-auto">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[#00ffff] font-bold text-lg">₹<%= product.price.toLocaleString() %></span>
+                                                        <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                                            <span class="text-gray-500 text-sm line-through">₹<%= product.originalPrice.toLocaleString() %></span>
+                                                        <% } %>
+                                                        <% if (product.hasOffer && product.discount > 0) { %>
+                                                            <div class="flex items-center gap-1 mt-1">
+                                                                <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                                                    <%= product.discount %>% OFF
+                                                                </span>
+                                                                <% if (product.offerInfo) { %>
+                                                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                                                        <%= product.offerInfo.type.charAt(0).toUpperCase() + product.offerInfo.type.slice(1) %> Offer
+                                                                    </span>
+                                                                <% } %>
+                                                            </div>
+                                                            <% if (product.offerInfo && product.offerInfo.name) { %>
+                                                                <div class="text-green-400 text-xs mt-1 font-medium">
+                                                                    🎉 <%= product.offerInfo.name %>
+                                                                </div>
+                                                            <% } %>
+                                                        <% } %>
+                                                    </div>
+
+                                                    <!-- Rating stars (placeholder) -->
+                                                    <div class="flex items-center gap-1">
+                                                        <% for (let i = 1; i <= 5; i++) { %>
+                                                            <svg class="w-4 h-4 <%= i <= 4 ? 'text-yellow-400' : 'text-gray-600' %>" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                            </svg>
+                                                        <% } %>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </a>
-                            <% }); %>
-                        <% } else { %>
-                            <!-- Placeholder Product Cards for Demo -->
-                            <% for (let i = 0; i < 9; i++) { %>
-                                <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-[#00ffff] transition">
-                                    <div class="relative">
-                                        <img src="/images/<%= ['figurine', 'necklace', 'keychain', 'mug'][i % 4] %>1.webp" alt="Product" class="w-full h-64 object-cover">
-                                        <% if (i % 3 === 0) { %>
-                                            <div class="absolute top-2 right-2 bg-[#00ffff] text-black text-xs font-bold px-2 py-1 rounded">NEW</div>
-                                        <% } %>
-                                        <% if (i % 4 === 0) { %>
-                                            <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">-15%</div>
-                                        <% } %>
-                                    </div>
-                                    <div class="p-4">
-                                        <h3 class="text-lg font-bold mb-1">Anime <%= ['Figurine', 'Necklace', 'Keychain', 'Mug'][i % 4] %> <%= i + 1 %></h3>
-                                        <p class="text-gray-400 text-sm mb-2"><%= ['Figurines', 'Necklaces', 'Keychains', 'Mugs'][i % 4] %></p>
-                                        <div class="flex justify-between items-center">
-                                            <div>
-                                                <% if (i % 4 === 0) { %>
-                                                    <span class="text-gray-400 line-through text-sm mr-2">₹<%= (Math.floor(Math.random() * 5000) + 3000).toLocaleString() %></span>
-                                                <% } %>
-                                                <span class="text-[#00ffff] font-bold">₹<%= (Math.floor(Math.random() * 4000) + 1500).toLocaleString() %></span>
+                                    </a>
+                                <% }); %>
+                            <% } else { %>
+                                <!-- Placeholder Product Cards for Demo -->
+                                <% for (let i = 0; i < 9; i++) { %>
+                                    <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-[#00ffff] transition">
+                                        <div class="relative">
+                                            <img src="/images/<%= ['figurine', 'necklace', 'keychain', 'mug'][i % 4] %>1.webp" alt="Product" class="w-full h-64 object-cover">
+                                            <% if (i % 3 === 0) { %>
+                                                <div class="absolute top-2 right-2 bg-[#00ffff] text-black text-xs font-bold px-2 py-1 rounded">NEW</div>
+                                            <% } %>
+                                            <% if (i % 4 === 0) { %>
+                                                <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">-15%</div>
+                                            <% } %>
+                                        </div>
+                                        <div class="p-4">
+                                            <h3 class="text-lg font-bold mb-1">Anime <%= ['Figurine', 'Necklace', 'Keychain', 'Mug'][i % 4] %> <%= i + 1 %></h3>
+                                            <p class="text-gray-400 text-sm mb-2"><%= ['Figurines', 'Necklaces', 'Keychains', 'Mugs'][i % 4] %></p>
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <% if (i % 4 === 0) { %>
+                                                        <span class="text-gray-400 line-through text-sm mr-2">₹<%= (Math.floor(Math.random() * 5000) + 3000).toLocaleString() %></span>
+                                                    <% } %>
+                                                    <span class="text-[#00ffff] font-bold">₹<%= (Math.floor(Math.random() * 4000) + 1500).toLocaleString() %></span>
+                                                </div>
+                                                <button class="p-2 bg-[#00ffff] text-black rounded hover:bg-[#0088ff] transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                </button>
                                             </div>
-                                            <button class="p-2 bg-[#00ffff] text-black rounded hover:bg-[#0088ff] transition">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                </svg>
-                                            </button>
                                         </div>
                                     </div>
-                                </div>
+                                <% } %>
                             <% } %>
-                        <% } %>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="mt-12 flex justify-center items-center space-x-2">
-                        <% if (currentPage > 1) { %>
-                            <a href="/shop?page=<%= currentPage - 1 %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </a>
-                        <% } %>
-                    
-                        <% for (let i = 1; i <= totalPages; i++) { %>
-                            <a href="/shop?page=<%= i %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center <%= currentPage === i ? 'bg-[#00ffff] text-black' : 'bg-gray-800 text-white hover:bg-gray-700' %> rounded-lg font-bold transition">
-                                <%= i %>
-                            </a>
-                        <% } %>
-                    
-                        <% if (currentPage < totalPages) { %>
-                            <a href="/shop?page=<%= currentPage + 1 %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
-                        <% } %>
+                        </div>
                         
-                    </div>
-                <% } %>
-                
+                        <!-- Pagination -->
+                        <div class="mt-12 flex justify-center items-center space-x-2">
+                            <% if (currentPage > 1) { %>
+                                <a href="/shop?page=<%= currentPage - 1 %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </a>
+                            <% } %>
+                        
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                                <a href="/shop?page=<%= i %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center <%= currentPage === i ? 'bg-[#00ffff] text-black' : 'bg-gray-800 text-white hover:bg-gray-700' %> rounded-lg font-bold transition">
+                                    <%= i %>
+                                </a>
+                            <% } %>
+                        
+                            <% if (currentPage < totalPages) { %>
+                                <a href="/shop?page=<%= currentPage + 1 %>&<% Object.entries(query).filter(([key]) => key !== 'page').forEach(([key, value]) => { %><%= key %>=<%= value %>&<% }) %>" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            <% } %>
+                            
+                        </div>
+                    <% } %>
+                    
+                </div>
             </div>
         </div>
-    </div>
-    
-</section>
-
-<!-- Recommended Products -->
-<section class="py-16 px-8 bg-gray-900">
-    <div class="max-w-7xl mx-auto">
-        <h2 class="text-3xl font-bold mb-8 text-[#00ffff]">You May Also Like</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <% if (locals.recommendedProducts && recommendedProducts.length > 0) { %>
-                <% recommendedProducts.forEach(product => { %>
-                    <a href="/shop/product/<%= product._id %>" class="block group">
-                        <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 transform group-hover:-translate-y-2 h-full flex flex-col">
-                            <div class="relative overflow-hidden">
-                                <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
+    </section>
 
-                                <!-- Gradient overlay -->
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    <!-- Recommended Products -->
+    <section class="py-16 px-8 bg-gray-900">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-8 text-[#00ffff]">You May Also Like</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <% if (locals.recommendedProducts && recommendedProducts.length > 0) { %>
+                    <% recommendedProducts.forEach(product => { %>
+                        <a href="/shop/product/<%= product._id %>" class="block group">
+                            <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-[#00ffff]/20 transition-all duration-300 transform group-hover:-translate-y-2 h-full flex flex-col">
+                                <div class="relative overflow-hidden">
+                                    <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
 
-                                <!-- Status badges -->
-                                <div class="absolute top-3 right-3 flex flex-col gap-2">
-                                    <% if (product.isNew) { %>
-                                        <div class="bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                                            NEW
-                                        </div>
-                                    <% } %>
-                                    <% if (product.hasOffer && product.discount > 0) { %>
-                                        <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                                            -<%= product.discount %>% OFF
-                                        </div>
-                                    <% } else if (product.discount > 0) { %>
-                                        <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                                            -<%= product.discount %>% OFF
-                                        </div>
-                                    <% } %>
-                                </div>
+                                    <!-- Gradient overlay -->
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                                <!-- Quick view button -->
-                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <button class="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-full font-semibold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                        Quick View
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="p-4 flex-1 flex flex-col">
-                                <div class="mb-3">
-                                    <h3 class="text-lg font-bold text-white mb-1 line-clamp-1 group-hover:text-[#00ffff] transition-colors duration-300">
-                                        <%= product.name %>
-                                    </h3>
-                                    <p class="text-gray-400 text-sm capitalize">
-                                        <%= product.category %>
-                                    </p>
-                                </div>
-
-                                <div class="flex justify-between items-center mt-auto">
-                                    <div class="flex flex-col">
-                                        <span class="text-[#00ffff] font-bold text-lg">₹<%= product.price.toLocaleString() %></span>
-                                        <% if (product.originalPrice && product.originalPrice > product.price) { %>
-                                            <span class="text-gray-500 text-sm line-through">₹<%= product.originalPrice.toLocaleString() %></span>
+                                    <!-- Status badges -->
+                                    <div class="absolute top-3 right-3 flex flex-col gap-2">
+                                        <% if (product.isNew) { %>
+                                            <div class="bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                                NEW
+                                            </div>
                                         <% } %>
                                         <% if (product.hasOffer && product.discount > 0) { %>
-                                            <div class="flex items-center gap-1 mt-1">
-                                                <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                                                    <%= product.discount %>% OFF
-                                                </span>
-                                                <% if (product.offerInfo) { %>
-                                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                                                        <%= product.offerInfo.type.charAt(0).toUpperCase() + product.offerInfo.type.slice(1) %> Offer
-                                                    </span>
-                                                <% } %>
+                                            <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                                                -<%= product.discount %>% OFF
                                             </div>
-                                            <% if (product.offerInfo && product.offerInfo.name) { %>
-                                                <div class="text-green-400 text-xs mt-1 font-medium">
-                                                    🎉 <%= product.offerInfo.name %>
-                                                </div>
-                                            <% } %>
+                                        <% } else if (product.discount > 0) { %>
+                                            <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                                                -<%= product.discount %>% OFF
+                                            </div>
                                         <% } %>
                                     </div>
 
-                                    <button class="p-2 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black rounded-xl hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                    </button>
+                                    <!-- Quick view button -->
+                                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <button class="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-full font-semibold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                            Quick View
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 flex-1 flex flex-col">
+                                    <div class="mb-3">
+                                        <h3 class="text-lg font-bold text-white mb-1 line-clamp-1 group-hover:text-[#00ffff] transition-colors duration-300">
+                                            <%= product.name %>
+                                        </h3>
+                                        <p class="text-gray-400 text-sm capitalize">
+                                            <%= product.category %>
+                                        </p>
+                                    </div>
+
+                                    <div class="flex justify-between items-center mt-auto">
+                                        <div class="flex flex-col">
+                                            <span class="text-[#00ffff] font-bold text-lg">₹<%= product.price.toLocaleString() %></span>
+                                            <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                                <span class="text-gray-500 text-sm line-through">₹<%= product.originalPrice.toLocaleString() %></span>
+                                            <% } %>
+                                            <% if (product.hasOffer && product.discount > 0) { %>
+                                                <div class="flex items-center gap-1 mt-1">
+                                                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                                        <%= product.discount %>% OFF
+                                                    </span>
+                                                    <% if (product.offerInfo) { %>
+                                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                                            <%= product.offerInfo.type.charAt(0).toUpperCase() + product.offerInfo.type.slice(1) %> Offer
+                                                        </span>
+                                                    <% } %>
+                                                </div>
+                                                <% if (product.offerInfo && product.offerInfo.name) { %>
+                                                    <div class="text-green-400 text-xs mt-1 font-medium">
+                                                        🎉 <%= product.offerInfo.name %>
+                                                    </div>
+                                                <% } %>
+                                            <% } %>
+                                        </div>
+
+                                        <button class="p-2 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black rounded-xl hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </a>
-                <% }); %>
-            <% } else { %>
-                <p class="text-gray-400">No recommended products available.</p>
-            <% } %>
+                        </a>
+                    <% }); %>
+                <% } else { %>
+                    <p class="text-gray-400">No recommended products available.</p>
+                <% } %>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<%- include("../../views/user/partials/footer") %>
+    <%- include("../../views/user/partials/footer") %>
 
-<script>
-// Fun animations and interactions for shop page
-document.addEventListener('DOMContentLoaded', function() {
-    // Create floating particles
-    createShopParticles();
+    <script>
+    // Fun animations and interactions for shop page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create floating particles
+        createShopParticles();
 
-    // Add fun interactions to product cards
-    enhanceShopProductCards();
+        // Add fun interactions to product cards
+        enhanceShopProductCards();
 
-    // Add emoji reactions on interactions
-    addShopEmojiReactions();
+        // Add emoji reactions on interactions
+        addShopEmojiReactions();
 
-    // Add search animation
-    enhanceSearchExperience();
+        // Add search animation
+        enhanceSearchExperience();
 
-    // Video controls
-    setupVideoControls();
+        // Video controls
+        setupVideoControls();
 
-    function createShopParticles() {
-        const particlesContainer = document.getElementById('shop-particles');
-        if (!particlesContainer) return;
+        function createShopParticles() {
+            const particlesContainer = document.getElementById('shop-particles');
+            if (!particlesContainer) return;
 
-        for (let i = 0; i < 15; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 8 + 's';
-            particle.style.animationDuration = (Math.random() * 4 + 8) + 's';
-            particlesContainer.appendChild(particle);
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 8) + 's';
+                particlesContainer.appendChild(particle);
+            }
         }
-    }
 
-    function enhanceShopProductCards() {
-        const productCards = document.querySelectorAll('.group');
-        productCards.forEach((card, index) => {
-            // Add stagger animation
-            card.style.animationDelay = (index * 0.1) + 's';
-            card.classList.add('animate-fade-in-up');
+        function enhanceShopProductCards() {
+            const productCards = document.querySelectorAll('.group');
+            productCards.forEach((card, index) => {
+                // Add stagger animation
+                card.style.animationDelay = (index * 0.1) + 's';
+                card.classList.add('animate-fade-in-up');
 
-            // Add fun hover effects
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-8px) scale(1.02) rotate(1deg)';
+                // Add fun hover effects
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02) rotate(1deg)';
 
-                // Add sparkle effect
-                createShopSparkles(this);
+                    // Add sparkle effect
+                    createShopSparkles(this);
 
-                // Add sound effect simulation (visual feedback)
-                const badge = this.querySelector('.animate-pulse');
-                if (badge) {
-                    badge.style.animation = 'wiggle 0.5s ease-in-out';
+                    // Add sound effect simulation (visual feedback)
+                    const badge = this.querySelector('.animate-pulse');
+                    if (badge) {
+                        badge.style.animation = 'wiggle 0.5s ease-in-out';
+                        setTimeout(() => {
+                            badge.style.animation = 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite';
+                        }, 500);
+                    }
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1) rotate(0deg)';
+                });
+
+                // Add click animation
+                card.addEventListener('click', function(e) {
+                    this.style.animation = 'bounceIn 0.3s ease-out';
                     setTimeout(() => {
-                        badge.style.animation = 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite';
+                        this.style.animation = '';
+                    }, 300);
+                });
+            });
+        }
+
+        function createShopSparkles(element) {
+            for (let i = 0; i < 3; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.innerHTML = ['✨', '⭐', '💫'][Math.floor(Math.random() * 3)];
+                sparkle.style.position = 'absolute';
+                sparkle.style.pointerEvents = 'none';
+                sparkle.style.fontSize = '1rem';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animation = 'fadeInUp 1s ease-out forwards';
+                sparkle.style.zIndex = '10';
+
+                element.style.position = 'relative';
+                element.appendChild(sparkle);
+
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 1000);
+            }
+        }
+
+        function addShopEmojiReactions() {
+            const buttons = document.querySelectorAll('button');
+            const emojis = ['🛒', '💝', '🎉', '⭐', '🌟', '✨', '🎊'];
+
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.type === 'submit' || this.id === 'resetFilters') {
+                        const emoji = document.createElement('div');
+                        emoji.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+                        emoji.style.position = 'fixed';
+                        emoji.style.left = e.clientX + 'px';
+                        emoji.style.top = e.clientY + 'px';
+                        emoji.style.fontSize = '1.5rem';
+                        emoji.style.pointerEvents = 'none';
+                        emoji.style.zIndex = '9999';
+                        emoji.style.animation = 'fadeInUp 1s ease-out forwards';
+
+                        document.body.appendChild(emoji);
+
+                        setTimeout(() => {
+                            emoji.remove();
+                        }, 1000);
+                    }
+                });
+            });
+        }
+
+        function enhanceSearchExperience() {
+            const searchInput = document.getElementById('search');
+            const clearButton = document.getElementById('clearSearch');
+
+            if (searchInput) {
+                searchInput.addEventListener('focus', function() {
+                    this.style.transform = 'scale(1.02)';
+                    this.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.3)';
+                });
+
+                searchInput.addEventListener('blur', function() {
+                    this.style.transform = 'scale(1)';
+                    this.style.boxShadow = '';
+                });
+
+                searchInput.addEventListener('input', function() {
+                    if (this.value.length > 0) {
+                        clearButton.style.display = 'block';
+                        clearButton.style.animation = 'bounceIn 0.3s ease-out';
+                    } else {
+                        clearButton.style.display = 'none';
+                    }
+                });
+            }
+
+            if (clearButton) {
+                clearButton.addEventListener('click', function() {
+                    searchInput.value = '';
+                    this.style.display = 'none';
+                    searchInput.focus();
+
+                    // Add clear animation
+                    const clearEmoji = document.createElement('div');
+                    clearEmoji.innerHTML = '🧹';
+                    clearEmoji.style.position = 'absolute';
+                    clearEmoji.style.right = '10px';
+                    clearEmoji.style.top = '50%';
+                    clearEmoji.style.transform = 'translateY(-50%)';
+                    clearEmoji.style.fontSize = '1.2rem';
+                    clearEmoji.style.pointerEvents = 'none';
+                    clearEmoji.style.animation = 'wiggle 0.5s ease-in-out';
+
+                    searchInput.parentElement.style.position = 'relative';
+                    searchInput.parentElement.appendChild(clearEmoji);
+
+                    setTimeout(() => {
+                        clearEmoji.remove();
                     }, 500);
-                }
-            });
-
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1) rotate(0deg)';
-            });
-
-            // Add click animation
-            card.addEventListener('click', function(e) {
-                this.style.animation = 'bounceIn 0.3s ease-out';
-                setTimeout(() => {
-                    this.style.animation = '';
-                }, 300);
-            });
-        });
-    }
-
-    function createShopSparkles(element) {
-        for (let i = 0; i < 3; i++) {
-            const sparkle = document.createElement('div');
-            sparkle.innerHTML = ['✨', '⭐', '💫'][Math.floor(Math.random() * 3)];
-            sparkle.style.position = 'absolute';
-            sparkle.style.pointerEvents = 'none';
-            sparkle.style.fontSize = '1rem';
-            sparkle.style.left = Math.random() * 100 + '%';
-            sparkle.style.top = Math.random() * 100 + '%';
-            sparkle.style.animation = 'fadeInUp 1s ease-out forwards';
-            sparkle.style.zIndex = '10';
-
-            element.style.position = 'relative';
-            element.appendChild(sparkle);
-
-            setTimeout(() => {
-                sparkle.remove();
-            }, 1000);
+                });
+            }
         }
-    }
 
-    function addShopEmojiReactions() {
-        const buttons = document.querySelectorAll('button');
-        const emojis = ['🛒', '💝', '🎉', '⭐', '🌟', '✨', '🎊'];
+        function setupVideoControls() {
+            const video = document.querySelector('video');
+            const videoToggle = document.getElementById('videoToggle');
+            const playIcon = document.getElementById('playIcon');
+            const pauseIcon = document.getElementById('pauseIcon');
 
-        buttons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (this.type === 'submit' || this.id === 'resetFilters') {
-                    const emoji = document.createElement('div');
-                    emoji.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
-                    emoji.style.position = 'fixed';
-                    emoji.style.left = e.clientX + 'px';
-                    emoji.style.top = e.clientY + 'px';
-                    emoji.style.fontSize = '1.5rem';
-                    emoji.style.pointerEvents = 'none';
-                    emoji.style.zIndex = '9999';
-                    emoji.style.animation = 'fadeInUp 1s ease-out forwards';
+            if (videoToggle && video) {
+                videoToggle.addEventListener('click', function() {
+                    if (video.paused) {
+                        video.play();
+                        playIcon.classList.add('hidden');
+                        pauseIcon.classList.remove('hidden');
+                    } else {
+                        video.pause();
+                        playIcon.classList.remove('hidden');
+                        pauseIcon.classList.add('hidden');
+                    }
 
-                    document.body.appendChild(emoji);
-
+                    // Add click animation
+                    this.style.animation = 'wiggle 0.3s ease-in-out';
                     setTimeout(() => {
-                        emoji.remove();
-                    }, 1000);
-                }
-            });
-        });
-    }
-
-    function enhanceSearchExperience() {
-        const searchInput = document.getElementById('search');
-        const clearButton = document.getElementById('clearSearch');
-
-        if (searchInput) {
-            searchInput.addEventListener('focus', function() {
-                this.style.transform = 'scale(1.02)';
-                this.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.3)';
-            });
-
-            searchInput.addEventListener('blur', function() {
-                this.style.transform = 'scale(1)';
-                this.style.boxShadow = '';
-            });
-
-            searchInput.addEventListener('input', function() {
-                if (this.value.length > 0) {
-                    clearButton.style.display = 'block';
-                    clearButton.style.animation = 'bounceIn 0.3s ease-out';
-                } else {
-                    clearButton.style.display = 'none';
-                }
-            });
+                        this.style.animation = '';
+                    }, 300);
+                });
+            }
         }
 
-        if (clearButton) {
-            clearButton.addEventListener('click', function() {
-                searchInput.value = '';
-                this.style.display = 'none';
-                searchInput.focus();
+        // Filter form enhancements
+        const filterForm = document.getElementById('filterForm');
+        const resetButton = document.getElementById('resetFilters');
 
-                // Add clear animation
-                const clearEmoji = document.createElement('div');
-                clearEmoji.innerHTML = '🧹';
-                clearEmoji.style.position = 'absolute';
-                clearEmoji.style.right = '10px';
-                clearEmoji.style.top = '50%';
-                clearEmoji.style.transform = 'translateY(-50%)';
-                clearEmoji.style.fontSize = '1.2rem';
-                clearEmoji.style.pointerEvents = 'none';
-                clearEmoji.style.animation = 'wiggle 0.5s ease-in-out';
+        if (resetButton) {
+            resetButton.addEventListener('click', function() {
+                // Clear all form inputs
+                const inputs = filterForm.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox') {
+                        input.checked = input.value === 'all';
+                    } else if (input.type === 'number') {
+                        input.value = input.name === 'min_price' ? '0' : '2000';
+                    } else {
+                        input.value = input.name === 'sort' ? 'default' : '';
+                    }
+                });
 
-                searchInput.parentElement.style.position = 'relative';
-                searchInput.parentElement.appendChild(clearEmoji);
-
+                // Add reset animation
+                filterForm.style.animation = 'wiggle 0.5s ease-in-out';
                 setTimeout(() => {
-                    clearEmoji.remove();
+                    filterForm.style.animation = '';
                 }, 500);
             });
         }
-    }
 
-    function setupVideoControls() {
-        const video = document.querySelector('video');
-        const videoToggle = document.getElementById('videoToggle');
-        const playIcon = document.getElementById('playIcon');
-        const pauseIcon = document.getElementById('pauseIcon');
+        // Add loading animation for form submission
+        if (filterForm) {
+            filterForm.addEventListener('submit', function() {
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
 
-        if (videoToggle && video) {
-            videoToggle.addEventListener('click', function() {
-                if (video.paused) {
-                    video.play();
-                    playIcon.classList.add('hidden');
-                    pauseIcon.classList.remove('hidden');
-                } else {
-                    video.pause();
-                    playIcon.classList.remove('hidden');
-                    pauseIcon.classList.add('hidden');
-                }
+                submitButton.innerHTML = `
+                    <div class="flex items-center justify-center">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                        Filtering...
+                    </div>
+                `;
 
-                // Add click animation
-                this.style.animation = 'wiggle 0.3s ease-in-out';
-                setTimeout(() => {
-                    this.style.animation = '';
-                }, 300);
+                submitButton.disabled = true;
             });
         }
-    }
-
-    // Filter form enhancements
-    const filterForm = document.getElementById('filterForm');
-    const resetButton = document.getElementById('resetFilters');
-
-    if (resetButton) {
-        resetButton.addEventListener('click', function() {
-            // Clear all form inputs
-            const inputs = filterForm.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                if (input.type === 'checkbox') {
-                    input.checked = input.value === 'all';
-                } else if (input.type === 'number') {
-                    input.value = input.name === 'min_price' ? '0' : '2000';
-                } else {
-                    input.value = input.name === 'sort' ? 'default' : '';
-                }
-            });
-
-            // Add reset animation
-            filterForm.style.animation = 'wiggle 0.5s ease-in-out';
-            setTimeout(() => {
-                filterForm.style.animation = '';
-            }, 500);
-        });
-    }
-
-    // Add loading animation for form submission
-    if (filterForm) {
-        filterForm.addEventListener('submit', function() {
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
-
-            submitButton.innerHTML = `
-                <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
-                    Filtering...
-                </div>
-            `;
-
-            submitButton.disabled = true;
-        });
-    }
-});
-</script>
-
-<style>
-/* Additional CSS for video background and animations */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.hero-content {
-    animation: fadeInUp 1s ease-out;
-}
-
-/* Ensure video covers the entire container */
-video {
-    min-width: 100%;
-    min-height: 100%;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .hero-content h1 {
-        font-size: 2.5rem;
-    }
-    .hero-content p {
-        font-size: 1.125rem;
-    }
-}
-
-/* Fun Animations for Shop Page */
-@keyframes bounceIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.3) translateY(50px);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.05) translateY(-10px);
-    }
-    70% {
-        transform: scale(0.9) translateY(0px);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0px);
-    }
-}
-
-@keyframes wiggle {
-    0%, 7% { transform: rotateZ(0); }
-    15% { transform: rotateZ(-15deg); }
-    20% { transform: rotateZ(10deg); }
-    25% { transform: rotateZ(-10deg); }
-    30% { transform: rotateZ(6deg); }
-    35% { transform: rotateZ(-4deg); }
-    40%, 100% { transform: rotateZ(0); }
-}
-
-@keyframes particle-float {
-    0% {
-        transform: translateY(100vh) translateX(0px) rotate(0deg);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    90% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-100vh) translateX(100px) rotate(360deg);
-        opacity: 0;
-    }
-}
-
-@keyframes shimmer {
-    0% { background-position: -200px 0; }
-    100% { background-position: calc(200px + 100%) 0; }
-}
-
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
-    50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.6); }
-}
-
-.animate-bounce-in {
-    animation: bounceIn 1s ease-out forwards;
-    opacity: 0;
-}
-
-.animate-fade-in-up {
-    animation: fadeInUp 0.6s ease-out forwards;
-    opacity: 0;
-}
-
-
-
-.floating-particles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: #00ffff;
-    border-radius: 50%;
-    animation: particle-float 8s linear infinite;
-}
-
-.particle:nth-child(2n) {
-    background: #ff0066;
-    animation-duration: 10s;
-}
-
-.particle:nth-child(3n) {
-    background: #ffcc00;
-    animation-duration: 12s;
-}
-
-.shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    background-size: 200px 100%;
-    animation: shimmer 2s infinite;
-}
-
-.animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-}
-
-/* Enhanced product card hover effects */
-.bg-gray-800:hover {
-    transform: translateY(-8px) scale(1.02) rotate(1deg);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.product-card:hover {
-    animation: wiggle 0.5s ease-in-out;
-}
-
-/* Smooth transitions for all interactive elements */
-button, input, select {
-    transition: all 0.3s ease;
-}
-
-button:active {
-    animation: wiggle 0.3s ease-in-out;
-}
-
-/* Enhanced hover effects */
-.hover-glow:hover {
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-}
-
-/* Custom scrollbar for better aesthetics */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #1f2937;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #00ffff;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #0088ff;
-}
-</style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Video control functionality
-        const video = document.querySelector('video');
-        const videoToggle = document.getElementById('videoToggle');
-        const playIcon = document.getElementById('playIcon');
-        const pauseIcon = document.getElementById('pauseIcon');
-        
-        if (video && videoToggle) {
-            videoToggle.addEventListener('click', function() {
-                if (video.paused) {
-                    video.play();
-                    playIcon.classList.add('hidden');
-                    pauseIcon.classList.remove('hidden');
-                } else {
-                    video.pause();
-                    playIcon.classList.remove('hidden');
-                    pauseIcon.classList.add('hidden');
-                }
-            });
-            
-            // Handle video load errors gracefully
-            video.addEventListener('error', function() {
-                console.log('Video failed to load, falling back to static background');
-                video.style.display = 'none';
-            });
-            
-            // Ensure video plays when it's loaded
-            video.addEventListener('loadeddata', function() {
-                video.play().catch(function(error) {
-                    console.log('Auto-play was prevented:', error);
-                });
-            });
-        }
-
-        // Price range indicator
-        const minPrice = document.getElementById('min_price');
-        const maxPrice = document.getElementById('max_price');
-        const priceIndicator = document.getElementById('priceRangeIndicator');
-        
-        function updatePriceRangeIndicator() {
-            if (priceIndicator) {
-                const min = parseInt(minPrice.value || 0);
-                const max = parseInt(maxPrice.value || 200);
-                const totalRange = 200;
-                
-                const leftPos = (min / totalRange) * 100;
-                const rightPos = 100 - ((max / totalRange) * 100);
-                
-                priceIndicator.style.left = leftPos + '%';
-                priceIndicator.style.right = rightPos + '%';
-            }
-        }
-        
-        if (minPrice && maxPrice) {
-            updatePriceRangeIndicator();
-            minPrice.addEventListener('input', updatePriceRangeIndicator);
-            maxPrice.addEventListener('input', updatePriceRangeIndicator);
-        }
-        
-        // Clear search button
-        const searchInput = document.getElementById('search');
-        const clearSearchBtn = document.getElementById('clearSearch');
-        
-        if (searchInput && clearSearchBtn) {
-            searchInput.addEventListener('input', function() {
-                clearSearchBtn.style.display = this.value ? 'block' : 'none';
-            });
-            
-            clearSearchBtn.addEventListener('click', function() {
-                searchInput.value = '';
-                this.style.display = 'none';
-            });
-        }
-        
-        // Reset filters button
-        const resetBtn = document.getElementById('resetFilters');
-        const filterForm = document.getElementById('filterForm');
-        
-        if (resetBtn && filterForm) {
-            resetBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                filterForm.reset(); // Reset all form fields
-                if (searchInput) searchInput.value = '';
-                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
-                if (minPrice) minPrice.value = '0';
-                if (maxPrice) maxPrice.value = '2000';
-                updatePriceRangeIndicator();
-                window.location.href = '/shop'; // Redirect to base shop URL
-            });
-        }
-        
-        // Category checkboxes logic
-        const allCategoriesCheckbox = document.getElementById('category_all');
-        const categoryCheckboxes = document.querySelectorAll('input[name="category"]:not([value="all"])');
-        
-        if (allCategoriesCheckbox) {
-            allCategoriesCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    categoryCheckboxes.forEach(checkbox => {
-                        checkbox.checked = false;
-                    });
-                }
-            });
-            
-            categoryCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        allCategoriesCheckbox.checked = false;
-                    }
-                    
-                    const anyChecked = Array.from(categoryCheckboxes).some(cb => cb.checked);
-                    if (!anyChecked) {
-                        allCategoriesCheckbox.checked = true;
-                    }
-                });
-            });
-        }
-
-        // Handle multiple category selections on form submit
-        document.getElementById('filterForm').addEventListener('submit', function(e) {
-            const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
-            const selectedCategories = Array.from(categoryCheckboxes)
-                .map(cb => cb.value)
-                .filter(val => val !== 'all');
-            
-            if (selectedCategories.length > 0) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'category';
-                hiddenInput.value = selectedCategories.join(',');
-                this.appendChild(hiddenInput);
-            }
-        });
     });
-    // Enhanced Reset filters button
-    const resetBtn = document.getElementById('resetFilters');
-        const filterForm = document.getElementById('filterForm');
-        
-        if (resetBtn && filterForm) {
-            resetBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                filterForm.reset(); // Reset all form fields
-                searchInput.value = '';
-                clearSearchBtn.style.display = 'none';
-                minPrice.value = '0';
-                maxPrice.value = '2000';
-                updatePriceRangeIndicator();
-                window.location.href = '/shop'; // Redirect to base shop URL
-            });
+    </script>
+
+    <style>
+    /* Additional CSS for video background and animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
         }
-    // Back to top button
-    const backToTopButton = document.querySelector('button.fixed');
-          backToTopButton.addEventListener('click', function() {
-            window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .hero-content {
+        animation: fadeInUp 1s ease-out;
+    }
+
+    /* Ensure video covers the entire container */
+    video {
+        min-width: 100%;
+        min-height: 100%;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .hero-content h1 {
+            font-size: 2.5rem;
+        }
+        .hero-content p {
+            font-size: 1.125rem;
+        }
+    }
+
+    /* Fun Animations for Shop Page */
+    @keyframes bounceIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.3) translateY(50px);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05) translateY(-10px);
+        }
+        70% {
+            transform: scale(0.9) translateY(0px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0px);
+        }
+    }
+
+    @keyframes wiggle {
+        0%, 7% { transform: rotateZ(0); }
+        15% { transform: rotateZ(-15deg); }
+        20% { transform: rotateZ(10deg); }
+        25% { transform: rotateZ(-10deg); }
+        30% { transform: rotateZ(6deg); }
+        35% { transform: rotateZ(-4deg); }
+        40%, 100% { transform: rotateZ(0); }
+    }
+
+    @keyframes particle-float {
+        0% {
+            transform: translateY(100vh) translateX(0px) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) translateX(100px) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -200px 0; }
+        100% { background-position: calc(200px + 100%) 0; }
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
+        50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.6); }
+    }
+
+    .animate-bounce-in {
+        animation: bounceIn 1s ease-out forwards;
+        opacity: 0;
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+
+
+    .floating-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #00ffff;
+        border-radius: 50%;
+        animation: particle-float 8s linear infinite;
+    }
+
+    .particle:nth-child(2n) {
+        background: #ff0066;
+        animation-duration: 10s;
+    }
+
+    .particle:nth-child(3n) {
+        background: #ffcc00;
+        animation-duration: 12s;
+    }
+
+    .shimmer {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        background-size: 200px 100%;
+        animation: shimmer 2s infinite;
+    }
+
+    .animate-pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    /* Enhanced product card hover effects */
+    .bg-gray-800:hover {
+        transform: translateY(-8px) scale(1.02) rotate(1deg);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .product-card:hover {
+        animation: wiggle 0.5s ease-in-out;
+    }
+
+    /* Smooth transitions for all interactive elements */
+    button, input, select {
+        transition: all 0.3s ease;
+    }
+
+    button:active {
+        animation: wiggle 0.3s ease-in-out;
+    }
+
+    /* Enhanced hover effects */
+    .hover-glow:hover {
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    }
+
+    /* Custom scrollbar for better aesthetics */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #1f2937;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #00ffff;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #0088ff;
+    }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Video control functionality
+            const video = document.querySelector('video');
+            const videoToggle = document.getElementById('videoToggle');
+            const playIcon = document.getElementById('playIcon');
+            const pauseIcon = document.getElementById('pauseIcon');
+            
+            if (video && videoToggle) {
+                videoToggle.addEventListener('click', function() {
+                    if (video.paused) {
+                        video.play();
+                        playIcon.classList.add('hidden');
+                        pauseIcon.classList.remove('hidden');
+                    } else {
+                        video.pause();
+                        playIcon.classList.remove('hidden');
+                        pauseIcon.classList.add('hidden');
+                    }
+                });
+                
+                // Handle video load errors gracefully
+                video.addEventListener('error', function() {
+                    console.log('Video failed to load, falling back to static background');
+                    video.style.display = 'none';
+                });
+                
+                // Ensure video plays when it's loaded
+                video.addEventListener('loadeddata', function() {
+                    video.play().catch(function(error) {
+                        console.log('Auto-play was prevented:', error);
                     });
                 });
+            }
+
+            // Price range indicator
+            const minPrice = document.getElementById('min_price');
+            const maxPrice = document.getElementById('max_price');
+            const priceIndicator = document.getElementById('priceRangeIndicator');
             
-            // Show/hide back to top button based on scroll position
-            window.addEventListener('scroll', function() {
-                if (window.pageYOffset > 300) {
-                    backToTopButton.style.opacity = '1';
-                } else {
-                    backToTopButton.style.opacity = '0';
+            function updatePriceRangeIndicator() {
+                if (priceIndicator) {
+                    const min = parseInt(minPrice.value || 0);
+                    const max = parseInt(maxPrice.value || 200);
+                    const totalRange = 200;
+                    
+                    const leftPos = (min / totalRange) * 100;
+                    const rightPos = 100 - ((max / totalRange) * 100);
+                    
+                    priceIndicator.style.left = leftPos + '%';
+                    priceIndicator.style.right = rightPos + '%';
+                }
+            }
+            
+            if (minPrice && maxPrice) {
+                updatePriceRangeIndicator();
+                minPrice.addEventListener('input', updatePriceRangeIndicator);
+                maxPrice.addEventListener('input', updatePriceRangeIndicator);
+            }
+            
+            // Clear search button
+            const searchInput = document.getElementById('search');
+            const clearSearchBtn = document.getElementById('clearSearch');
+            
+            if (searchInput && clearSearchBtn) {
+                searchInput.addEventListener('input', function() {
+                    clearSearchBtn.style.display = this.value ? 'block' : 'none';
+                });
+                
+                clearSearchBtn.addEventListener('click', function() {
+                    searchInput.value = '';
+                    this.style.display = 'none';
+                });
+            }
+            
+            // Reset filters button
+            const resetBtn = document.getElementById('resetFilters');
+            const filterForm = document.getElementById('filterForm');
+            
+            if (resetBtn && filterForm) {
+                resetBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    filterForm.reset(); // Reset all form fields
+                    if (searchInput) searchInput.value = '';
+                    if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                    if (minPrice) minPrice.value = '0';
+                    if (maxPrice) maxPrice.value = '2000';
+                    updatePriceRangeIndicator();
+                    window.location.href = '/shop'; // Redirect to base shop URL
+                });
+            }
+            
+            // Category checkboxes logic
+            const allCategoriesCheckbox = document.getElementById('category_all');
+            const categoryCheckboxes = document.querySelectorAll('input[name="category"]:not([value="all"])');
+            
+            if (allCategoriesCheckbox) {
+                allCategoriesCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        categoryCheckboxes.forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
+                    }
+                });
+                
+                categoryCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            allCategoriesCheckbox.checked = false;
+                        }
+                        
+                        const anyChecked = Array.from(categoryCheckboxes).some(cb => cb.checked);
+                        if (!anyChecked) {
+                            allCategoriesCheckbox.checked = true;
+                        }
+                    });
+                });
+            }
+
+            // Handle multiple category selections on form submit
+            document.getElementById('filterForm').addEventListener('submit', function(e) {
+                const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
+                const selectedCategories = Array.from(categoryCheckboxes)
+                    .map(cb => cb.value)
+                    .filter(val => val !== 'all');
+                
+                if (selectedCategories.length > 0) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'category';
+                    hiddenInput.value = selectedCategories.join(',');
+                    this.appendChild(hiddenInput);
                 }
             });
-</script>
+        });
+        // Enhanced Reset filters button
+        const resetBtn = document.getElementById('resetFilters');
+            const filterForm = document.getElementById('filterForm');
+            
+            if (resetBtn && filterForm) {
+                resetBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    filterForm.reset(); // Reset all form fields
+                    searchInput.value = '';
+                    clearSearchBtn.style.display = 'none';
+                    minPrice.value = '0';
+                    maxPrice.value = '2000';
+                    updatePriceRangeIndicator();
+                    window.location.href = '/shop'; // Redirect to base shop URL
+                });
+            }
+        // Back to top button
+        const backToTopButton = document.querySelector('button.fixed');
+            backToTopButton.addEventListener('click', function() {
+                window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    });
+                
+                // Show/hide back to top button based on scroll position
+                window.addEventListener('scroll', function() {
+                    if (window.pageYOffset > 300) {
+                        backToTopButton.style.opacity = '1';
+                    } else {
+                        backToTopButton.style.opacity = '0';
+                    }
+                });
+    </script>

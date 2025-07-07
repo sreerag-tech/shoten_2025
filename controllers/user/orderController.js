@@ -10,6 +10,8 @@ const PaymentService = require("../../services/paymentService");
 const loadOrders = async (req, res) => {
   try {
     const userId = req.session.user;
+    const orderId = req.params.orderId || null;
+    console.log(`Loading orders for user: ${userId}, orderId: ${orderId}`);
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
@@ -87,6 +89,7 @@ const loadOrders = async (req, res) => {
 
     // Get user data for header
     const userData = await User.findById(userId);
+    const orderData=await Order.findOne({ _id: orderId, userId: userId });
 
     // Get order message from session
     const orderMessage = req.session.orderMessage || null;
@@ -94,6 +97,7 @@ const loadOrders = async (req, res) => {
 
     res.render("orders", {
       user: userData,
+      order: orderData,
       orders: ordersWithCorrectTotals,
       currentPage: page,
       totalPages: totalPages,
@@ -534,7 +538,7 @@ const handlePaymentFailure = async (req, res) => {
       await newOrder.save();
 
       // Clear the user's cart since order was attempted
-      await Cart.deleteOne({ userId: userId });
+      await Cart.deleteMany({ userId: userId });
 
       // Also save to FailedOrder for retry functionality
       const tempOrderId = orderId || pendingOrder.orderData?.orderId || `temp_${Date.now()}`;
@@ -545,6 +549,7 @@ const handlePaymentFailure = async (req, res) => {
 
       if (failedOrder) {
         // Update existing failed order
+        response.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
         failedOrder.attemptCount += 1;
         failedOrder.lastAttempt = new Date();
         failedOrder.failureReason = error;

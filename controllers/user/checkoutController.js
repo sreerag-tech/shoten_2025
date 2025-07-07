@@ -164,10 +164,10 @@ const loadOrderSuccess = async (req, res) => {
     const order = await Order.findOne({ _id: orderId, userId: userId })
       .populate('orderedItems.product');
 
-    if (!order) {
-      req.session.checkoutMessage = { type: 'error', text: 'Order not found' };
-      return res.redirect('/orders');
-    }
+    // if (!order) {
+    //   req.session.checkoutMessage = { type: 'error', text: 'Order not found' };
+    //   return res.redirect('/orders');
+    // }
 
     // Use original order data (prices already include offers applied at order time)
     const orderedItemsWithDetails = order.orderedItems.map(item => {
