@@ -23,17 +23,23 @@ const placeOrder = async (req, res) => {
             discount,
             totalAmount
         } = req.body;
+        console.log(req.body, 'Request body for placing order');
 
         if (!addressId) {
             return res.json({ success: false, message: 'Please select a delivery address' });
         }
-        
+
+        // Reject COD for orders >= ₹1000
+        if (paymentMethod === 'COD' && totalAmount >= 1000) {
+            return res.json({ success: false, message: 'Cash on Delivery is not available for orders of ₹1000 or more' });
+        }
+
         // Get selected address
         const selectedAddress = await Address.findOne({ _id: addressId, userId: userId });
         if (!selectedAddress) {
             return res.json({ success: false, message: 'Selected address not found' });
         }
-        
+
         // Get cart items with populated product data
         const cartItems = await Cart.find({ userId: userId })
             .populate({
@@ -43,29 +49,29 @@ const placeOrder = async (req, res) => {
                     model: 'Category'
                 }
             });
-        
+
         // Validate cart items
         const validCartItems = [];
         for (const item of cartItems) {
             if (!item.productId) continue;
             if (item.productId.isBlocked || item.productId.isDeleted || item.productId.status !== 'Available') continue;
             if (!item.productId.category || item.productId.category.isListed === false) continue;
-            
+
             // Check stock availability
             if (item.productId.quantity < item.quantity) {
-                return res.json({ 
-                    success: false, 
-                    message: `Insufficient stock for ${item.productId.productName}. Only ${item.productId.quantity} available.` 
+                return res.json({
+                    success: false,
+                    message: `Insufficient stock for ${item.productId.productName}. Only ${item.productId.quantity} available.`
                 });
             }
-            
+
             validCartItems.push(item);
         }
-        
+
         if (validCartItems.length === 0) {
             return res.json({ success: false, message: 'No valid items in cart' });
         }
-        
+
         // Calculate order totals with offers
         let calculatedSubtotal = 0;
         const orderedItems = [];
@@ -94,7 +100,7 @@ const placeOrder = async (req, res) => {
                 $inc: { quantity: -item.quantity }
             });
         }
-        
+
         // Calculate shipping charge
         const calculatedShippingCharge = calculatedSubtotal >= 500 ? 0 : 50;
 
@@ -120,10 +126,10 @@ const placeOrder = async (req, res) => {
         }
 
         const finalTotal = calculatedSubtotal + calculatedShippingCharge - calculatedDiscount;
-        
+
         // Generate unique order ID
         const orderId = 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-        
+
         // Create order
         const newOrder = new Order({
             orderId: orderId,
@@ -161,12 +167,12 @@ const placeOrder = async (req, res) => {
                     session: { user: userId },
                     body: {
                         amount: finalTotal,
-                        orderId: newOrder._id, // Use MongoDB ObjectId
+                        orderId: newOrder._id,
                         description: `Payment for order #${orderId}`
                     }
                 }, {
                     json: (data) => {
-                        console.log('Wallet payment response:', data); // Debug log
+                        console.log('Wallet payment response:', data);
                         return data;
                     }
                 });
@@ -189,6 +195,7 @@ const placeOrder = async (req, res) => {
                 await User.findByIdAndUpdate(userId, {
                     $push: { orderHistory: newOrder._id }
                 });
+                console.log(newOrder._id, 'Order placed successfully using wallet!');
 
                 return res.json({
                     success: true,
@@ -253,7 +260,8 @@ const placeOrder = async (req, res) => {
                 razorpayOrderId: razorpayResult.razorpayOrderId,
                 paymentOptions: paymentOptions
             });
-        } else {
+        } else if (paymentMethod === 'COD') {
+            console.log(totalAmount, 'Processing COD order');
             // COD Order - Process immediately
             await newOrder.save();
 
@@ -271,7 +279,7 @@ const placeOrder = async (req, res) => {
                 orderId: newOrder._id
             });
         }
-        
+
     } catch (error) {
         console.error('Error placing order:', error);
         return res.json({ success: false, message: 'Failed to place order: ' + error.message });
@@ -337,23 +345,23 @@ const setDefaultCheckoutAddress = async (req, res) => {
     try {
         const userId = req.session.user;
         const { addressId } = req.body;
-        
+
         // Remove default from all addresses
         await Address.updateMany({ userId: userId }, { isDefault: false });
-        
+
         // Set new default
         const result = await Address.findOneAndUpdate(
             { _id: addressId, userId: userId },
             { isDefault: true },
             { new: true }
         );
-        
+
         if (!result) {
             return res.json({ success: false, message: 'Address not found' });
         }
-        
+
         return res.json({ success: true, message: 'Default address updated successfully' });
-        
+
     } catch (error) {
         console.error('Error setting default address:', error);
         return res.json({ success: false, message: 'Failed to update default address: ' + error.message });
