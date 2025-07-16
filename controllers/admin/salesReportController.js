@@ -14,90 +14,10 @@ const loadSalesReport = async (req, res) => {
       customEndDate 
     } = req.query;
 
-    // Calculate date range based on report type
-    let dateFilter = {};
-    let reportTitle = '';
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    switch (reportType) {
-      case 'daily':
-        dateFilter = {
-          createdOn: {
-            $gte: today,
-            $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-          }
-        };
-        reportTitle = 'Daily Sales Report';
-        break;
-        
-      case 'weekly':
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - today.getDay());
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 7);
-        
-        dateFilter = {
-          createdOn: {
-            $gte: weekStart,
-            $lt: weekEnd
-          }
-        };
-        reportTitle = 'Weekly Sales Report';
-        break;
-        
-      case 'monthly':
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        
-        dateFilter = {
-          createdOn: {
-            $gte: monthStart,
-            $lt: monthEnd
-          }
-        };
-        reportTitle = 'Monthly Sales Report';
-        break;
-        
-      case 'yearly':
-        const yearStart = new Date(today.getFullYear(), 0, 1);
-        const yearEnd = new Date(today.getFullYear() + 1, 0, 1);
-        
-        dateFilter = {
-          createdOn: {
-            $gte: yearStart,
-            $lt: yearEnd
-          }
-        };
-        reportTitle = 'Yearly Sales Report';
-        break;
-        
-      case 'custom':
-        if (customStartDate && customEndDate) {
-          const startDateObj = new Date(customStartDate);
-          const endDateObj = new Date(customEndDate);
-          endDateObj.setHours(23, 59, 59, 999);
-          
-          dateFilter = {
-            createdOn: {
-              $gte: startDateObj,
-              $lte: endDateObj
-            }
-          };
-          reportTitle = `Custom Sales Report (${customStartDate} to ${customEndDate})`;
-        } else {
-          // Default to today if no custom dates provided
-          dateFilter = {
-            createdOn: {
-              $gte: today,
-              $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-            }
-          };
-          reportTitle = 'Daily Sales Report';
-        }
-        break;
-    }
+    // Use the centralized date filter function for consistency
+    let dateFilter = getDateFilter(reportType, customStartDate, customEndDate);
+    let reportTitle = getReportTitle(reportType, customStartDate, customEndDate);
+
 
     // Get sales data
     const salesData = await getSalesData(dateFilter);
@@ -233,7 +153,7 @@ const getChartData = async (reportType, dateFilter) => {
         $dateToString: { format: "%Y-%m-%d", date: "$createdOn" }
       };
       const startDate = new Date(dateFilter.createdOn.$gte);
-      const endDate = new Date(dateFilter.createdOn.$lte);
+      const endDate = new Date(dateFilter.createdOn.$lte || dateFilter.createdOn.$lt);
       const current = new Date(startDate);
       while (current <= endDate) {
         labels.push(current.toISOString().split('T')[0]);
@@ -500,6 +420,27 @@ const getDateFilter = (reportType, customStartDate, customEndDate) => {
           $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
         }
       };
+  }
+};
+
+// Helper function to get report title
+const getReportTitle = (reportType, customStartDate, customEndDate) => {
+  switch (reportType) {
+    case 'daily':
+      return 'Daily Sales Report';
+    case 'weekly':
+      return 'Weekly Sales Report';
+    case 'monthly':
+      return 'Monthly Sales Report';
+    case 'yearly':
+      return 'Yearly Sales Report';
+    case 'custom':
+      if (customStartDate && customEndDate) {
+        return `Custom Sales Report (${customStartDate} to ${customEndDate})`;
+      }
+      return 'Daily Sales Report';
+    default:
+      return 'Daily Sales Report';
   }
 };
 

@@ -537,6 +537,19 @@ const handlePaymentFailure = async (req, res) => {
 
       await newOrder.save();
 
+      // Restore product stock since payment failed
+      const Product = require("../../models/productSchema");
+      for (const item of pendingOrder.orderedItems) {
+        try {
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { quantity: item.quantity }
+          });
+          console.log(`Stock restored for product ${item.product}: +${item.quantity}`);
+        } catch (stockError) {
+          console.error(`Error restoring stock for product ${item.product}:`, stockError);
+        }
+      }
+
       // Clear the user's cart since order was attempted
       await Cart.deleteMany({ userId: userId });
 
@@ -549,7 +562,6 @@ const handlePaymentFailure = async (req, res) => {
 
       if (failedOrder) {
         // Update existing failed order
-        response.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
         failedOrder.attemptCount += 1;
         failedOrder.lastAttempt = new Date();
         failedOrder.failureReason = error;
@@ -587,8 +599,18 @@ const handlePaymentFailure = async (req, res) => {
       // Store order details in session for the failure page
       req.session.failureOrderDetails = orderDetails;
 
-      // Redirect to order failure page
-      return res.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
+      // Return JSON response for AJAX calls, redirect for direct calls
+      if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        return res.json({
+          success: false,
+          redirect: '/order-failure',
+          message: error || 'Payment processing failed',
+          orderDetails: orderDetails
+        });
+      } else {
+        // Redirect to order failure page
+        return res.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
+      }
 
     } else {
       console.log('No pending order found in session, payment failure not saved');

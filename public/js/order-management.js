@@ -289,7 +289,7 @@ function downloadInvoice(orderId) {
 
     // Create a temporary link to download the invoice
     const link = document.createElement('a');
-    link.href = `/download-invoice/${orderId}`;
+    link.href = `/orders/${orderId}/invoice`;
     link.download = `invoice-${orderId}.pdf`;
     document.body.appendChild(link);
     link.click();

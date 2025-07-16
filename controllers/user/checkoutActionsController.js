@@ -95,10 +95,8 @@ const placeOrder = async (req, res) => {
                 status: 'Processing'
             });
 
-            // Reduce product stock
-            await Product.findByIdAndUpdate(item.productId._id, {
-                $inc: { quantity: -item.quantity }
-            });
+            // Note: Stock will be reduced after successful payment verification
+            // For now, just prepare the order items
         }
 
         // Calculate shipping charge

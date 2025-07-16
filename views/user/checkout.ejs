@@ -617,35 +617,9 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    if (data.paymentRequired) {
-                        // Handle Razorpay payment
-                        const options = data.paymentOptions;
-                        options.handler = function(response) {
-                            // Handle payment success
-                            window.location.href = `/order-success/${data.tempOrderId}`;
-                        };
-                        const rzp = new Razorpay(options);
-                        rzp.open();
-                    } else {
-                        // Redirect to order success for COD or Wallet
-                        Swal.fire({
-                            title: 'Success!',
-                            text: data.message,
-                            icon: 'success',
-                            confirmButtonColor: '#00ffff'
-                        }).then(() => {
-                            window.location.href = `/order-success/${data.orderId}`;
-                        });
-                    }
-                } else {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: data.message,
-                        icon: 'error',
-                        confirmButtonColor: '#00ffff'
-                    });
-                }
+                // Use the checkout-actions.js to handle the response
+                // This will show the payment confirmation and handle Razorpay
+                handleOrderResponse(data);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -661,6 +635,77 @@
                 placeOrderBtn.innerHTML = '<i class="fas fa-check-circle"></i> Place Order';
             });
         });
+
+        // Verify payment with server
+        function verifyPayment(paymentResponse, orderId) {
+            Swal.fire({
+                title: '🔄 Verifying Payment...',
+                text: 'Please wait while we verify your payment.',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                background: '#1f2937',
+                color: '#ffffff',
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch('/verify-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...paymentResponse,
+                    orderId: orderId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.close();
+
+                if (data.success) {
+                    // Payment verified - redirect to success page
+                    window.location.href = `/order-success/${data.orderId}`;
+                } else {
+                    // Verification failed
+                    handlePaymentFailure(orderId, data.message);
+                }
+            })
+            .catch(error => {
+                Swal.close();
+                console.error('Payment verification error:', error);
+                handlePaymentFailure(orderId, 'Payment verification failed');
+            });
+        }
+
+        // Handle payment failure
+        function handlePaymentFailure(orderId, errorMessage) {
+            fetch('/payment-failure', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    error: errorMessage
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.redirect) {
+                    // Redirect to failure page
+                    window.location.href = data.redirect + '?error=' + encodeURIComponent(errorMessage);
+                } else {
+                    // Show error and redirect to orders
+                    window.location.href = '/orders';
+                }
+            })
+            .catch(() => {
+                // Even if recording fails, redirect to orders
+                window.location.href = '/orders';
+            });
+        }
     });
     </script>
 

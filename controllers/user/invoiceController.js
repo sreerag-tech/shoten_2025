@@ -8,14 +8,24 @@ const downloadInvoice = async (req, res) => {
   try {
     const userId = req.session.user;
     const orderId = req.params.id;
-    
+
+    console.log('Invoice download requested for order:', orderId, 'by user:', userId);
+
+    if (!userId) {
+      console.log('No user session found');
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
     const order = await Order.findOne({ _id: orderId, userId: userId })
       .populate('orderedItems.product')
       .populate('userId');
 
     if (!order) {
+      console.log('Order not found:', orderId, 'for user:', userId);
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
+
+    console.log('Order found, generating invoice for:', order.orderId);
 
     // Use original order data (prices already include offers applied at order time)
     const orderedItemsWithDetails = order.orderedItems.map(item => {
@@ -58,15 +68,17 @@ const downloadInvoice = async (req, res) => {
 function generateInvoicePDF(doc, order) {
   // Header
   doc.fontSize(20).text('SHOTEN INVOICE', 50, 50);
-  doc.fontSize(10).text(`Invoice Date: ${new Date(order.invoiceDate).toLocaleDateString()}`, 50, 80);
+  const invoiceDate = order.invoiceDate ? new Date(order.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString();
+  doc.fontSize(10).text(`Invoice Date: ${invoiceDate}`, 50, 80);
   doc.text(`Order ID: ${order.orderId}`, 50, 95);
   
   // Customer Info
   doc.fontSize(14).text('Bill To:', 50, 130);
-  doc.fontSize(10).text(order.shippingAddress.fullName, 50, 150);
-  doc.text(order.shippingAddress.city + ', ' + order.shippingAddress.state, 50, 165);
-  doc.text('PIN: ' + order.shippingAddress.pincode, 50, 180);
-  doc.text('Phone: ' + order.shippingAddress.phone, 50, 195);
+  const address = order.shippingAddress || order.address || {};
+  doc.fontSize(10).text(address.fullName || address.name || 'N/A', 50, 150);
+  doc.text((address.city || 'N/A') + ', ' + (address.state || 'N/A'), 50, 165);
+  doc.text('PIN: ' + (address.pincode || address.zipCode || 'N/A'), 50, 180);
+  doc.text('Phone: ' + (address.phone || 'N/A'), 50, 195);
   
   // Order Details
   let yPosition = 230;

@@ -215,9 +215,25 @@ function submitOrder(orderData) {
 
         if (data.success) {
             if (data.paymentRequired) {
-                // Online payment - Initialize Razorpay
-                const orderIdForTracking = data.tempOrderId || data.orderId;
-                initiateRazorpayPayment(data.paymentOptions, orderIdForTracking);
+                // Show confirmation before opening Razorpay
+                Swal.fire({
+                    title: '💳 Proceed to Payment',
+                    text: `Total Amount: ₹${data.paymentOptions.amount / 100}`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#00ffff',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Pay Now',
+                    cancelButtonText: 'Cancel',
+                    background: '#1f2937',
+                    color: '#ffffff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Online payment - Initialize Razorpay
+                        const orderIdForTracking = data.tempOrderId || data.orderId;
+                        initiateRazorpayPayment(data.paymentOptions, orderIdForTracking);
+                    }
+                });
             } else {
                 // COD order - Show success and redirect
                 Swal.fire({
@@ -379,31 +395,37 @@ function handlePaymentFailure(orderId, errorMessage) {
             error: errorMessage
         })
     })
-    .then(() => {
-        // Show error message and redirect to orders
-        Swal.fire({
-            title: '❌ Payment Failed',
-            text: `Payment failed: ${errorMessage}. Order created in your order history. Items removed from cart. You can retry payment from your orders.`,
-            icon: 'error',
-            confirmButtonColor: '#ef4444',
-            background: '#1f2937',
-            color: '#ffffff',
-            confirmButtonText: 'View Orders',
-            showCancelButton: true,
-            cancelButtonText: 'Continue Shopping',
-            cancelButtonColor: '#6b7280'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Go to orders page to retry
-                window.location.href = '/orders';
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                // Continue shopping
-                window.location.href = '/shop';
-            } else {
-                // Default to orders
-                window.location.href = '/orders';
-            }
-        });
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirect) {
+            // Redirect to failure page
+            window.location.href = data.redirect + '?error=' + encodeURIComponent(errorMessage);
+        } else {
+            // Show error message and redirect to orders
+            Swal.fire({
+                title: '❌ Payment Failed',
+                text: `Payment failed: ${errorMessage}. Order created in your order history. Items removed from cart. You can retry payment from your orders.`,
+                icon: 'error',
+                confirmButtonColor: '#ef4444',
+                background: '#1f2937',
+                color: '#ffffff',
+                confirmButtonText: 'View Orders',
+                showCancelButton: true,
+                cancelButtonText: 'Continue Shopping',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Go to orders page to retry
+                    window.location.href = '/orders';
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    // Continue shopping
+                    window.location.href = '/shop';
+                } else {
+                    // Default to orders
+                    window.location.href = '/orders';
+                }
+            });
+        }
     })
     .catch(() => {
         // Even if recording fails, show error and redirect
@@ -428,4 +450,62 @@ function handlePaymentFailure(orderId, errorMessage) {
             }
         });
     });
+}
+
+// Handle order response (used by checkout.ejs)
+function handleOrderResponse(data) {
+    if (data.success) {
+        if (data.paymentRequired) {
+            // Show confirmation before opening Razorpay
+            Swal.fire({
+                title: '💳 Proceed to Payment',
+                text: `Total Amount: ₹${data.paymentOptions.amount / 100}`,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#00ffff',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Pay Now',
+                cancelButtonText: 'Cancel',
+                background: '#1f2937',
+                color: '#ffffff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Online payment - Initialize Razorpay
+                    const orderIdForTracking = data.tempOrderId || data.orderId;
+                    initiateRazorpayPayment(data.paymentOptions, orderIdForTracking);
+                } else {
+                    // User cancelled, reset button if available
+                    const placeOrderBtn = document.querySelector('.place-order-btn');
+                    if (placeOrderBtn) {
+                        placeOrderBtn.disabled = false;
+                        placeOrderBtn.innerHTML = '<i class="fas fa-check-circle"></i> Place Order';
+                    }
+                }
+            });
+        } else {
+            // COD order - Show success and redirect
+            Swal.fire({
+                title: '🎉 Order Placed!',
+                text: 'Your order has been placed successfully!',
+            icon: 'success',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff',
+            timer: 2000,
+            showConfirmButton: false
+        }).then(() => {
+            // Redirect to order success page
+            window.location.href = `/order-success/${data.orderId}`;
+        });
+        }
+    } else {
+        Swal.fire({
+            title: '❌ Order Failed',
+            text: data.message,
+            icon: 'error',
+            confirmButtonColor: '#00ffff',
+            background: '#1f2937',
+            color: '#ffffff'
+        });
+    }
 }

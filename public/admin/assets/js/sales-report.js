@@ -5,14 +5,36 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSalesChart();
     
     // Handle report type change
-    document.getElementById('reportType').addEventListener('change', function() {
-        const customDateFields = document.querySelectorAll('#customDateStart, #customDateEnd');
-        if (this.value === 'custom') {
-            customDateFields.forEach(field => field.style.display = 'block');
-        } else {
-            customDateFields.forEach(field => field.style.display = 'none');
-        }
-    });
+    const reportTypeSelect = document.getElementById('reportType');
+    if (reportTypeSelect) {
+        reportTypeSelect.addEventListener('change', function() {
+            const customDateStart = document.getElementById('customDateStart');
+            const customDateEnd = document.getElementById('customDateEnd');
+
+            if (this.value === 'custom') {
+                if (customDateStart) customDateStart.style.display = 'block';
+                if (customDateEnd) customDateEnd.style.display = 'block';
+
+                // Make custom date fields required
+                const startDateInput = document.getElementById('customStartDate');
+                const endDateInput = document.getElementById('customEndDate');
+                if (startDateInput) startDateInput.required = true;
+                if (endDateInput) endDateInput.required = true;
+            } else {
+                if (customDateStart) customDateStart.style.display = 'none';
+                if (customDateEnd) customDateEnd.style.display = 'none';
+
+                // Remove required attribute for non-custom reports
+                const startDateInput = document.getElementById('customStartDate');
+                const endDateInput = document.getElementById('customEndDate');
+                if (startDateInput) startDateInput.required = false;
+                if (endDateInput) endDateInput.required = false;
+            }
+        });
+
+        // Trigger change event on page load to set initial state
+        reportTypeSelect.dispatchEvent(new Event('change'));
+    }
 });
 
 // Initialize the main sales chart
@@ -243,34 +265,78 @@ function exportTableToCSV() {
 
 // Validate custom date range
 function validateDateRange() {
-    const startDate = document.getElementById('customStartDate').value;
-    const endDate = document.getElementById('customEndDate').value;
-    
-    if (reportType === 'custom' && startDate && endDate) {
+    const reportTypeSelect = document.getElementById('reportType');
+    if (!reportTypeSelect) return true;
+
+    const reportType = reportTypeSelect.value;
+    const startDateInput = document.getElementById('customStartDate');
+    const endDateInput = document.getElementById('customEndDate');
+
+    if (reportType === 'custom') {
+        if (!startDateInput || !endDateInput) return true;
+
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+
+        if (!startDate || !endDate) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Missing Dates',
+                text: 'Please select both start and end dates for custom report.',
+                confirmButtonColor: '#007bff'
+            });
+            return false;
+        }
+
         const start = new Date(startDate);
         const end = new Date(endDate);
-        
+        const today = new Date();
+
+        // Check if dates are valid
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Dates',
+                text: 'Please select valid dates.',
+                confirmButtonColor: '#007bff'
+            });
+            return false;
+        }
+
         if (start > end) {
             Swal.fire({
                 icon: 'error',
                 title: 'Invalid Date Range',
-                text: 'Start date cannot be later than end date.'
+                text: 'Start date cannot be later than end date.',
+                confirmButtonColor: '#007bff'
             });
             return false;
         }
-        
+
+        // Check if end date is in the future
+        if (end > today) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Future Date Selected',
+                text: 'End date is in the future. Report will only show data up to today.',
+                confirmButtonColor: '#007bff'
+            });
+        }
+
         // Check if date range is too large (more than 1 year)
         const diffTime = Math.abs(end - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays > 365) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Large Date Range',
-                text: 'Date range is quite large. Report generation might take longer.',
+                text: `Date range is ${diffDays} days. Large reports may take longer to generate.`,
                 showCancelButton: true,
                 confirmButtonText: 'Continue',
-                cancelButtonText: 'Cancel'
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d'
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('reportFilterForm').submit();
@@ -279,13 +345,31 @@ function validateDateRange() {
             return false;
         }
     }
-    
+
     return true;
 }
 
 // Add form validation
-document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
-    if (!validateDateRange()) {
-        e.preventDefault();
-    }
-});
+const reportForm = document.getElementById('reportFilterForm');
+if (reportForm) {
+    reportForm.addEventListener('submit', function(e) {
+        const isValid = validateDateRange();
+        if (!isValid) {
+            e.preventDefault();
+            return false;
+        }
+
+        // Show loading message for report generation
+        Swal.fire({
+            title: 'Generating Report...',
+            text: 'Please wait while we prepare your sales report.',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        return true;
+    });
+}

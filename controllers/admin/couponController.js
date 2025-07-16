@@ -212,10 +212,21 @@ const createCoupon = async (req, res) => {
 
     // Validate minimum price
     if (minimumPrice < 0) {
-      return res.json({ 
-        success: false, 
-        message: 'Minimum order amount cannot be negative' 
+      return res.json({
+        success: false,
+        message: 'Minimum order amount cannot be negative'
       });
+    }
+
+    // Validate description word limit (50 words maximum)
+    if (description && description.trim()) {
+      const wordCount = description.trim().split(/\s+/).length;
+      if (wordCount > 50) {
+        return res.json({
+          success: false,
+          message: `Description must not exceed 50 words. Current word count: ${wordCount}`
+        });
+      }
     }
 
     // Create new coupon

@@ -46,8 +46,12 @@
                         <!-- Description -->
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" 
-                                      placeholder="Optional description for the coupon" maxlength="500"></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="Optional description for the coupon (max 50 words)" maxlength="500"></textarea>
+                            <div class="form-text">
+                                <span id="wordCount">0</span>/50 words
+                                <span id="wordCountWarning" class="text-danger ms-2" style="display: none;">Word limit exceeded!</span>
+                            </div>
                         </div>
 
                         <div class="row">
@@ -191,6 +195,29 @@ document.getElementById('discountType').addEventListener('change', function() {
     }
 });
 
+// Real-time word count validation for description
+document.getElementById('description').addEventListener('input', function() {
+    const text = this.value.trim();
+    const words = text ? text.split(/\s+/) : [];
+    const wordCount = words.length;
+    const maxWords = 50;
+
+    const wordCountElement = document.getElementById('wordCount');
+    const warningElement = document.getElementById('wordCountWarning');
+
+    wordCountElement.textContent = wordCount;
+
+    if (wordCount > maxWords) {
+        wordCountElement.classList.add('text-danger');
+        warningElement.style.display = 'inline';
+        this.classList.add('is-invalid');
+    } else {
+        wordCountElement.classList.remove('text-danger');
+        warningElement.style.display = 'none';
+        this.classList.remove('is-invalid');
+    }
+});
+
 // Form validation and submission
 document.getElementById('addCouponForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -209,6 +236,15 @@ document.getElementById('addCouponForm').addEventListener('submit', function(e) 
     if (!/^[A-Z0-9]{3,20}$/i.test(data.code)) {
         Swal.fire('Error!', 'Coupon code must be 3-20 characters long and contain only letters and numbers', 'error');
         return;
+    }
+
+    // Validate description word count
+    if (data.description && data.description.trim()) {
+        const words = data.description.trim().split(/\s+/);
+        if (words.length > 50) {
+            Swal.fire('Error!', `Description must not exceed 50 words. Current word count: ${words.length}`, 'error');
+            return;
+        }
     }
     
     // Validate discount value
