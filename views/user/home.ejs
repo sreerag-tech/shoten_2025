@@ -59,11 +59,11 @@
                         </div>
 
                         <!-- Quick view button -->
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <!-- <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <button class="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-full font-semibold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                                 Quick View
                             </button>
-                        </div>
+                        </div> -->
                     </div>
 
                     <div class="p-5">
@@ -95,12 +95,14 @@
                                     </div>
                                 <% } %>
                             </div>
+<button 
+    class="add-to-cart-btn p-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black rounded-xl hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105" 
+    data-product-id="<%= product._id %>">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+    </svg>
+</button>
 
-                            <button class="p-3 bg-gradient-to-r from-[#00ffff] to-[#0088ff] text-black rounded-xl hover:from-[#0088ff] hover:to-[#00ffff] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -122,12 +124,55 @@
                 <button class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition">SUBSCRIBE</button>
             </div>
         </div>
+        <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg hidden z-50"></div>
     </section>
 
   <%-include("../../views/user/partials/footer")%>
 
   
   <script>
+     function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.remove('hidden');
+
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+
+     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+    button.addEventListener('click', async function () {
+        const productId = this.getAttribute('data-product-id');
+
+        try {
+            const res = await fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ productId })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // ✅ Show toast or notification (optional)
+                showToast(data.message); // Implement this function if needed
+
+                // ✅ Optionally update cart count on navbar
+                if (document.getElementById('cart-count')) {
+                    document.getElementById('cart-count').textContent = data.cartCount;
+                }
+            } else {
+                alert('Failed to add to cart');
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+        }
+    });
+});
+
       // Enhanced animations and fun effects
       document.addEventListener('DOMContentLoaded', function() {
           // Create floating particles

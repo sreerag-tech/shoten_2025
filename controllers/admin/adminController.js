@@ -1,6 +1,3 @@
-//this page give the basic login ,logout and admin opening working
-
-
 const User = require("../../models/userSchema");
 const Order = require("../../models/orderSchema");
 const Product = require("../../models/productSchema");
@@ -9,25 +6,21 @@ const mongoose = require("mongoose");
 const bcrypt = require(`bcrypt`);
 const offerService = require("../../services/offerService");
 
-
-const pageerror= async(req,res)=>{
+const pageerror = async(req,res)=>{
   res.render("admin-error")
 }
 
-
-const loadLogin=(req,res)=>{
+const loadLogin = (req,res)=>{
   if(req.session.admin){
     return res.redirect("/admin/dashboard")
   }
   res.render("admin-login",{message:null})
 }
 
-
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
    
-
     // Find admin user
     const admin = await User.findOne({ email, isAdmin: true });
     
@@ -35,7 +28,6 @@ const login = async (req, res) => {
       // Render admin login page with error message if no admin found
       return res.render('admin-login', { 
         message: 'Invalid email or password',
-       
       });
     }
     // Compare passwords
@@ -63,7 +55,6 @@ const login = async (req, res) => {
     });
   }
 };
-
 
 const loadDashboard = async (req, res) => {
   if (req.session.admin) {
@@ -169,6 +160,122 @@ const loadDashboard = async (req, res) => {
         };
       }));
 
+      // Initialize bestSellingProducts and bestSellingCategories as empty arrays
+      let bestSellingProducts = [];
+      let bestSellingCategories = [];
+
+      try {
+        // Get best selling products (top 10)
+        bestSellingProducts = await Order.aggregate([
+          { $match: { status: { $ne: 'Cancelled' } } },
+          { $unwind: '$orderedItems' },
+          {
+            $group: {
+              _id: '$orderedItems.product',
+              totalSold: { $sum: '$orderedItems.quantity' },
+              totalRevenue: { 
+                $sum: { 
+                  $multiply: [
+                    '$orderedItems.quantity',
+                    '$orderedItems.price'
+                  ]
+                }
+              }
+            }
+          },
+          {
+            $lookup: {
+              from: 'products',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'product'
+            }
+          },
+          { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: 'product.category',
+              foreignField: '_id',
+              as: 'category'
+            }
+          },
+          { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+          {
+            $project: {
+              _id: '$product._id',
+              productName: '$product.productName',
+              productImage: '$product.productImage',
+              salePrice: '$product.salePrice',
+              category: { $ifNull: ['$category', null] },
+              totalSold: 1,
+              totalRevenue: 1
+            }
+          },
+          { $sort: { totalSold: -1 } },
+          { $limit: 10 }
+        ]).catch(err => {
+          console.error('Error in bestSellingProducts aggregation:', err);
+          return [];
+        });
+
+        // Get best selling categories (top 10)
+        bestSellingCategories = await Order.aggregate([
+          { $match: { status: { $ne: 'Cancelled' } } },
+          { $unwind: '$orderedItems' },
+          {
+            $lookup: {
+              from: 'products',
+              localField: 'orderedItems.product',
+              foreignField: '_id',
+              as: 'product'
+            }
+          },
+          { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+          {
+            $group: {
+              _id: '$product.category',
+              totalSold: { $sum: '$orderedItems.quantity' },
+              totalRevenue: { 
+                $sum: { 
+                  $multiply: [
+                    '$orderedItems.quantity',
+                    '$orderedItems.price'
+                  ]
+                }
+              }
+            }
+          },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'category'
+            }
+          },
+          { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+          {
+            $project: {
+              _id: '$category._id',
+              name: '$category.name',
+              totalSold: 1,
+              totalRevenue: 1
+            }
+          },
+          { $sort: { totalSold: -1 } },
+          { $limit: 10 }
+        ]).catch(err => {
+          console.error('Error in bestSellingCategories aggregation:', err);
+          return [];
+        });
+      } catch (err) {
+        console.error('Error in best selling aggregations:', err);
+        // Continue rendering with empty arrays to avoid breaking the dashboard
+        bestSellingProducts = [];
+        bestSellingCategories = [];
+      }
+
       // Get order statistics by status
       const orderStats = await Order.aggregate([
         {
@@ -187,6 +294,8 @@ const loadDashboard = async (req, res) => {
         totalRevenue,
         recentOrders,
         latestProducts,
+        bestSellingProducts,
+        bestSellingCategories,
         orderStats,
         activePage: 'dashboard'
       });
@@ -198,7 +307,6 @@ const loadDashboard = async (req, res) => {
     res.redirect("/admin/login");
   }
 };
-
 
 const logout = async(req,res)=>{
   try{
@@ -215,15 +323,10 @@ const logout = async(req,res)=>{
   }
 }
 
-
-
-
-
-
 module.exports={
     loadLogin,
     login,
     loadDashboard,
     pageerror,
     logout,
-} 
+}

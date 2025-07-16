@@ -1,4 +1,3 @@
-
 <%- include("../../views/admin/partials/header", { activePage: 'dashboard' }) %>
 
 <div class="content-main">
@@ -87,6 +86,100 @@
         </div>
     </div>
 
+    <!-- Best Selling Products -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Best Selling Products (Top 10)</h5>
+            <a href="/admin/products" class="btn btn-sm btn-primary">View All Products</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Units Sold</th>
+                            <th>Total Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (bestSellingProducts && bestSellingProducts.length > 0) { %>
+                            <% bestSellingProducts.forEach(product => { %>
+                                <tr>
+                                    <td><span class="fw-semibold">#<%= product._id.toString().slice(-6).toUpperCase() %></span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <% if (product.productImage && product.productImage.length > 0) { %>
+                                                <img src="/Uploads/product-images/<%= product.productImage[0] %>"
+                                                     alt="<%= product.productName %>"
+                                                     class="product-thumb rounded me-2"
+                                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                            <% } else { %>
+                                                <div class="product-thumb bg-light rounded me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-box text-muted"></i>
+                                                </div>
+                                            <% } %>
+                                            <span><%= product.productName %></span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-light text-dark"><%= product.category?.name || 'Uncategorized' %></span></td>
+                                    <td><span class="fw-semibold">₹<%= product.salePrice.toLocaleString() %></span></td>
+                                    <td><span class="badge bg-primary"><%= product.totalSold %></span></td>
+                                    <td><span class="fw-semibold">₹<%= product.totalRevenue.toLocaleString() %></span></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No best selling products found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Selling Categories -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Best Selling Categories (Top 10)</h5>
+            <a href="/admin/category" class="btn btn-sm btn-primary">View All Categories</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category ID</th>
+                            <th>Name</th>
+                            <th>Products Sold</th>
+                            <th>Total Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (bestSellingCategories && bestSellingCategories.length > 0) { %>
+                            <% bestSellingCategories.forEach(category => { %>
+                                <tr>
+                                    <td><span class="fw-semibold">#<%= category._id.toString().slice(-6).toUpperCase() %></span></td>
+                                    <td><span class="badge bg-light text-dark"><%= category.name %></span></td>
+                                    <td><span class="badge bg-primary"><%= category.totalSold %></span></td>
+                                    <td><span class="fw-semibold">₹<%= category.totalRevenue.toLocaleString() %></span></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">No best selling categories found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Orders Table -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -116,7 +209,7 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <% if (order.userId?.profileImage) { %>
-                                                <img src="/uploads/profiles/<%= order.userId.profileImage %>"
+                                                <img src="/Uploads/profiles/<%= order.userId.profileImage %>"
                                                      alt="<%= order.userId.name %>"
                                                      class="avatar-sm rounded-circle me-2"
                                                      style="width: 32px; height: 32px; object-fit: cover;">
@@ -146,7 +239,6 @@
                                 <td colspan="6" class="text-center text-muted">No recent orders found</td>
                             </tr>
                         <% } %>
-
                     </tbody>
                 </table>
             </div>
@@ -180,7 +272,7 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <% if (product.productImage && product.productImage.length > 0) { %>
-                                                <img src="/uploads/product-images/<%= product.productImage[0] %>"
+                                                <img src="/Uploads/product-images/<%= product.productImage[0] %>"
                                                      alt="<%= product.productName %>"
                                                      class="product-thumb rounded me-2"
                                                      style="width: 40px; height: 40px; object-fit: cover;">
@@ -210,7 +302,6 @@
                                 <td colspan="6" class="text-center text-muted">No products found</td>
                             </tr>
                         <% } %>
-
                     </tbody>
                 </table>
             </div>
