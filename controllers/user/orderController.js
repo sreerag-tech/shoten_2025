@@ -445,11 +445,11 @@ const verifyPayment = async (req, res) => {
     await order.save();
 
     // Update product stock now that payment is confirmed
-    for (const item of pendingOrder.orderedItems) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { quantity: -item.quantity }
-      });
-    }
+    // for (const item of pendingOrder.orderedItems) {
+    //   await Product.findByIdAndUpdate(item.product, {
+    //     $inc: { quantity: -item.quantity }
+    //   });
+    // }
 
     // Clear cart
     await Cart.deleteMany({ userId: pendingOrder.userId });
