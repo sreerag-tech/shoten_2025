@@ -8,6 +8,8 @@ const couponController = require("../controllers/user/couponController");
 const orderController = require("../controllers/user/orderController");
 const  {userAuth}  = require("../middlewares/auth"); // Import userAuth middleware
 
+const User = require("../models/userSchema");
+
 // Import existing multer configuration for profile uploads
 const multer = require("multer");
 const path = require("path");
@@ -161,9 +163,12 @@ router.get("/order-success/:orderId?", userAuth, (req, res) => {
   res.render("order-success", { orderId: orderId });
 });
 
-router.get("/order-failure", userAuth, (req, res) => {
+router.get("/order-failure",  userAuth, async (req, res) => {
   const errorMessage = req.query.error || null;
   const orderDetails = req.session.failureOrderDetails || null;
+  const userId = req.session.user;
+  
+      const userData = await User.findById(userId);
 
   // Clear the session data after using it
   if (req.session.failureOrderDetails) {
@@ -171,6 +176,7 @@ router.get("/order-failure", userAuth, (req, res) => {
   }
 
   res.render("order-failure", {
+    user: userData,
     errorMessage: errorMessage,
     orderDetails: orderDetails
   });

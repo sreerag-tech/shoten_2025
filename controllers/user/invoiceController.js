@@ -25,6 +25,20 @@ const downloadInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
+    // Check if order status allows invoice download
+    const allowedStatuses = ['Shipped', 'Out for Delivery', 'Delivered'];
+    const hasShippedItems = order.orderedItems.some(item =>
+      allowedStatuses.includes(item.status)
+    );
+
+    if (!hasShippedItems && !allowedStatuses.includes(order.status)) {
+      console.log('Invoice download not allowed for order status:', order.status);
+      return res.status(403).json({
+        success: false,
+        message: 'Invoice is only available for shipped or delivered orders'
+      });
+    }
+
     console.log('Order found, generating invoice for:', order.orderId);
 
     // Use original order data (prices already include offers applied at order time)

@@ -422,7 +422,7 @@ function handlePaymentFailure(orderId, errorMessage) {
                     window.location.href = '/shop';
                 } else {
                     // Default to orders
-                    window.location.href = '/orders';
+                    window.location.href = '/order-failure';
                 }
             });
         }
@@ -446,7 +446,7 @@ function handlePaymentFailure(orderId, errorMessage) {
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 window.location.href = '/shop';
             } else {
-                window.location.href = '/orders';
+                window.location.href = '/order-failure';
             }
         });
     });

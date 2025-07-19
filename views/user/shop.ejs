@@ -732,9 +732,11 @@
             });
         }
 
-        // Add loading animation for form submission
+        // AJAX form submission to prevent page refresh
         if (filterForm) {
-            filterForm.addEventListener('submit', function() {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevent default form submission
+
                 const submitButton = this.querySelector('button[type="submit"]');
                 const originalText = submitButton.innerHTML;
 
@@ -744,8 +746,73 @@
                         Filtering...
                     </div>
                 `;
-
                 submitButton.disabled = true;
+
+                // Get form data
+                const formData = new FormData(this);
+                const params = new URLSearchParams(formData);
+
+                // Handle multiple category selections
+                const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
+                const selectedCategories = Array.from(categoryCheckboxes)
+                    .map(cb => cb.value)
+                    .filter(val => val !== 'all');
+
+                if (selectedCategories.length > 0) {
+                    params.delete('category'); // Remove existing category params
+                    params.append('category', selectedCategories.join(','));
+                }
+
+                // Fetch filtered results
+                fetch(`/shop?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the response and update only the products section
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Update products grid
+                    const newProductsGrid = doc.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8');
+                    const currentProductsGrid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8');
+
+                    if (newProductsGrid && currentProductsGrid) {
+                        currentProductsGrid.innerHTML = newProductsGrid.innerHTML;
+                    }
+
+                    // Update pagination
+                    const newPagination = doc.querySelector('.mt-12.flex.justify-center');
+                    const currentPagination = document.querySelector('.mt-12.flex.justify-center');
+
+                    if (newPagination && currentPagination) {
+                        currentPagination.innerHTML = newPagination.innerHTML;
+                    }
+
+                    // Update URL without refresh
+                    const newUrl = `/shop?${params.toString()}`;
+                    window.history.pushState({}, '', newUrl);
+
+                    // Restore button
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+
+                    // Scroll to products section
+                    document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                })
+                .catch(error => {
+                    console.error('Filter error:', error);
+                    // Fallback to normal form submission
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                    this.submit();
+                });
             });
         }
     });

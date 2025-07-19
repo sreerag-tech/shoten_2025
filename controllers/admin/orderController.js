@@ -291,6 +291,11 @@ const updateOrderStatus = async (req, res) => {
     // Update order status
     order.status = status;
 
+    // Set delivered date when status is changed to Delivered
+    if (status === 'Delivered' && !order.deliveredAt) {
+      order.deliveredAt = new Date();
+    }
+
     // Update all items status if order status is changed
     if (status === 'Cancelled') {
       // If cancelling order, cancel all non-returned items and process refunds
@@ -411,6 +416,18 @@ const updateItemStatus = async (req, res) => {
 
     // Update item status
     order.orderedItems[itemIndex].status = status;
+
+    // Set delivered date when item status is changed to Delivered
+    if (status === 'Delivered' && !order.deliveredAt) {
+      // Check if all items are delivered
+      const allItemsDelivered = order.orderedItems.every(item =>
+        item.status === 'Delivered' || item.status === 'Cancelled' || item.status === 'Returned'
+      );
+
+      if (allItemsDelivered) {
+        order.deliveredAt = new Date();
+      }
+    }
 
     // If cancelling item, process refund
     if (status === 'Cancelled' && order.paymentStatus === 'Completed') {

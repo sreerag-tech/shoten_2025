@@ -175,7 +175,7 @@ const loadOrderSuccess = async (req, res) => {
 
     if (!order) {
       req.session.checkoutMessage = { type: 'error', text: 'Order not found' };
-      return res.redirect('/orders');
+      return res.redirect('/order-failure');
     }
 
     // Use original order data (prices already include offers applied at order time)

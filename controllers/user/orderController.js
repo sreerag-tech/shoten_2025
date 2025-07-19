@@ -129,7 +129,8 @@ const loadOrderDetail = async (req, res) => {
 
     if (!order) {
       req.session.orderMessage = { type: 'error', text: 'Order not found' };
-      return res.redirect('/orders');
+      console.log(`1`)
+      return res.redirect('/order-failure');
     }
 
     // Use original order data (prices already include offers applied at order time)
@@ -609,13 +610,13 @@ const handlePaymentFailure = async (req, res) => {
         });
       } else {
         // Redirect to order failure page
-        return res.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
+        return res.redirect('/order-failure');
       }
 
     } else {
       console.log('No pending order found in session, payment failure not saved');
       // Redirect to order failure page without order details
-      return res.redirect('/order-failure?error=' + encodeURIComponent(error || 'Payment processing failed'));
+      return res.redirect('/order-failure');
     }
 
   } catch (error) {

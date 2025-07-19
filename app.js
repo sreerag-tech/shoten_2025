@@ -27,12 +27,54 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Session timeout middleware
+app.use((req, res, next) => {
+  if (req.session && req.session.user) {
+    // Check if session has lastActivity timestamp
+    if (req.session.lastActivity) {
+      const currentTime = Date.now();
+      const sessionTimeout = 72 * 60 * 60 * 1000; // 72 hours in milliseconds
+
+      // If session has timed out
+      if (currentTime - req.session.lastActivity > sessionTimeout) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Error destroying expired session:', err);
+          }
+          // Only redirect if it's a page request, not an API call
+          if (!req.xhr && (!req.headers.accept || req.headers.accept.indexOf('json') === -1)) {
+            return res.redirect('/login?expired=true');
+          }
+          // For API calls, send JSON response
+          if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(401).json({
+              success: false,
+              message: 'Your session has expired. Please log in again.',
+              redirect: '/login'
+            });
+          }
+        });
+        return;
+      }
+
+      // Update lastActivity timestamp
+      req.session.lastActivity = currentTime;
+    } else {
+      // Initialize lastActivity if not present
+      req.session.lastActivity = Date.now();
+    }
+  }
+  next();
+});
+
+// Cache control middleware
 app.use((req, res, next) => {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
     next();
-  });
+});
 
 // Disable caching for all requests
 app.use((req, res, next) => {

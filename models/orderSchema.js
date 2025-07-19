@@ -201,6 +201,14 @@ const orderSchema = new Schema({
     type: Date,
     default: null,
   },
+  returnDays: {
+    type: Number,
+    default: 7, // Default 7 days return policy
+  },
+  deliveredAt: {
+    type: Date,
+    default: null,
+  },
 });
 
 const Order = mongoose.model("Order", orderSchema);

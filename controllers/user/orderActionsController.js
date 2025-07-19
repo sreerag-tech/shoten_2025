@@ -45,8 +45,8 @@ const cancelOrder = async (req, res) => {
     order.cancelReason = reason || 'Cancelled by user';
     order.cancelledAt = new Date();
     
-    // Calculate refund amount - use finalAmount for full order cancellation
-    let refundAmount = order.finalAmount || order.totalPrice || 0;
+    // Calculate refund amount - what customer actually paid
+    let refundAmount = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
 
     console.log('Order payment method:', order.paymentMethod);
     console.log('Order payment status:', order.paymentStatus);
@@ -180,8 +180,16 @@ const cancelOrderItem = async (req, res) => {
     order.orderedItems[itemIndex].status = 'Cancelled';
     order.orderedItems[itemIndex].returnReason = reason;
 
-    // Calculate refund amount for this item
-    const refundAmount = item.price * item.quantity;
+    // Calculate refund amount considering coupon discount
+    // Use the same logic as admin return handling for consistency
+    const totalPaidByCustomer = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
+    const totalItemsInOrder = order.orderedItems.reduce((sum, orderItem) => sum + (orderItem.quantity || 0), 0);
+    const thisItemQuantity = item.quantity || 1;
+
+    // Calculate proportional refund amount
+    const refundAmount = totalItemsInOrder > 0 ?
+      Math.round((totalPaidByCustomer * thisItemQuantity) / totalItemsInOrder) :
+      item.price * item.quantity;
 
     // Process refund if this is a paid order
     const isPaidOrder = order.paymentMethod === 'razorpay' ||
@@ -278,9 +286,21 @@ const returnOrder = async (req, res) => {
     
     // Check if order can be returned
     const canReturn = order.orderedItems.some(item => item.status === 'Delivered');
-    
+
     if (!canReturn) {
       return res.json({ success: false, message: 'Order cannot be returned' });
+    }
+
+    // Check return days limit
+    const returnDays = order.returnDays || 7; // Default 7 days
+    const deliveredDate = order.deliveredAt || order.createdOn;
+    const daysSinceDelivery = Math.floor((Date.now() - new Date(deliveredDate).getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysSinceDelivery > returnDays) {
+      return res.json({
+        success: false,
+        message: `Return period has expired. Returns are only allowed within ${returnDays} days of delivery.`
+      });
     }
     
     // Update order status for delivered items
@@ -324,6 +344,18 @@ const returnOrderItem = async (req, res) => {
     // Check if item can be returned
     if (item.status !== 'Delivered') {
       return res.json({ success: false, message: 'Item cannot be returned' });
+    }
+
+    // Check return days limit for individual item
+    const returnDays = order.returnDays || 7; // Default 7 days
+    const deliveredDate = order.deliveredAt || order.createdOn;
+    const daysSinceDelivery = Math.floor((Date.now() - new Date(deliveredDate).getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysSinceDelivery > returnDays) {
+      return res.json({
+        success: false,
+        message: `Return period has expired. Returns are only allowed within ${returnDays} days of delivery.`
+      });
     }
     
     // Update item status
