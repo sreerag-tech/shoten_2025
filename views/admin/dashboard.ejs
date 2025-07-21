@@ -307,6 +307,68 @@
             </div>
         </div>
     </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">📊 Analytics Dashboard</h5>
+                            <small class="text-muted">Interactive charts with filters</small>
+                        </div>
+                        <div class="col-auto">
+                            <div class="row g-2">
+                                <div class="col-auto">
+                                    <select class="form-select form-select-sm" id="chartType">
+                                        <option value="sales">Sales Analytics</option>
+                                        <option value="orders">Order Status</option>
+                                        <option value="categories">Category Performance</option>
+                                        <option value="customers">Customer Growth</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <select class="form-select form-select-sm" id="timePeriod">
+                                        <option value="7days">Last 7 Days</option>
+                                        <option value="30days">Last 30 Days</option>
+                                        <option value="90days">Last 90 Days</option>
+                                        <option value="custom">Custom Range</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto" id="customDateRange" style="display: none;">
+                                    <div class="row g-1">
+                                        <div class="col">
+                                            <input type="date" class="form-control form-control-sm" id="startDate">
+                                        </div>
+                                        <div class="col">
+                                            <input type="date" class="form-control form-control-sm" id="endDate">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary btn-sm" onclick="updateChart()">
+                                        <i class="fas fa-sync-alt"></i> Update
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="chartLoading" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading chart data...</p>
+                    </div>
+                    <div style="position: relative; height: 400px;">
+                        <canvas id="analyticsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -320,5 +382,237 @@
         border: 1px solid var(--border-color);
     }
 </style>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+let analyticsChart = null;
+
+// Initialize chart on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChart();
+
+    // Handle time period change
+    document.getElementById('timePeriod').addEventListener('change', function() {
+        const customRange = document.getElementById('customDateRange');
+        if (this.value === 'custom') {
+            customRange.style.display = 'block';
+        } else {
+            customRange.style.display = 'none';
+            updateChart();
+        }
+    });
+});
+
+function initializeChart() {
+    const ctx = document.getElementById('analyticsChart').getContext('2d');
+
+    analyticsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Sales Analytics - Last 7 Days'
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Sales Amount (₹)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Order Count'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
+        }
+    });
+
+    // Load initial data
+    updateChart();
+}
+
+async function updateChart() {
+    const chartType = document.getElementById('chartType').value;
+    const timePeriod = document.getElementById('timePeriod').value;
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    // Validate custom date range
+    if (timePeriod === 'custom' && (!startDate || !endDate)) {
+        Swal.fire('Error', 'Please select both start and end dates for custom range', 'error');
+        return;
+    }
+
+    if (timePeriod === 'custom' && new Date(startDate) > new Date(endDate)) {
+        Swal.fire('Error', 'Start date cannot be after end date', 'error');
+        return;
+    }
+
+    // Show loading
+    document.getElementById('chartLoading').style.display = 'block';
+
+    try {
+        const params = new URLSearchParams({
+            chartType,
+            period: timePeriod
+        });
+
+        if (timePeriod === 'custom') {
+            params.append('startDate', startDate);
+            params.append('endDate', endDate);
+        }
+
+        const response = await fetch(`/admin/chart-data?${params.toString()}`);
+        const result = await response.json();
+
+        if (result.success) {
+            updateChartDisplay(result.data, chartType, timePeriod);
+        } else {
+            throw new Error(result.message || 'Failed to load chart data');
+        }
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+        Swal.fire('Error', 'Failed to load chart data: ' + error.message, 'error');
+    } finally {
+        document.getElementById('chartLoading').style.display = 'none';
+    }
+}
+
+function updateChartDisplay(data, chartType, timePeriod) {
+    // Update chart type based on data
+    let newChartType = 'line';
+    if (chartType === 'orders') {
+        newChartType = 'bar';
+    } else if (chartType === 'categories') {
+        newChartType = 'doughnut';
+    }
+
+    // Update chart title
+    const titles = {
+        sales: 'Sales Analytics',
+        orders: 'Order Status Distribution',
+        categories: 'Category Performance',
+        customers: 'Customer Growth'
+    };
+
+    const periodText = {
+        '7days': 'Last 7 Days',
+        '30days': 'Last 30 Days',
+        '90days': 'Last 90 Days',
+        'custom': 'Custom Range'
+    };
+
+    // Destroy existing chart and create new one if type changed
+    if (analyticsChart.config.type !== newChartType) {
+        analyticsChart.destroy();
+        const ctx = document.getElementById('analyticsChart').getContext('2d');
+
+        const chartOptions = getChartOptions(chartType, titles[chartType] + ' - ' + periodText[timePeriod]);
+
+        analyticsChart = new Chart(ctx, {
+            type: newChartType,
+            data: data,
+            options: chartOptions
+        });
+    } else {
+        // Update existing chart
+        analyticsChart.data = data;
+        analyticsChart.options.plugins.title.text = titles[chartType] + ' - ' + periodText[timePeriod];
+        analyticsChart.update();
+    }
+}
+
+function getChartOptions(chartType, title) {
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            title: {
+                display: true,
+                text: title
+            },
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        }
+    };
+
+    if (chartType === 'sales') {
+        baseOptions.scales = {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Sales Amount (₹)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Order Count'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                }
+            }
+        };
+    } else if (chartType === 'orders') {
+        baseOptions.scales = {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Orders'
+                }
+            }
+        };
+    } else if (chartType === 'customers') {
+        baseOptions.scales = {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Customers'
+                }
+            }
+        };
+    }
+
+    return baseOptions;
+}
+</script>
 
 <%- include("../../views/admin/partials/footer", { activePage: 'dashboard' }) %>

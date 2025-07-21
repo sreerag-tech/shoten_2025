@@ -1,6 +1,8 @@
 const User = require("../../models/userSchema");
 const Order = require("../../models/orderSchema");
 const Product = require("../../models/productSchema");
+const Wallet = require("../../models/walletSchema");
+const refundCalculationService = require("../../services/refundCalculationService");
 
 // Cancel Entire Order
 const cancelOrder = async (req, res) => {
@@ -45,14 +47,14 @@ const cancelOrder = async (req, res) => {
     order.cancelReason = reason || 'Cancelled by user';
     order.cancelledAt = new Date();
     
-    // Calculate refund amount - what customer actually paid
-    let refundAmount = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
+    // Calculate refund amount using proper refund calculation service
+    const refundCalculation = refundCalculationService.calculateFullOrderRefund(order);
+    const refundAmount = refundCalculation.refundAmount;
 
     console.log('Order payment method:', order.paymentMethod);
     console.log('Order payment status:', order.paymentStatus);
-    console.log('Calculated refund amount:', refundAmount);
-    console.log('Order final amount:', order.finalAmount);
-    console.log('Order total price:', order.totalPrice);
+    console.log('Refund calculation:', refundCalculation);
+    console.log('Final refund amount:', refundAmount);
 
     // Process refund if this is a paid order (not COD) and there's an amount to refund
     const isPaidOrder = order.paymentMethod === 'razorpay' ||
@@ -180,16 +182,16 @@ const cancelOrderItem = async (req, res) => {
     order.orderedItems[itemIndex].status = 'Cancelled';
     order.orderedItems[itemIndex].returnReason = reason;
 
-    // Calculate refund amount considering coupon discount
-    // Use the same logic as admin return handling for consistency
-    const totalPaidByCustomer = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
-    const totalItemsInOrder = order.orderedItems.reduce((sum, orderItem) => sum + (orderItem.quantity || 0), 0);
-    const thisItemQuantity = item.quantity || 1;
+    // Calculate refund amount using proper refund calculation service
+    const itemsToRefund = [{
+      price: item.price,
+      quantity: item.quantity
+    }];
 
-    // Calculate proportional refund amount
-    const refundAmount = totalItemsInOrder > 0 ?
-      Math.round((totalPaidByCustomer * thisItemQuantity) / totalItemsInOrder) :
-      item.price * item.quantity;
+    const refundCalculation = refundCalculationService.calculateRefundAmount(order, itemsToRefund);
+    const refundAmount = refundCalculation.refundAmount;
+
+    console.log('Item cancellation refund calculation:', refundCalculation);
 
     // Process refund if this is a paid order
     const isPaidOrder = order.paymentMethod === 'razorpay' ||

@@ -3,6 +3,7 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Wallet = require("../../models/walletSchema");
 const offerService = require("../../services/offerService");
+const refundCalculationService = require("../../services/refundCalculationService");
 
 // Helper function to calculate order status based on item statuses
 const calculateOrderStatus = (order) => {
@@ -46,6 +47,9 @@ const loadOrders = async (req, res) => {
     const sortOrder = req.query.sortOrder || "desc";
     const dateFrom = req.query.dateFrom || "";
     const dateTo = req.query.dateTo || "";
+
+    // Ensure latest orders are shown first by default
+    const defaultSort = { createdOn: -1, _id: -1 }; // Add _id as secondary sort for consistency
 
     // Build query object
     let query = {};
@@ -91,9 +95,23 @@ const loadOrders = async (req, res) => {
       }
     }
 
-    // Sort object
-    const sortObj = {};
-    sortObj[sortBy] = sortOrder === "desc" ? -1 : 1;
+    // Sort object - use custom sort if specified, otherwise use default (latest first)
+    let sortObj;
+    if (req.query.sortBy || req.query.sortOrder) {
+      // Custom sort specified
+      sortObj = {};
+      sortObj[sortBy] = sortOrder === "desc" ? -1 : 1;
+      // Add secondary sort for consistency
+      if (sortBy !== 'createdOn') {
+        sortObj.createdOn = -1;
+      }
+      if (sortBy !== '_id') {
+        sortObj._id = -1;
+      }
+    } else {
+      // Use default sort (latest first)
+      sortObj = defaultSort;
+    }
 
     // Get orders with pagination
     const ordersRaw = await Order.find(query)
@@ -515,26 +533,21 @@ const handleReturnRequest = async (req, res) => {
       item.status = 'Returned';
       item.adminResponse = adminResponse || 'Return request approved';
 
-      // SIMPLE SOLUTION: Calculate refund based on what customer actually paid
-      // Total amount paid by customer
-      const totalPaidByCustomer = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
+      // Calculate refund using proper refund calculation service
+      const itemsToRefund = [{
+        price: item.price,
+        quantity: item.quantity
+      }];
 
-      // Total number of items in the order
-      const totalItemsInOrder = order.orderedItems.reduce((sum, orderItem) => sum + (orderItem.quantity || 0), 0);
+      const refundCalculation = refundCalculationService.calculateRefundAmount(order, itemsToRefund);
+      const refundAmount = refundCalculation.refundAmount;
 
-      // This item's quantity
-      const thisItemQuantity = item.quantity || 1;
-
-      // Calculate refund as proportional share of total amount paid
-      const refundAmount = totalItemsInOrder > 0 ?
-        Math.round((totalPaidByCustomer * thisItemQuantity) / totalItemsInOrder) : 0;
+      console.log('Admin return approval - Refund calculation:', refundCalculation);
 
       console.log('=== REFUND CALCULATION ===');
       console.log('Order ID:', order.orderId);
-      console.log('Total paid by customer:', totalPaidByCustomer);
-      console.log('Total items in order:', totalItemsInOrder);
-      console.log('This item quantity:', thisItemQuantity);
-      console.log('Refund amount:', refundAmount);
+      console.log('Refund calculation details:', refundCalculation);
+      console.log('Final refund amount:', refundAmount);
       console.log('=== END ===');
 
       // Get the product for stock restoration
@@ -627,13 +640,14 @@ const getReturnRequests = async (req, res) => {
       for (let index = 0; index < order.orderedItems.length; index++) {
         const item = order.orderedItems[index];
         if (item.status === 'Return Request') {
-          // Calculate the actual refund amount using the same logic as the refund process
-          const totalPaidByCustomer = (order.totalPrice || 0) + (order.shippingCharge || 0) - (order.discount || 0);
-          const totalItemsInOrder = order.orderedItems.reduce((sum, orderItem) => sum + (orderItem.quantity || 0), 0);
-          const thisItemQuantity = item.quantity || 1;
+          // Calculate the actual refund amount using proper refund calculation service
+          const itemsToRefund = [{
+            price: item.price,
+            quantity: item.quantity
+          }];
 
-          const actualRefundAmount = totalItemsInOrder > 0 ?
-            Math.round((totalPaidByCustomer * thisItemQuantity) / totalItemsInOrder) : 0;
+          const refundCalculation = refundCalculationService.calculateRefundAmount(order, itemsToRefund);
+          const actualRefundAmount = refundCalculation.refundAmount;
 
           returnRequests.push({
             order: order,

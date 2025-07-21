@@ -21,10 +21,24 @@
                     <a href="/orders" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition">
                         ← Back to Orders
                     </a>
-                    <button class="download-invoice-btn px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition"
-                            data-order-id="<%= order._id %>">
-                        📄 Download Invoice
-                    </button>
+                    <%
+                        // Check if any item is shipped or delivered for invoice availability
+                        const allowedStatuses = ['Shipped', 'Out for Delivery', 'Delivered'];
+                        const hasShippedOrDeliveredItems = order.orderedItems.some(item =>
+                            allowedStatuses.includes(item.status)
+                        );
+                    %>
+                    <% if (hasShippedOrDeliveredItems) { %>
+                        <button class="download-invoice-btn px-4 py-2 bg-[#00ffff] text-black rounded-lg hover:bg-[#0088ff] transition"
+                                data-order-id="<%= order._id %>">
+                            📄 Download Invoice
+                        </button>
+                    <% } else { %>
+                        <button class="px-4 py-2 bg-gray-500 text-gray-300 rounded-lg cursor-not-allowed"
+                                disabled title="Invoice available after shipping">
+                            📄 Invoice (Not Available)
+                        </button>
+                    <% } %>
                 </div>
             </div>
         </div>

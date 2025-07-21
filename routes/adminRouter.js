@@ -18,6 +18,7 @@ router.get("/pageerror", adminController.pageerror);
 router.get("/login", adminController.loadLogin);
 router.post("/login", adminController.login);
 router.get("/dashboard", adminAuth, adminController.loadDashboard);
+router.get("/chart-data", adminAuth, adminController.getChartData);
 router.get("/logout", adminController.logout);
 
 router.get("/users", adminAuth, customerController.customerInfo);
@@ -90,5 +91,11 @@ router.get("/referral-management", adminAuth, referralController.loadReferralMan
 router.get("/referral-analytics", adminAuth, referralController.getReferralAnalytics);
 router.get("/referral-export", adminAuth, referralController.exportReferralData);
 router.get("/referral-user/:userId", adminAuth, referralController.getUserReferralDetails);
+
+// Refund History Routes
+const refundController = require("../controllers/admin/refundController");
+router.get("/refund-history", adminAuth, refundController.loadRefundHistory);
+router.get("/refund-details/:orderId", adminAuth, refundController.getRefundDetails);
+router.get("/refund-export", adminAuth, refundController.exportRefundData);
 
 module.exports = router;

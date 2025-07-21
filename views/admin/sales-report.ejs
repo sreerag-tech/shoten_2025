@@ -237,6 +237,69 @@
                                             </tbody>
                                         </table>
                                     </div>
+
+                                    <!-- Pagination -->
+                                    <% if (totalPages > 1) { %>
+                                        <div class="d-flex justify-content-between align-items-center mt-4">
+                                            <div>
+                                                <small class="text-muted">
+                                                    Showing <%= ((currentPage - 1) * 20) + 1 %> to <%= Math.min(currentPage * 20, totalOrders) %> of <%= totalOrders %> orders
+                                                </small>
+                                            </div>
+                                            <nav aria-label="Sales report pagination">
+                                                <ul class="pagination pagination-sm mb-0">
+                                                    <% if (hasPrevPage) { %>
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?reportType=<%= reportType %>&customStartDate=<%= customStartDate %>&customEndDate=<%= customEndDate %>&page=<%= currentPage - 1 %>">
+                                                                <i class="fas fa-chevron-left"></i> Previous
+                                                            </a>
+                                                        </li>
+                                                    <% } %>
+
+                                                    <%
+                                                        const startPage = Math.max(1, currentPage - 2);
+                                                        const endPage = Math.min(totalPages, currentPage + 2);
+                                                    %>
+
+                                                    <% if (startPage > 1) { %>
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?reportType=<%= reportType %>&customStartDate=<%= customStartDate %>&customEndDate=<%= customEndDate %>&page=1">1</a>
+                                                        </li>
+                                                        <% if (startPage > 2) { %>
+                                                            <li class="page-item disabled">
+                                                                <span class="page-link">...</span>
+                                                            </li>
+                                                        <% } %>
+                                                    <% } %>
+
+                                                    <% for (let i = startPage; i <= endPage; i++) { %>
+                                                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                                            <a class="page-link" href="?reportType=<%= reportType %>&customStartDate=<%= customStartDate %>&customEndDate=<%= customEndDate %>&page=<%= i %>"><%= i %></a>
+                                                        </li>
+                                                    <% } %>
+
+                                                    <% if (endPage < totalPages) { %>
+                                                        <% if (endPage < totalPages - 1) { %>
+                                                            <li class="page-item disabled">
+                                                                <span class="page-link">...</span>
+                                                            </li>
+                                                        <% } %>
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?reportType=<%= reportType %>&customStartDate=<%= customStartDate %>&customEndDate=<%= customEndDate %>&page=<%= totalPages %>"><%= totalPages %></a>
+                                                        </li>
+                                                    <% } %>
+
+                                                    <% if (hasNextPage) { %>
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?reportType=<%= reportType %>&customStartDate=<%= customStartDate %>&customEndDate=<%= customEndDate %>&page=<%= currentPage + 1 %>">
+                                                                Next <i class="fas fa-chevron-right"></i>
+                                                            </a>
+                                                        </li>
+                                                    <% } %>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>

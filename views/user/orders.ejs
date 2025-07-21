@@ -111,12 +111,24 @@
                                             data-order-id="<%= order._id %>">
                                         📋 Full Details
                                     </button>
-                                     <% if (status !== 'Payment Failed') { %>
-                                    <button class="download-invoice-btn px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition"
-                                            data-order-id="<%= order._id %>">
-                                        📄 Invoice
-                                    </button>
-                                    <%}%>
+                                    <%
+                                        // Check if any item is shipped or delivered for invoice availability
+                                        const allowedStatuses = ['Shipped', 'Out for Delivery', 'Delivered'];
+                                        const hasShippedOrDeliveredItems = order.orderedItems.some(item =>
+                                            allowedStatuses.includes(item.status)
+                                        );
+                                    %>
+                                    <% if (hasShippedOrDeliveredItems && status !== 'Payment Failed') { %>
+                                        <button class="download-invoice-btn px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition"
+                                                data-order-id="<%= order._id %>">
+                                            📄 Invoice
+                                        </button>
+                                    <% } else if (status !== 'Payment Failed') { %>
+                                        <button class="px-3 py-1 bg-gray-400 text-gray-600 rounded text-sm cursor-not-allowed"
+                                                disabled title="Invoice available after shipping">
+                                            📄 Invoice
+                                        </button>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>

@@ -267,6 +267,29 @@ const editProduct = async (req, res) => {
     }
 
     const existingImages = product.productImage || [];
+
+    // Handle removed images
+    let finalImages = [...existingImages]; // Start with existing images
+    if (products.removedImages) {
+      const removedImagesList = products.removedImages.split(',').filter(img => img.trim());
+      finalImages = finalImages.filter(img => !removedImagesList.includes(img));
+
+      // Delete removed image files from filesystem
+      const fs = require('fs');
+      const path = require('path');
+      removedImagesList.forEach(imageName => {
+        const imagePath = path.join('public', 'uploads', 'product-images', imageName);
+        if (fs.existsSync(imagePath)) {
+          try {
+            fs.unlinkSync(imagePath);
+            console.log(`Deleted image: ${imageName}`);
+          } catch (error) {
+            console.error(`Error deleting image ${imageName}:`, error);
+          }
+        }
+      });
+    }
+
     const validTypes = ['image/jpeg', 'image/png'];
 
     const newImages = [];
@@ -313,15 +336,16 @@ const editProduct = async (req, res) => {
       }
     }
 
-    const finalImages = [];
-    for (let i = 0; i < Math.max(existingImages.length, newImages.length, 4); i++) {
+    // Combine filtered existing images with new images
+    const updatedFinalImages = [];
+    for (let i = 0; i < Math.max(finalImages.length, newImages.length, 4); i++) {
       if (newImages[i]) {
-        finalImages[i] = newImages[i]; // ✅ ADDED: Use new image if available
-      } else if (existingImages[i] && existingImages[i].trim() !== '') {
-        finalImages[i] = existingImages[i]; // ✅ ADDED: Keep existing image if valid
+        updatedFinalImages[i] = newImages[i]; // Use new image if available
+      } else if (finalImages[i] && finalImages[i].trim() !== '') {
+        updatedFinalImages[i] = finalImages[i]; // Keep filtered existing image if valid
       }
     }
-    product.productImage = finalImages.filter(Boolean); // ✅ ADDED: Remove empty slots
+    product.productImage = updatedFinalImages.filter(Boolean); // Remove empty slots
 
     if (product.productImage.length < 3) {
       return res.redirect(`/admin/edit-product/${productId}?error=Product+must+have+at+least+3+images`);

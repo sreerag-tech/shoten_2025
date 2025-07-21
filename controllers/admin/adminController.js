@@ -323,10 +323,328 @@ const logout = async(req,res)=>{
   }
 }
 
+// Get chart data with filters
+const getChartData = async (req, res) => {
+  try {
+    const {
+      chartType = 'sales',
+      period = '7days',
+      startDate,
+      endDate
+    } = req.query;
+
+    let dateFilter = {};
+    const now = new Date();
+
+    // Build date filter based on period
+    switch (period) {
+      case '7days':
+        dateFilter.createdOn = {
+          $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        };
+        break;
+      case '30days':
+        dateFilter.createdOn = {
+          $gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        };
+        break;
+      case '90days':
+        dateFilter.createdOn = {
+          $gte: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        };
+        break;
+      case 'custom':
+        if (startDate && endDate) {
+          dateFilter.createdOn = {
+            $gte: new Date(startDate),
+            $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+          };
+        }
+        break;
+    }
+
+    let chartData = {};
+
+    switch (chartType) {
+      case 'sales':
+        chartData = await getSalesChartData(dateFilter, period);
+        break;
+      case 'orders':
+        chartData = await getOrdersChartData(dateFilter, period);
+        break;
+      case 'categories':
+        chartData = await getCategoriesChartData(dateFilter);
+        break;
+      case 'customers':
+        chartData = await getCustomersChartData(dateFilter, period);
+        break;
+      default:
+        chartData = await getSalesChartData(dateFilter, period);
+    }
+
+    res.json({ success: true, data: chartData });
+
+  } catch (error) {
+    console.error('Error getting chart data:', error);
+    res.status(500).json({ success: false, message: 'Error loading chart data' });
+  }
+};
+
+// Helper function to get sales chart data
+const getSalesChartData = async (dateFilter, period) => {
+  const groupBy = getGroupByFormat(period);
+
+  const salesData = await Order.aggregate([
+    {
+      $match: {
+        ...dateFilter,
+        status: { $nin: ['Cancelled', 'Payment Failed'] },
+        paymentStatus: { $ne: 'Failed' }
+      }
+    },
+    {
+      $group: {
+        _id: groupBy,
+        totalSales: { $sum: "$totalPrice" },
+        orderCount: { $sum: 1 }
+      }
+    },
+    { $sort: { "_id": 1 } }
+  ]);
+
+  const labels = generateLabels(period);
+  const salesAmounts = [];
+  const orderCounts = [];
+
+  labels.forEach(label => {
+    const dataPoint = salesData.find(item => item._id === label);
+    salesAmounts.push(dataPoint ? dataPoint.totalSales : 0);
+    orderCounts.push(dataPoint ? dataPoint.orderCount : 0);
+  });
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Sales Amount (₹)',
+        data: salesAmounts,
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        yAxisID: 'y'
+      },
+      {
+        label: 'Order Count',
+        data: orderCounts,
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        yAxisID: 'y1'
+      }
+    ]
+  };
+};
+
+// Helper function to get orders chart data
+const getOrdersChartData = async (dateFilter, period) => {
+  const groupBy = getGroupByFormat(period);
+
+  const orderData = await Order.aggregate([
+    { $match: dateFilter },
+    {
+      $group: {
+        _id: {
+          date: groupBy,
+          status: "$status"
+        },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { "_id.date": 1 } }
+  ]);
+
+  const labels = generateLabels(period);
+  const statuses = ['Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+  const datasets = [];
+
+  const colors = [
+    'rgba(54, 162, 235, 0.8)',
+    'rgba(255, 206, 86, 0.8)',
+    'rgba(75, 192, 192, 0.8)',
+    'rgba(153, 102, 255, 0.8)',
+    'rgba(255, 99, 132, 0.8)'
+  ];
+
+  statuses.forEach((status, index) => {
+    const data = labels.map(label => {
+      const dataPoint = orderData.find(item =>
+        item._id.date === label && item._id.status === status
+      );
+      return dataPoint ? dataPoint.count : 0;
+    });
+
+    datasets.push({
+      label: status,
+      data,
+      backgroundColor: colors[index],
+      borderColor: colors[index].replace('0.8', '1'),
+      borderWidth: 1
+    });
+  });
+
+  return { labels, datasets };
+};
+
+// Helper function to get categories chart data
+const getCategoriesChartData = async (dateFilter) => {
+  const categoryData = await Order.aggregate([
+    {
+      $match: {
+        ...dateFilter,
+        status: { $nin: ['Cancelled', 'Payment Failed'] },
+        paymentStatus: { $ne: 'Failed' }
+      }
+    },
+    { $unwind: "$orderedItems" },
+    {
+      $lookup: {
+        from: "products",
+        localField: "orderedItems.product",
+        foreignField: "_id",
+        as: "productInfo"
+      }
+    },
+    { $unwind: "$productInfo" },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "productInfo.category",
+        foreignField: "_id",
+        as: "categoryInfo"
+      }
+    },
+    { $unwind: "$categoryInfo" },
+    {
+      $group: {
+        _id: "$categoryInfo.name",
+        totalSales: { $sum: { $multiply: ["$orderedItems.quantity", "$orderedItems.price"] } },
+        totalQuantity: { $sum: "$orderedItems.quantity" }
+      }
+    },
+    { $sort: { totalSales: -1 } },
+    { $limit: 10 }
+  ]);
+
+  const labels = categoryData.map(item => item._id);
+  const salesData = categoryData.map(item => item.totalSales);
+  const quantityData = categoryData.map(item => item.totalQuantity);
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Sales Amount (₹)',
+        data: salesData,
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(255, 205, 86, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+          'rgba(255, 159, 64, 0.8)',
+          'rgba(199, 199, 199, 0.8)',
+          'rgba(83, 102, 255, 0.8)',
+          'rgba(255, 99, 255, 0.8)',
+          'rgba(99, 255, 132, 0.8)'
+        ]
+      }
+    ]
+  };
+};
+
+// Helper function to get customers chart data
+const getCustomersChartData = async (dateFilter, period) => {
+  const groupBy = getGroupByFormat(period);
+
+  const customerData = await User.aggregate([
+    { $match: { ...dateFilter, isAdmin: false } },
+    {
+      $group: {
+        _id: groupBy,
+        newCustomers: { $sum: 1 }
+      }
+    },
+    { $sort: { "_id": 1 } }
+  ]);
+
+  const labels = generateLabels(period);
+  const newCustomers = [];
+
+  labels.forEach(label => {
+    const dataPoint = customerData.find(item => item._id === label);
+    newCustomers.push(dataPoint ? dataPoint.newCustomers : 0);
+  });
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'New Customers',
+        data: newCustomers,
+        borderColor: 'rgb(153, 102, 255)',
+        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        fill: true
+      }
+    ]
+  };
+};
+
+// Utility function to get group by format based on period
+const getGroupByFormat = (period) => {
+  switch (period) {
+    case '7days':
+      return { $dateToString: { format: "%Y-%m-%d", date: "$createdOn" } };
+    case '30days':
+      return { $dateToString: { format: "%Y-%m-%d", date: "$createdOn" } };
+    case '90days':
+      return { $dateToString: { format: "%Y-%m-%d", date: "$createdOn" } };
+    default:
+      return { $dateToString: { format: "%Y-%m-%d", date: "$createdOn" } };
+  }
+};
+
+// Utility function to generate labels based on period
+const generateLabels = (period) => {
+  const labels = [];
+  const now = new Date();
+
+  switch (period) {
+    case '7days':
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        labels.push(date.toISOString().split('T')[0]);
+      }
+      break;
+    case '30days':
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        labels.push(date.toISOString().split('T')[0]);
+      }
+      break;
+    case '90days':
+      for (let i = 89; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        labels.push(date.toISOString().split('T')[0]);
+      }
+      break;
+  }
+
+  return labels;
+};
+
 module.exports={
     loadLogin,
     login,
     loadDashboard,
     pageerror,
     logout,
+    getChartData
 }

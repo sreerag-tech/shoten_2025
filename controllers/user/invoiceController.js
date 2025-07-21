@@ -25,17 +25,18 @@ const downloadInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Check if order status allows invoice download
+    // Check if order status allows invoice download - ONLY for shipped or delivered orders
     const allowedStatuses = ['Shipped', 'Out for Delivery', 'Delivered'];
-    const hasShippedItems = order.orderedItems.some(item =>
+    const hasShippedOrDeliveredItems = order.orderedItems.some(item =>
       allowedStatuses.includes(item.status)
     );
 
-    if (!hasShippedItems && !allowedStatuses.includes(order.status)) {
-      console.log('Invoice download not allowed for order status:', order.status);
+    // More restrictive: require at least one item to be shipped/delivered
+    if (!hasShippedOrDeliveredItems) {
+      console.log('Invoice download not allowed - no shipped/delivered items. Order status:', order.status);
       return res.status(403).json({
         success: false,
-        message: 'Invoice is only available for shipped or delivered orders'
+        message: 'Invoice is only available after items are shipped or delivered'
       });
     }
 

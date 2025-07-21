@@ -1,0 +1,421 @@
+<%- include('./partials/header') %>
+        <!-- Main Content -->
+        <div class="container-fluid" style="padding: 2rem;">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">💰 Refund History</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportRefunds('csv')">
+                            📊 Export CSV
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportRefunds('excel')">
+                            📈 Export Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Total Refunds</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><%= stats.totalRefunds %></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-undo fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Total Refund Amount</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">₹<%= stats.totalRefundAmount.toLocaleString() %></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        This Month</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">₹<%= stats.monthlyRefundAmount.toLocaleString() %></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Recent (7 days)</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><%= stats.recentRefunds %></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">🔍 Filters</h6>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Order ID, Customer name..." value="<%= search %>">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Status</option>
+                                <option value="Partial" <%= status === 'Partial' ? 'selected' : '' %>>Partial</option>
+                                <option value="Completed" <%= status === 'Completed' ? 'selected' : '' %>>Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="dateFrom" class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="dateFrom" name="dateFrom" value="<%= dateFrom %>">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="dateTo" class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="dateTo" name="dateTo" value="<%= dateTo %>">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">🔍 Filter</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearFilters()">🔄 Clear</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Refunds Table -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">📋 Refund Records</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="refundsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Refund Amount</th>
+                                    <th>Status</th>
+                                    <th>Refund Date</th>
+                                    <th>Payment Method</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (refunds && refunds.length > 0) { %>
+                                    <% refunds.forEach(refund => { %>
+                                        <tr>
+                                            <td>
+                                                <strong><%= refund.orderId %></strong>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong><%= refund.userId?.name || 'N/A' %></strong><br>
+                                                    <small class="text-muted"><%= refund.userId?.email || 'N/A' %></small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">₹<%= refund.refundAmount.toLocaleString() %></span>
+                                            </td>
+                                            <td>
+                                                <% if (refund.refundStatus === 'Completed') { %>
+                                                    <span class="badge bg-success">✅ Completed</span>
+                                                <% } else if (refund.refundStatus === 'Partial') { %>
+                                                    <span class="badge bg-warning">⚠️ Partial</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary">❓ <%= refund.refundStatus %></span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <%= refund.refundDate ? new Date(refund.refundDate).toLocaleDateString() : 'N/A' %>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info"><%= refund.paymentMethod %></span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="viewRefundDetails('<%= refund._id %>')">
+                                                    👁️ View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                                <h5>No Refunds Found</h5>
+                                                <p>No refund records match your current filters.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <% if (totalPages > 1) { %>
+                        <nav aria-label="Refund pagination">
+                            <ul class="pagination justify-content-center">
+                                <% if (hasPrevPage) { %>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= search %>&status=<%= status %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>">Previous</a>
+                                    </li>
+                                <% } %>
+                                
+                                <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                                    <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                        <a class="page-link" href="?page=<%= i %>&search=<%= search %>&status=<%= status %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>"><%= i %></a>
+                                    </li>
+                                <% } %>
+                                
+                                <% if (hasNextPage) { %>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= search %>&status=<%= status %>&dateFrom=<%= dateFrom %>&dateTo=<%= dateTo %>">Next</a>
+                                    </li>
+                                <% } %>
+                            </ul>
+                        </nav>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+<!-- Refund Details Modal -->
+<div class="modal fade" id="refundDetailsModal" tabindex="-1" aria-labelledby="refundDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="refundDetailsModalLabel">💰 Refund Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="refundDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// Clear filters
+function clearFilters() {
+    document.getElementById('search').value = '';
+    document.getElementById('status').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+// View refund details
+async function viewRefundDetails(orderId) {
+    try {
+        const response = await fetch(`/admin/refund-details/${orderId}`);
+        const result = await response.json();
+
+        if (result.success) {
+            const order = result.data.order;
+            const transactions = result.data.walletTransactions;
+
+            let content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>📋 Order Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Order ID:</strong></td><td>${order.orderId}</td></tr>
+                            <tr><td><strong>Customer:</strong></td><td>${order.userId?.name || 'N/A'}</td></tr>
+                            <tr><td><strong>Email:</strong></td><td>${order.userId?.email || 'N/A'}</td></tr>
+                            <tr><td><strong>Total Amount:</strong></td><td>₹${order.totalPrice.toLocaleString()}</td></tr>
+                            <tr><td><strong>Refund Amount:</strong></td><td>₹${order.refundAmount.toLocaleString()}</td></tr>
+                            <tr><td><strong>Refund Status:</strong></td><td><span class="badge bg-success">${order.refundStatus}</span></td></tr>
+                            <tr><td><strong>Refund Date:</strong></td><td>${order.refundDate ? new Date(order.refundDate).toLocaleDateString() : 'N/A'}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>💳 Wallet Transactions</h6>
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            if (transactions && transactions.length > 0) {
+                transactions.forEach(transaction => {
+                    content += `
+                        <tr>
+                            <td><span class="badge bg-${transaction.type === 'credit' ? 'success' : 'danger'}">${transaction.type}</span></td>
+                            <td>₹${transaction.amount.toLocaleString()}</td>
+                            <td>${new Date(transaction.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                content += '<tr><td colspan="3" class="text-center text-muted">No wallet transactions found</td></tr>';
+            }
+
+            content += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <h6>📦 Order Items</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            order.orderedItems.forEach(item => {
+                content += `
+                    <tr>
+                        <td>${item.product?.productName || 'N/A'}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.price.toLocaleString()}</td>
+                        <td><span class="badge bg-info">${item.status}</span></td>
+                    </tr>
+                `;
+            });
+
+            content += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('refundDetailsContent').innerHTML = content;
+            new bootstrap.Modal(document.getElementById('refundDetailsModal')).show();
+        } else {
+            Swal.fire('Error!', result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error fetching refund details:', error);
+        Swal.fire('Error!', 'Failed to load refund details', 'error');
+    }
+}
+
+// Export refunds
+async function exportRefunds(format) {
+    try {
+        const params = new URLSearchParams();
+        params.append('format', format);
+
+        const search = document.getElementById('search').value;
+        const status = document.getElementById('status').value;
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        if (dateFrom) params.append('dateFrom', dateFrom);
+        if (dateTo) params.append('dateTo', dateTo);
+
+        const response = await fetch(`/admin/refund-export?${params.toString()}`);
+        const result = await response.json();
+
+        if (result.success) {
+            if (format === 'csv' && result.data) {
+                // Convert to CSV and download
+                const csvContent = convertToCSV(result.data);
+                downloadCSV(csvContent, 'refund-history.csv');
+            } else {
+                Swal.fire('Success!', result.message, 'success');
+            }
+        } else {
+            Swal.fire('Error!', result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error exporting refunds:', error);
+        Swal.fire('Error!', 'Failed to export refund data', 'error');
+    }
+}
+
+// Convert data to CSV
+function convertToCSV(data) {
+    if (!data || data.length === 0) return '';
+
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+    ].join('\n');
+
+    return csvContent;
+}
+
+// Download CSV file
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+</script>
+
+<%- include('./partials/footer') %>

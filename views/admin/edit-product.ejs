@@ -45,6 +45,22 @@
         object-fit: cover;
         margin-right: 10px;
         border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .image-item {
+        position: relative;
+        display: inline-block;
+    }
+    .remove-image-btn {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .image-item:hover .remove-image-btn {
+        opacity: 1;
+    }
+    .image-item.removing {
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
     }
 </style>
 
@@ -114,13 +130,24 @@
                         <div class="card mb-2">
                             <div class="card-header">
                                 <h4>Existing Images</h4>
+                                <small class="text-muted">Click the × button to remove an image</small>
                             </div>
                             <div class="card-body">
-                                <div class="thumbnails-container">
+                                <div class="thumbnails-container" id="existingImagesContainer">
                                     <% product.productImage.forEach((img, index) => { %>
-                                        <img src="/uploads/product-images/<%= img %>" class="existing-image" alt="Product Image <%= index + 1 %>">
+                                        <div class="image-item position-relative d-inline-block me-2 mb-2" data-image="<%= img %>">
+                                            <img src="/uploads/product-images/<%= img %>" class="existing-image" alt="Product Image <%= index + 1 %>">
+                                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 remove-image-btn"
+                                                    style="width: 25px; height: 25px; padding: 0; border-radius: 50%; font-size: 12px;"
+                                                    onclick="removeExistingImage('<%= img %>', this)"
+                                                    title="Remove this image">
+                                                ×
+                                            </button>
+                                        </div>
                                     <% }) %>
                                 </div>
+                                <!-- Hidden input to track removed images -->
+                                <input type="hidden" name="removedImages" id="removedImages" value="">
                             </div>
                         </div>
                         <div class="card mb-2">
@@ -300,6 +327,35 @@
     function displayErrorMessage(elementId, message) {
         const errorElement = document.getElementById(elementId);
         if (errorElement) errorElement.textContent = message;
+    }
+
+    // Function to remove existing images
+    function removeExistingImage(imageName, buttonElement) {
+        if (confirm('Are you sure you want to remove this image?')) {
+            const imageItem = buttonElement.closest('.image-item');
+            const removedImagesInput = document.getElementById('removedImages');
+
+            // Add removing animation
+            imageItem.classList.add('removing');
+
+            // Update removed images list
+            let removedImages = removedImagesInput.value ? removedImagesInput.value.split(',') : [];
+            if (!removedImages.includes(imageName)) {
+                removedImages.push(imageName);
+                removedImagesInput.value = removedImages.join(',');
+            }
+
+            // Remove the image item after animation
+            setTimeout(() => {
+                imageItem.remove();
+
+                // Show message if no images left
+                const container = document.getElementById('existingImagesContainer');
+                if (container.children.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No existing images. Add new images below.</p>';
+                }
+            }, 300);
+        }
     }
 </script>
 

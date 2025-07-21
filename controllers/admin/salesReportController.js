@@ -6,22 +6,31 @@ const ExcelJS = require('exceljs');
 const loadSalesReport = async (req, res) => {
   try {
     // Get filter parameters
-    const { 
-      reportType = 'daily', 
-      startDate, 
+    const {
+      reportType = 'daily',
+      startDate,
       endDate,
       customStartDate,
-      customEndDate 
+      customEndDate,
+      page = 1
     } = req.query;
+
+    // Pagination parameters
+    const currentPage = parseInt(page) || 1;
+    const limit = 20; // Show 20 orders per page
+    const skip = (currentPage - 1) * limit;
 
     // Use the centralized date filter function for consistency
     let dateFilter = getDateFilter(reportType, customStartDate, customEndDate);
     let reportTitle = getReportTitle(reportType, customStartDate, customEndDate);
 
+    // Get sales data with pagination
+    const salesData = await getSalesData(dateFilter, skip, limit);
 
-    // Get sales data
-    const salesData = await getSalesData(dateFilter);
-    
+    // Get total count for pagination
+    const totalOrders = await getTotalOrdersCount(dateFilter);
+    const totalPages = Math.ceil(totalOrders / limit);
+
     // Get chart data for graphs
     const chartData = await getChartData(reportType, dateFilter);
 
@@ -32,6 +41,11 @@ const loadSalesReport = async (req, res) => {
       reportType,
       customStartDate: customStartDate || '',
       customEndDate: customEndDate || '',
+      currentPage,
+      totalPages,
+      totalOrders,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1,
       activePage: 'sales-report'
     });
 
@@ -42,11 +56,23 @@ const loadSalesReport = async (req, res) => {
 };
 
 // Get sales data with calculations
-const getSalesData = async (dateFilter) => {
-  const orders = await Order.find({
+const getSalesData = async (dateFilter, skip = 0, limit = null) => {
+  let query = Order.find({
     ...dateFilter,
-    status: { $nin: ['Cancelled'] } // Exclude cancelled orders
-  }).populate('orderedItems.product', 'productName category');
+    status: { $nin: ['Cancelled', 'Payment Failed'] }, // Exclude cancelled and failed orders
+    paymentStatus: { $ne: 'Failed' } // Also exclude orders with failed payment status
+  }).populate('orderedItems.product', 'productName category')
+    .sort({ createdOn: -1 }); // Latest orders first
+
+  // Apply pagination if specified
+  if (skip > 0) {
+    query = query.skip(skip);
+  }
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const orders = await query;
 
   let totalSalesCount = 0;
   let totalOrderAmount = 0;
@@ -91,6 +117,15 @@ const getSalesData = async (dateFilter) => {
     netSalesAmount,
     salesDetails
   };
+};
+
+// Get total orders count for pagination
+const getTotalOrdersCount = async (dateFilter) => {
+  return await Order.countDocuments({
+    ...dateFilter,
+    status: { $nin: ['Cancelled', 'Payment Failed'] },
+    paymentStatus: { $ne: 'Failed' }
+  });
 };
 
 // Get chart data for graphs
@@ -163,7 +198,13 @@ const getChartData = async (reportType, dateFilter) => {
   }
 
   const chartData = await Order.aggregate([
-    { $match: { ...dateFilter, status: { $nin: ['Cancelled'] } } },
+    {
+      $match: {
+        ...dateFilter,
+        status: { $nin: ['Cancelled', 'Payment Failed'] },
+        paymentStatus: { $ne: 'Failed' }
+      }
+    },
     {
       $group: {
         _id: groupBy,
