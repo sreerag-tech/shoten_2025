@@ -395,6 +395,15 @@ const verifyPayment = async (req, res) => {
     if (req.session.retryOrderData) {
       const retryData = req.session.retryOrderData;
 
+      // Get the order to access ordered items for stock decrement
+      const retryOrder = await Order.findById(retryData.actualOrderId);
+      if (!retryOrder) {
+        return res.status(404).json({
+          success: false,
+          message: 'Retry order not found'
+        });
+      }
+
       // Update the original order status to Processing (like COD orders)
       await Order.findByIdAndUpdate(retryData.actualOrderId, {
         status: 'Processing',
@@ -409,6 +418,36 @@ const verifyPayment = async (req, res) => {
         },
         'orderedItems.$[].status': 'Processing'
       });
+
+      // CRITICAL: Decrement stock for retry payment success
+      // Stock was never decremented for the original failed payment
+      console.log('=== RETRY PAYMENT STOCK DECREMENT DEBUG ===');
+      console.log('Retry order items:', JSON.stringify(retryOrder.orderedItems, null, 2));
+      console.log('Retry order ID:', retryData.actualOrderId);
+
+      for (const item of retryOrder.orderedItems) {
+        try {
+          console.log(`Attempting to decrement stock for retry payment - product ${item.product}: -${item.quantity}`);
+
+          // Check if product exists first
+          const product = await Product.findById(item.product);
+          if (!product) {
+            console.error(`Product not found for retry payment: ${item.product}`);
+            continue;
+          }
+
+          console.log(`Product ${item.product} current stock: ${product.quantity}`);
+
+          const result = await Product.findByIdAndUpdate(item.product, {
+            $inc: { quantity: -item.quantity }
+          }, { new: true });
+
+          console.log(`Stock decremented for retry payment - product ${item.product}: ${product.quantity} -> ${result.quantity} (change: -${item.quantity})`);
+        } catch (stockError) {
+          console.error(`Error decrementing stock for retry payment - product ${item.product}:`, stockError);
+        }
+      }
+      console.log('=== END RETRY PAYMENT STOCK DECREMENT DEBUG ===');
 
       // Clear retry data from session
       req.session.retryOrderData = null;
@@ -446,11 +485,33 @@ const verifyPayment = async (req, res) => {
     await order.save();
 
     // Update product stock now that payment is confirmed
-    // for (const item of pendingOrder.orderedItems) {
-    //   await Product.findByIdAndUpdate(item.product, {
-    //     $inc: { quantity: -item.quantity }
-    //   });
-    // }
+    console.log('=== STOCK DECREMENT DEBUG ===');
+    console.log('Pending order items:', JSON.stringify(pendingOrder.orderedItems, null, 2));
+    console.log('Is retry payment:', !!pendingOrder.failedOrderId);
+
+    for (const item of pendingOrder.orderedItems) {
+      try {
+        console.log(`Attempting to decrement stock for product ${item.product}: -${item.quantity}`);
+
+        // Check if product exists first
+        const product = await Product.findById(item.product);
+        if (!product) {
+          console.error(`Product not found: ${item.product}`);
+          continue;
+        }
+
+        console.log(`Product ${item.product} current stock: ${product.quantity}`);
+
+        const result = await Product.findByIdAndUpdate(item.product, {
+          $inc: { quantity: -item.quantity }
+        }, { new: true });
+
+        console.log(`Stock decremented for product ${item.product}: ${product.quantity} -> ${result.quantity} (change: -${item.quantity})`);
+      } catch (stockError) {
+        console.error(`Error decrementing stock for product ${item.product}:`, stockError);
+      }
+    }
+    console.log('=== END STOCK DECREMENT DEBUG ===');
 
     // Clear cart
     await Cart.deleteMany({ userId: pendingOrder.userId });
@@ -538,18 +599,10 @@ const handlePaymentFailure = async (req, res) => {
 
       await newOrder.save();
 
-      // Restore product stock since payment failed
-      const Product = require("../../models/productSchema");
-      for (const item of pendingOrder.orderedItems) {
-        try {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { quantity: item.quantity }
-          });
-          console.log(`Stock restored for product ${item.product}: +${item.quantity}`);
-        } catch (stockError) {
-          console.error(`Error restoring stock for product ${item.product}:`, stockError);
-        }
-      }
+      // NOTE: No need to restore stock for Razorpay payment failures
+      // because stock is only decremented AFTER successful payment verification
+      // For COD orders, stock is decremented immediately during order placement
+      console.log('Payment failed - no stock restoration needed for Razorpay orders');
 
       // Clear the user's cart since order was attempted
       await Cart.deleteMany({ userId: userId });

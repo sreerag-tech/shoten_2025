@@ -95,9 +95,13 @@
                     status: 'Processing'
                 });
 
-    await Product.findByIdAndUpdate(item.productId._id, {
-                    $inc: { quantity: -item.quantity }
-                })
+                // Only decrement stock for COD orders immediately
+                // For Razorpay, stock will be decremented after payment verification
+                if (paymentMethod === 'COD') {
+                    await Product.findByIdAndUpdate(item.productId._id, {
+                        $inc: { quantity: -item.quantity }
+                    });
+                }
             }
 
             // Calculate shipping charge

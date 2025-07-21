@@ -24,15 +24,18 @@ const calculateBestOfferForProduct = async (productId, userId = null) => {
       endDate: { $gte: currentDate }
     });
     
-    // Find active category offers
-    const categoryOffers = await Offer.find({
-      offerType: 'category',
-      applicableCategories: product.category._id,
-      isActive: true,
-      isDeleted: false,
-      startDate: { $lte: currentDate },
-      endDate: { $gte: currentDate }
-    });
+    // Find active category offers (only if product has a category)
+    let categoryOffers = [];
+    if (product.category && product.category._id) {
+      categoryOffers = await Offer.find({
+        offerType: 'category',
+        applicableCategories: product.category._id,
+        isActive: true,
+        isDeleted: false,
+        startDate: { $lte: currentDate },
+        endDate: { $gte: currentDate }
+      });
+    }
     
     // Combine all applicable offers
     const allOffers = [...productOffers, ...categoryOffers];
