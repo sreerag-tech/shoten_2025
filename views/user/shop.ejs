@@ -176,21 +176,14 @@
                             </div>
                         </div>
                         
-                        <!-- Apply Filters Button -->
-                        <div class="flex space-x-3">
-                            <button 
-                                type="submit" 
-                                class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition w-full"
-                            >
-                                Apply Filters
-                            </button>
-                            
-                            <button 
-                                type="button" 
+                        <!-- Reset Filters Button Only -->
+                        <div class="flex justify-center">
+                            <button
+                                type="button"
                                 id="resetFilters"
-                                class="px-6 py-3 border border-[#00ffff] text-[#00ffff] font-bold rounded-lg hover:bg-gray-700 transition"
+                                class="px-6 py-3 border border-[#00ffff] text-[#00ffff] font-bold rounded-lg hover:bg-gray-700 transition w-full"
                             >
-                                Reset
+                                🔄 Reset All Filters
                             </button>
                         </div>
                     </form>
@@ -717,104 +710,550 @@
                 inputs.forEach(input => {
                     if (input.type === 'checkbox') {
                         input.checked = input.value === 'all';
+                        input.classList.remove('checkbox-active');
                     } else if (input.type === 'number') {
                         input.value = input.name === 'min_price' ? '0' : '2000';
+                        input.classList.remove('filter-active');
                     } else {
                         input.value = input.name === 'sort' ? 'default' : '';
+                        input.classList.remove('filter-active');
                     }
                 });
+
+                // Update price range indicator if it exists
+                if (typeof updatePriceRangeIndicator === 'function') {
+                    updatePriceRangeIndicator();
+                }
 
                 // Add reset animation
                 filterForm.style.animation = 'wiggle 0.5s ease-in-out';
                 setTimeout(() => {
                     filterForm.style.animation = '';
                 }, 500);
+
+                // Apply filters after reset using AJAX (this will show all products)
+                applyFiltersAjax();
             });
         }
 
-        // AJAX form submission to prevent page refresh
-        if (filterForm) {
-            filterForm.addEventListener('submit', function(e) {
-                e.preventDefault(); // Prevent default form submission
+        // AJAX-based dynamic filtering without page refresh
+        let filterTimeout;
+        let isFiltering = false;
 
-                const submitButton = this.querySelector('button[type="submit"]');
-                const originalText = submitButton.innerHTML;
+        function applyFiltersAjax() {
+            // Prevent multiple simultaneous requests
+            if (isFiltering) return;
 
-                submitButton.innerHTML = `
-                    <div class="flex items-center justify-center">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
-                        Filtering...
-                    </div>
-                `;
-                submitButton.disabled = true;
+            // Clear previous timeout
+            clearTimeout(filterTimeout);
 
-                // Get form data
-                const formData = new FormData(this);
-                const params = new URLSearchParams(formData);
+            // Add a small delay to avoid too many requests
+            filterTimeout = setTimeout(() => {
+                isFiltering = true;
 
-                // Handle multiple category selections
-                const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
-                const selectedCategories = Array.from(categoryCheckboxes)
-                    .map(cb => cb.value)
-                    .filter(val => val !== 'all');
+                // Show loading state
+                showFilteringLoader();
 
-                if (selectedCategories.length > 0) {
-                    params.delete('category'); // Remove existing category params
-                    params.append('category', selectedCategories.join(','));
+                // Get all filter values
+                const filterData = getFilterData();
+
+                // Build query string
+                const queryString = buildQueryString(filterData);
+
+                // Make AJAX request
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', `/shop?${queryString}`, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('Accept', 'text/html');
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        isFiltering = false;
+                        hideFilteringLoader();
+
+                        if (xhr.status === 200) {
+                            console.log('AJAX request successful, updating content...');
+                            console.log('Response length:', xhr.responseText.length);
+
+                            // Validate response before processing
+                            if (xhr.responseText && xhr.responseText.length > 100) {
+                                // Check if response contains expected shop content
+                                if (xhr.responseText.includes('grid-cols-1') || xhr.responseText.includes('No Products Found')) {
+                                    updatePageContent(xhr.responseText, queryString);
+                                } else {
+                                    console.error('Response does not contain expected shop content');
+                                    showFilterError();
+                                }
+                            } else {
+                                console.error('Response is too short or empty');
+                                showFilterError();
+                            }
+                        } else {
+                            console.error('Filter request failed:', xhr.status, xhr.statusText);
+                            showFilterError();
+                        }
+                    }
+                };
+
+                xhr.onerror = function() {
+                    isFiltering = false;
+                    hideFilteringLoader();
+                    console.error('Filter request error');
+                    showFilterError();
+                };
+
+                xhr.send();
+            }, 300); // 300ms delay to avoid too many requests
+        }
+
+        // Get all filter data from form
+        function getFilterData() {
+            const data = {};
+
+            // Search input
+            const searchInput = document.getElementById('search');
+            if (searchInput && searchInput.value.trim()) {
+                data.search = searchInput.value.trim();
+            }
+
+            // Sort selection
+            const sortSelect = document.getElementById('sort');
+            if (sortSelect && sortSelect.value && sortSelect.value !== 'default') {
+                data.sort = sortSelect.value;
+            }
+
+            // Category checkboxes
+            const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
+            const selectedCategories = Array.from(categoryCheckboxes)
+                .map(cb => cb.value)
+                .filter(val => val !== 'all');
+
+            if (selectedCategories.length > 0) {
+                data.category = selectedCategories.join(',');
+            }
+
+            // Price range
+            const minPrice = document.getElementById('min_price');
+            const maxPrice = document.getElementById('max_price');
+
+            if (minPrice && minPrice.value && minPrice.value !== '0') {
+                data.min_price = minPrice.value;
+            }
+
+            if (maxPrice && maxPrice.value && maxPrice.value !== '2000') {
+                data.max_price = maxPrice.value;
+            }
+
+            return data;
+        }
+
+        // Build query string from filter data
+        function buildQueryString(data) {
+            const params = new URLSearchParams();
+
+            Object.keys(data).forEach(key => {
+                if (data[key]) {
+                    params.append(key, data[key]);
+                }
+            });
+
+            return params.toString();
+        }
+
+        // Show loading indicator
+        function showFilteringLoader() {
+            const productsGrid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8');
+            if (productsGrid) {
+                productsGrid.style.opacity = '0.6';
+                productsGrid.style.pointerEvents = 'none';
+                productsGrid.style.filter = 'blur(1px)';
+            }
+
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'filtering-loader';
+            loadingDiv.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-80 text-white px-6 py-3 rounded-lg z-50';
+            loadingDiv.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-[#00ffff]"></div>
+                    <span>Filtering products...</span>
+                </div>
+            `;
+            document.body.appendChild(loadingDiv);
+        }
+
+        // Hide loading indicator
+        function hideFilteringLoader() {
+            const productsGrid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8');
+            if (productsGrid) {
+                productsGrid.style.opacity = '1';
+                productsGrid.style.pointerEvents = 'auto';
+                productsGrid.style.filter = 'none';
+            }
+
+            const loader = document.getElementById('filtering-loader');
+            if (loader) {
+                loader.remove();
+            }
+        }
+
+        // Update page content with new results
+        function updatePageContent(html, queryString) {
+            try {
+                // Check if the response is valid HTML and not an error page
+                if (!html || html.length < 100) {
+                    console.error('Invalid or empty response');
+                    showFilterError();
+                    return;
                 }
 
-                // Fetch filtered results
-                fetch(`/shop?${params.toString()}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Check if this is an error page or redirect
+                const title = doc.querySelector('title');
+                if (title && (title.textContent.includes('Error') || title.textContent.includes('404'))) {
+                    console.error('Error page received');
+                    showFilterError();
+                    return;
+                }
+
+                // Find the current products container first - use attribute selectors to avoid colon issues
+                let currentProductsContainer = document.querySelector('[class*="grid"][class*="grid-cols-1"][class*="sm:grid-cols-2"][class*="lg:grid-cols-3"][class*="gap-8"]');
+
+                if (!currentProductsContainer) {
+                    // Try with different class combinations
+                    currentProductsContainer = document.querySelector('[class*="grid"][class*="grid-cols-1"][class*="md:grid-cols-2"][class*="lg:grid-cols-3"][class*="gap-8"]');
+                }
+
+                if (!currentProductsContainer) {
+                    // Try finding any grid with gap-8
+                    currentProductsContainer = document.querySelector('.grid[class*="gap-8"]');
+                }
+
+                if (!currentProductsContainer) {
+                    // Try finding the products section parent and then find grid inside
+                    const productsSection = document.querySelector('[class*="col-span-3"]');
+                    if (productsSection) {
+                        currentProductsContainer = productsSection.querySelector('.grid');
                     }
-                })
-                .then(response => response.text())
-                .then(html => {
-                    // Parse the response and update only the products section
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
+                }
 
-                    // Update products grid
-                    const newProductsGrid = doc.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8');
-                    const currentProductsGrid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8');
-
-                    if (newProductsGrid && currentProductsGrid) {
-                        currentProductsGrid.innerHTML = newProductsGrid.innerHTML;
+                if (!currentProductsContainer) {
+                    // Last resort: find any grid element in the main content area
+                    const mainContent = document.querySelector('.max-w-7xl');
+                    if (mainContent) {
+                        const grids = mainContent.querySelectorAll('.grid');
+                        // Find the grid that likely contains products (has multiple children)
+                        for (let grid of grids) {
+                            if (grid.children.length > 1) {
+                                currentProductsContainer = grid;
+                                break;
+                            }
+                        }
                     }
+                }
 
-                    // Update pagination
-                    const newPagination = doc.querySelector('.mt-12.flex.justify-center');
-                    const currentPagination = document.querySelector('.mt-12.flex.justify-center');
-
-                    if (newPagination && currentPagination) {
-                        currentPagination.innerHTML = newPagination.innerHTML;
-                    }
-
-                    // Update URL without refresh
-                    const newUrl = `/shop?${params.toString()}`;
-                    window.history.pushState({}, '', newUrl);
-
-                    // Restore button
-                    submitButton.innerHTML = originalText;
-                    submitButton.disabled = false;
-
-                    // Scroll to products section
-                    document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8').scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
+                console.log('Current products container found:', !!currentProductsContainer);
+                if (currentProductsContainer) {
+                    console.log('Current container classes:', currentProductsContainer.className);
+                    console.log('Current container HTML preview:', currentProductsContainer.outerHTML.substring(0, 200));
+                } else {
+                    // Debug: Let's see what containers are actually available
+                    console.log('Available grid elements:');
+                    const allGrids = document.querySelectorAll('[class*="grid"]');
+                    allGrids.forEach((grid, index) => {
+                        console.log(`Grid ${index}:`, grid.className);
                     });
-                })
-                .catch(error => {
-                    console.error('Filter error:', error);
-                    // Fallback to normal form submission
-                    submitButton.innerHTML = originalText;
-                    submitButton.disabled = false;
-                    this.submit();
+
+                    console.log('Available elements with "col-span":');
+                    const colSpans = document.querySelectorAll('[class*="col-span"]');
+                    colSpans.forEach((span, index) => {
+                        console.log(`Col-span ${index}:`, span.className);
+                    });
+                }
+
+                if (!currentProductsContainer) {
+                    console.error('Current products container not found after all attempts');
+                    showFilterError();
+                    return;
+                }
+
+                // Find the new products container or no products message using attribute selectors
+                let newProductsContainer = doc.querySelector('[class*="grid"][class*="grid-cols-1"][class*="sm:grid-cols-2"][class*="lg:grid-cols-3"][class*="gap-8"]');
+
+                if (!newProductsContainer) {
+                    newProductsContainer = doc.querySelector('[class*="grid"][class*="grid-cols-1"][class*="md:grid-cols-2"][class*="lg:grid-cols-3"][class*="gap-8"]');
+                }
+
+                if (!newProductsContainer) {
+                    // Try finding any grid with gap-8
+                    newProductsContainer = doc.querySelector('.grid[class*="gap-8"]');
+                }
+
+                if (!newProductsContainer) {
+                    // Try finding grid inside content area
+                    const contentArea = doc.querySelector('[class*="col-span-3"]');
+                    if (contentArea) {
+                        newProductsContainer = contentArea.querySelector('.grid');
+                    }
+                }
+
+                let noProductsMessage = doc.querySelector('.bg-gray-800.rounded-lg.p-8.text-center');
+
+                // Also check for the parent container that holds either products or no-products message
+                const newContentArea = doc.querySelector('.lg\\:col-span-3');
+
+                console.log('New products container found:', !!newProductsContainer);
+                console.log('No products message found:', !!noProductsMessage);
+                console.log('New content area found:', !!newContentArea);
+
+                // Update the products area
+                if (newProductsContainer && newProductsContainer.children.length > 0) {
+                    console.log('Updating with new products, count:', newProductsContainer.children.length);
+                    updateProductsContainer(currentProductsContainer, newProductsContainer);
+                } else if (noProductsMessage) {
+                    console.log('Showing no products message');
+                    // For no products, we need to replace the entire products area
+                    const currentParent = currentProductsContainer.parentElement;
+                    if (currentParent) {
+                        // Create a wrapper div to maintain structure
+                        const wrapper = document.createElement('div');
+                        wrapper.appendChild(noProductsMessage.cloneNode(true));
+
+                        // Replace the grid with the no products message
+                        currentParent.replaceChild(wrapper, currentProductsContainer);
+                    }
+                } else if (newContentArea) {
+                    console.log('Using content area fallback');
+                    // Find the current content area and replace its content
+                    const currentContentArea = document.querySelector('[class*="col-span-3"]');
+                    if (currentContentArea) {
+                        currentContentArea.innerHTML = newContentArea.innerHTML;
+                    }
+                } else {
+                    console.log('Checking if response contains no products message in HTML');
+                    // Sometimes the no products message might be in a different structure
+                    if (html.includes('No Products Found')) {
+                        console.log('Found no products message in HTML, replacing content');
+                        const currentParent = currentProductsContainer.parentElement;
+                        if (currentParent) {
+                            currentParent.innerHTML = '<div class="bg-gray-800 rounded-lg p-8 text-center"><h3 class="text-xl font-bold mb-2">No Products Found</h3><p class="text-gray-400 mb-6">We couldn\'t find any products matching your current filters.</p><a href="/shop" class="px-6 py-3 bg-[#00ffff] text-black font-bold rounded-lg hover:bg-[#0088ff] transition">Clear All Filters</a></div>';
+                        }
+                    } else {
+                        console.error('No valid content found in response');
+                        showFilterError();
+                        return;
+                    }
+                }
+
+                // Update pagination
+                const newPagination = doc.querySelector('.mt-12.flex.justify-center');
+                const currentPagination = document.querySelector('.mt-12.flex.justify-center');
+
+                if (newPagination && currentPagination) {
+                    currentPagination.innerHTML = newPagination.innerHTML;
+                }
+
+                // Update URL without refresh
+                const newUrl = queryString ? `/shop?${queryString}` : '/shop';
+                window.history.pushState({ filters: queryString }, '', newUrl);
+
+                // Re-initialize any dynamic elements
+                setTimeout(() => {
+                    reinitializeDynamicElements();
+                }, 200);
+
+            } catch (error) {
+                console.error('Error updating page content:', error);
+                showFilterError();
+            }
+        }
+
+        // Separate function to update products container
+        function updateProductsContainer(currentContainer, newContent) {
+            if (!currentContainer) {
+                console.error('Current container not found');
+                return;
+            }
+
+            // Add fade-out effect
+            currentContainer.style.opacity = '0.3';
+            currentContainer.style.transition = 'opacity 0.2s ease';
+
+            setTimeout(() => {
+                if (newContent.tagName === 'DIV' && newContent.classList.contains('grid')) {
+                    // It's a products grid
+                    currentContainer.innerHTML = newContent.innerHTML;
+                } else {
+                    // It's a no-products message, replace the entire container
+                    const parent = currentContainer.parentElement;
+                    const newElement = newContent.cloneNode(true);
+                    parent.replaceChild(newElement, currentContainer);
+
+                    // Update reference for fade-in
+                    currentContainer = newElement;
+                }
+
+                // Add fade-in effect
+                currentContainer.style.opacity = '1';
+                currentContainer.style.animation = 'fadeIn 0.4s ease-in-out';
+
+                console.log('Products container updated successfully');
+
+                // Remove animation after completion
+                setTimeout(() => {
+                    currentContainer.style.animation = '';
+                    currentContainer.style.transition = '';
+                }, 400);
+            }, 200);
+        }
+
+
+        // Show error message
+        function showFilterError() {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg z-50';
+            errorDiv.textContent = 'Error applying filters. Please try again.';
+            document.body.appendChild(errorDiv);
+
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 3000);
+        }
+
+        // Re-initialize dynamic elements after content update
+        function reinitializeDynamicElements() {
+            // Re-initialize wishlist buttons if they exist
+            const wishlistButtons = document.querySelectorAll('.wishlist-btn');
+            wishlistButtons.forEach(btn => {
+                // Remove existing event listeners and re-add them
+                btn.replaceWith(btn.cloneNode(true));
+            });
+
+            // Re-initialize pagination links to use AJAX
+            const paginationLinks = document.querySelectorAll('.mt-12.flex.justify-center a');
+            paginationLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Get the URL from the link
+                    const url = new URL(this.href);
+                    const urlParams = new URLSearchParams(url.search);
+
+                    // Restore current filter values and add page parameter
+                    const currentFilters = getFilterData();
+                    Object.keys(currentFilters).forEach(key => {
+                        urlParams.set(key, currentFilters[key]);
+                    });
+
+                    // Make AJAX request for the new page
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', `/shop?${urlParams.toString()}`, true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            updatePageContent(xhr.responseText, urlParams.toString());
+
+                            // Scroll to top of products section
+                            const productsSection = document.querySelector('[class*="grid"][class*="gap-8"]') ||
+                                                   document.querySelector('.grid');
+                            if (productsSection) {
+                                productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }
+                    };
+
+                    xhr.send();
                 });
             });
+
+            // Re-initialize any other dynamic elements as needed
+            // This ensures all functionality continues to work after AJAX update
         }
+
+        // Add event listeners to all filter inputs for AJAX filtering
+        if (filterForm) {
+            // Search input - apply filter on input with debounce
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    // Add visual feedback for active search
+                    if (this.value.trim()) {
+                        this.classList.add('filter-active');
+                    } else {
+                        this.classList.remove('filter-active');
+                    }
+                    applyFiltersAjax();
+                });
+            }
+
+            // Sort dropdown - apply filter immediately on change
+            const sortSelect = document.getElementById('sort');
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function() {
+                    // Add visual feedback for active sort
+                    if (this.value && this.value !== 'default') {
+                        this.classList.add('filter-active');
+                    } else {
+                        this.classList.remove('filter-active');
+                    }
+                    applyFiltersAjax();
+                });
+            }
+
+            // Category checkboxes - apply filter immediately on change
+            const categoryCheckboxes = document.querySelectorAll('input[name="category"]');
+            categoryCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // Add visual feedback for active filters
+                    if (this.checked && this.value !== 'all') {
+                        this.classList.add('checkbox-active');
+                    } else {
+                        this.classList.remove('checkbox-active');
+                    }
+                    applyFiltersAjax();
+                });
+            });
+
+            // Price range inputs - apply filter on input with debounce
+            const minPriceInput = document.getElementById('min_price');
+            const maxPriceInput = document.getElementById('max_price');
+
+            if (minPriceInput) {
+                minPriceInput.addEventListener('input', function() {
+                    // Add visual feedback for active filters
+                    if (this.value && this.value !== '0') {
+                        this.classList.add('filter-active');
+                    } else {
+                        this.classList.remove('filter-active');
+                    }
+                    applyFiltersAjax();
+                });
+            }
+
+            if (maxPriceInput) {
+                maxPriceInput.addEventListener('input', function() {
+                    // Add visual feedback for active filters
+                    if (this.value && this.value !== '2000') {
+                        this.classList.add('filter-active');
+                    } else {
+                        this.classList.remove('filter-active');
+                    }
+                    applyFiltersAjax();
+                });
+            }
+
+            // Prevent form submission completely
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        // Initialize pagination links on page load
+        reinitializeDynamicElements();
     });
     </script>
 
@@ -977,6 +1416,54 @@
         animation: wiggle 0.3s ease-in-out;
     }
 
+    /* Smooth filtering animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Loading state for products during filtering */
+    .products-loading {
+        opacity: 0.5;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    /* Smooth transitions for filter changes */
+    .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8 {
+        transition: opacity 0.3s ease;
+    }
+
+    /* Filter input focus effects */
+    input:focus, select:focus {
+        box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.3);
+        border-color: #00ffff;
+    }
+
+    /* Active filter indicators */
+    .filter-active {
+        border-color: #00ffff !important;
+        box-shadow: 0 0 0 1px rgba(0, 255, 255, 0.3);
+    }
+
+    .checkbox-active {
+        accent-color: #00ffff;
+    }
+
+    /* Filtering indicator */
+    .filtering-indicator {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: #00ffff;
+        padding: 1rem 2rem;
+        border-radius: 0.5rem;
+        z-index: 9999;
+        display: none;
+    }
+
     /* Enhanced hover effects */
     .hover-glow:hover {
         box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
@@ -1120,53 +1607,73 @@
                 });
             }
 
-            // Handle multiple category selections on form submit
-            document.getElementById('filterForm').addEventListener('submit', function(e) {
-                const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
-                const selectedCategories = Array.from(categoryCheckboxes)
-                    .map(cb => cb.value)
-                    .filter(val => val !== 'all');
-                
-                if (selectedCategories.length > 0) {
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'category';
-                    hiddenInput.value = selectedCategories.join(',');
-                    this.appendChild(hiddenInput);
+            // Form submit is now handled by the dynamic filtering system above
+        });
+
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.filters !== undefined) {
+                // Restore filters from URL and apply them
+                const urlParams = new URLSearchParams(window.location.search);
+                restoreFiltersFromURL(urlParams);
+                applyFiltersAjax();
+            }
+        });
+
+        // Function to restore filter values from URL parameters
+        function restoreFiltersFromURL(urlParams) {
+            // Restore search
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                searchInput.value = urlParams.get('search') || '';
+            }
+
+            // Restore sort
+            const sortSelect = document.getElementById('sort');
+            if (sortSelect) {
+                sortSelect.value = urlParams.get('sort') || 'default';
+            }
+
+            // Restore categories
+            const categories = urlParams.get('category');
+            const categoryCheckboxes = document.querySelectorAll('input[name="category"]');
+            categoryCheckboxes.forEach(checkbox => {
+                if (categories) {
+                    checkbox.checked = categories.split(',').includes(checkbox.value);
+                } else {
+                    checkbox.checked = checkbox.value === 'all';
                 }
             });
-        });
-        // Enhanced Reset filters button
-        const resetBtn = document.getElementById('resetFilters');
-            const filterForm = document.getElementById('filterForm');
-            
-            if (resetBtn && filterForm) {
-                resetBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    filterForm.reset(); // Reset all form fields
-                    searchInput.value = '';
-                    clearSearchBtn.style.display = 'none';
-                    minPrice.value = '0';
-                    maxPrice.value = '2000';
-                    updatePriceRangeIndicator();
-                    window.location.href = '/shop'; // Redirect to base shop URL
-                });
+
+            // Restore price range
+            const minPriceInput = document.getElementById('min_price');
+            const maxPriceInput = document.getElementById('max_price');
+
+            if (minPriceInput) {
+                minPriceInput.value = urlParams.get('min_price') || '0';
             }
+            if (maxPriceInput) {
+                maxPriceInput.value = urlParams.get('max_price') || '2000';
+            }
+        }
+
         // Back to top button
         const backToTopButton = document.querySelector('button.fixed');
+        if (backToTopButton) {
             backToTopButton.addEventListener('click', function() {
                 window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
-                    });
-                
-                // Show/hide back to top button based on scroll position
-                window.addEventListener('scroll', function() {
-                    if (window.pageYOffset > 300) {
-                        backToTopButton.style.opacity = '1';
-                    } else {
-                        backToTopButton.style.opacity = '0';
-                    }
+                    top: 0,
+                    behavior: 'smooth'
                 });
+            });
+
+            // Show/hide back to top button based on scroll position
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopButton.style.opacity = '1';
+                } else {
+                    backToTopButton.style.opacity = '0';
+                }
+            });
+        }
     </script>

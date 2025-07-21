@@ -159,16 +159,35 @@ const loadShop = async (req, res) => {
       };
     }));
 
-    res.render("shop", {
-      user: userData,
-      products: productData,
-      recommendedProducts: recommendedProductData,
-      categories: listedCategories,
-      query: req.query,
-      currentPage: parseInt(page),
-      totalPages,
-      totalProducts
-    });
+    // Check if this is an AJAX request
+    const isAjaxRequest = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest';
+
+    if (isAjaxRequest) {
+      // For AJAX requests, render only the shop content without layout
+      res.render("shop", {
+        user: userData,
+        products: productData,
+        recommendedProducts: recommendedProductData,
+        categories: listedCategories,
+        query: req.query,
+        currentPage: parseInt(page),
+        totalPages,
+        totalProducts,
+        layout: false // This prevents the full page layout from being rendered
+      });
+    } else {
+      // For regular requests, render the full page
+      res.render("shop", {
+        user: userData,
+        products: productData,
+        recommendedProducts: recommendedProductData,
+        categories: listedCategories,
+        query: req.query,
+        currentPage: parseInt(page),
+        totalPages,
+        totalProducts
+      });
+    }
   } catch (error) {
     console.log("Error loading shop:", error.message);
     res.redirect("/pageNotFound");
