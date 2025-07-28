@@ -117,9 +117,11 @@
                                         <label class="form-label">Category</label>
                                         <select class="form-select border" style="width: 150px;" name="category">
                                             <% categories.forEach(cat => { %>
-                                                <option value="<%= cat.name %>" <%= cat.name === product.category.name ? 'selected' : '' %>>
-                                                    <%= cat.name %>
-                                                </option>
+                                              <option value="<%= cat.name %>" 
+    <%= (product.category && cat.name === product.category.name) ? 'selected' : '' %>>
+    <%= cat.name %>
+</option>
+
                                             <% }) %>
                                         </select>
                                         <div id="category-error" class="error-message"></div>
