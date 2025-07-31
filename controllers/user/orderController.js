@@ -705,8 +705,12 @@ const cancelOrder = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Item not found' });
       }
 
+      // If item is already cancelled, just return success
       if (item.status === 'Cancelled') {
-        return res.status(400).json({ success: false, message: 'Item already cancelled' });
+        return res.json({
+          success: true,
+          message: 'Item already cancelled'
+        });
       }
 
       // Update item status
@@ -720,12 +724,16 @@ const cancelOrder = async (req, res) => {
         { $inc: { quantity: item.quantity } }
       );
 
-    } else {
-      // Cancel entire order
-      if (order.status === 'Cancelled') {
-        return res.status(400).json({ success: false, message: 'Order already cancelled' });
+      // Update order status if all items are cancelled
+      const allCancelled = order.orderedItems.every(item => item.status === 'Cancelled');
+      if (allCancelled) {
+        order.status = 'Cancelled';
+        order.cancelReason = reason || 'No reason provided';
+        order.cancelledAt = new Date();
       }
 
+    } else {
+      // Cancel entire order
       // Update order status
       order.status = 'Cancelled';
       order.cancelReason = reason || 'No reason provided';
@@ -733,6 +741,7 @@ const cancelOrder = async (req, res) => {
 
       // Update all items status and restore stock
       for (const item of order.orderedItems) {
+        // Skip items that are already cancelled
         if (item.status !== 'Cancelled') {
           item.status = 'Cancelled';
           item.cancelReason = reason || 'No reason provided';

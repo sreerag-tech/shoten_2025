@@ -17,94 +17,191 @@ function setAmount(amount) {
     document.getElementById('addAmount').value = amount;
 }
 
+// Initialize Razorpay
+let razorpayInstance;
+
 // Add Money Form Handler
-document.getElementById('addMoneyForm').addEventListener('submit', function(e) {
+document.getElementById('addMoneyForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const amount = document.getElementById('addAmount').value;
+    let loadingSwal = null;
     
     // Validate amount
     if (!amount || amount <= 0) {
-        Swal.fire({
-            title: '❌ Invalid Amount',
-            text: 'Please enter a valid amount',
-            icon: 'error',
-            confirmButtonColor: '#00ffff',
-            background: '#1f2937',
-            color: '#ffffff'
-        });
+        showError('❌ Invalid Amount', 'Please enter a valid amount');
         return;
     }
     
     if (amount > 50000) {
-        Swal.fire({
-            title: '❌ Amount Too High',
-            text: 'Maximum amount allowed is ₹50,000',
-            icon: 'error',
-            confirmButtonColor: '#00ffff',
-            background: '#1f2937',
-            color: '#ffffff'
-        });
+        showError('❌ Amount Too High', 'Maximum amount allowed is ₹50,000');
         return;
     }
     
-    // Show loading
-    Swal.fire({
-        title: 'Processing...',
-        text: 'Adding money to your wallet',
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        background: '#1f2937',
-        color: '#ffffff',
-        didOpen: () => {
-            Swal.showLoading();
+    try {
+        // Show loading
+        loadingSwal = Swal.fire({
+            title: 'Processing...',
+            text: 'Creating payment request...',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            background: '#1f2937',
+            color: '#ffffff',
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Create Razorpay order
+        const orderResponse = await fetch('/wallet/create-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ amount: amount * 100 }) // Convert to paise
+        });
+
+        const orderData = await orderResponse.json();
+
+        if (!orderResponse.ok || !orderData.success) {
+            throw new Error(orderData.message || 'Failed to create payment request');
         }
-    });
-    
-    // Add money to wallet
-    fetch('/wallet/add-money', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amount: amount })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            Swal.fire({
-                title: '✅ Money Added!',
-                text: data.message,
-                icon: 'success',
-                confirmButtonColor: '#00ffff',
-                background: '#1f2937',
-                color: '#ffffff'
-            }).then(() => {
-                closeAddMoneyModal();
-                location.reload(); // Refresh to show updated balance
-            });
-        } else {
+
+        // Initialize Razorpay checkout
+        const options = {
+            key: orderData.key_id,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: 'Shoten Wallet Top-up',
+            description: 'Adding money to your wallet',
+            order_id: orderData.order_id,
+            handler: async function (response) {
+                try {
+                    // Hide loading if still showing
+                    if (loadingSwal) {
+                        loadingSwal.close();
+                    }
+
+                    // Verify payment signature
+                    const verifyResponse = await fetch('/wallet/verify-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        })
+                    });
+
+                    const verifyData = await verifyResponse.json();
+
+                    if (!verifyResponse.ok || !verifyData.success) {
+                        throw new Error(verifyData.message || 'Payment verification failed');
+                    }
+
+                    // Payment successful
+                    showSuccess(`₹${amount.toLocaleString()} added to your wallet`, verifyData.newBalance);
+
+                } catch (error) {
+                    // Payment failed - redirect to wallet page with error
+                    window.location.href = '/wallet';
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: '❌ Payment Failed',
+                            text: error.message || 'Could not add money to wallet',
+                            icon: 'error',
+                            confirmButtonColor: '#00ffff',
+                            background: '#1f2937',
+                            color: '#ffffff'
+                        });
+                    }, 1000); // Delay to ensure redirect completes
+                }
+            },
+            prefill: {
+                name: orderData.user.name,
+                email: orderData.user.email,
+                contact: orderData.user.phone
+            },
+            theme: {
+                color: '#00ffff'
+            },
+            modal: {
+                ondismiss: function() {
+                    // User exited payment - redirect to wallet page
+                    window.location.href = '/wallet';
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: '❌ Payment Cancelled',
+                            text: 'Payment was cancelled',
+                            icon: 'error',
+                            confirmButtonColor: '#00ffff',
+                            background: '#1f2937',
+                            color: '#ffffff'
+                        });
+                    }, 1000);
+                }
+            }
+        };
+
+        if (typeof Razorpay === 'undefined') {
+            throw new Error('Razorpay SDK not loaded');
+        }
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+    } catch (error) {
+        // Close loading if still showing
+        if (loadingSwal) {
+            loadingSwal.close();
+        }
+
+        // Redirect to wallet page with error
+        window.location.href = '/wallet';
+        setTimeout(() => {
             Swal.fire({
                 title: '❌ Error',
-                text: data.message,
+                text: error.message || 'Could not add money to wallet',
                 icon: 'error',
                 confirmButtonColor: '#00ffff',
                 background: '#1f2937',
                 color: '#ffffff'
             });
-        }
-    })
-    .catch(error => {
-        Swal.fire({
-            title: '❌ Error',
-            text: 'Failed to add money to wallet',
-            icon: 'error',
-            confirmButtonColor: '#00ffff',
-            background: '#1f2937',
-            color: '#ffffff'
-        });
-    });
+        }, 1000); // Delay to ensure redirect completes
+    }
 });
+
+// Helper function to show success message
+function showSuccess(message, newBalance) {
+    Swal.fire({
+        title: '✅ Payment Successful!',
+        text: message,
+        icon: 'success',
+        confirmButtonColor: '#00ffff',
+        background: '#1f2937',
+        color: '#ffffff'
+    }).then(() => {
+        closeAddMoneyModal();
+        // Update balance display immediately
+        document.getElementById('walletBalance').textContent = `₹${newBalance.toLocaleString()}`;
+        // Then reload to ensure all data is fresh
+        setTimeout(() => location.reload(), 1000);
+    });
+}
+
+// Helper function to show error message
+function showError(title, message) {
+    Swal.fire({
+        title: title,
+        text: message,
+        icon: 'error',
+        confirmButtonColor: '#00ffff',
+        background: '#1f2937',
+        color: '#ffffff'
+    });
+}
 
 // Refresh Transactions
 function refreshTransactions() {
