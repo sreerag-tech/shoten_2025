@@ -1,5 +1,3 @@
-
-
 // Import organized controller modules
 const authController = require('./authController');
 const passwordController = require('./passwordController');
@@ -117,7 +115,9 @@ const {
   addMoney,
   getWalletBalance,
   getTransactionHistory,
-  useWalletForPayment
+  useWalletForPayment,
+  createRazorpayOrder,
+  verifyPayment
 } = walletController;
 
 // Checkout functions
@@ -215,6 +215,8 @@ module.exports = {
   getWalletBalance,
   getTransactionHistory,
   useWalletForPayment,
+  createRazorpayOrder,
+  verifyPayment,
 
   // Checkout functions
   loadCheckout,

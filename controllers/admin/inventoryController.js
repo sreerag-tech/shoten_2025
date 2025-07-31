@@ -360,7 +360,7 @@ const exportInventoryReport = async (req, res) => {
     let csvContent = 'Product Name,Category,Current Stock,Regular Price,Offer Price,Total Value,Status\n';
 
     for (const product of products) {
-      const status = product.quantity <= 0 ? 'Out of Stock' :
+      const status = product.quantity <= 0 ? '' :
                     product.quantity <= 10 ? 'Low Stock' : 'In Stock';
 
       // Calculate offer price

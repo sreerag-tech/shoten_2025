@@ -111,6 +111,8 @@ router.post('/wallet/add-money', userAuth, userController.addMoney);
 router.get('/wallet/balance', userAuth, userController.getWalletBalance);
 router.get('/wallet/transactions', userAuth, userController.getTransactionHistory);
 router.post('/wallet/use-for-payment', userAuth, userController.useWalletForPayment);
+router.post('/wallet/create-order', userAuth, userController.createRazorpayOrder);
+router.post('/wallet/verify-payment', userAuth, userController.verifyPayment);
 
 // Checkout Routes
 router.get('/checkout', userAuth, userController.loadCheckout);
@@ -201,7 +203,3 @@ router.get("/api/placeholder/:width/:height", (req, res) => {
 });
 
 module.exports = router;
-
-
-
-

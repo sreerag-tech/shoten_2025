@@ -543,6 +543,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Cancel order buttons
+    document.querySelectorAll('.cancel-order-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent default button action
+            const orderId = this.getAttribute('data-order-id');
+            showCancelOrderModal(orderId);
+        });
+    });
+
+    // Cancel item buttons
+    document.querySelectorAll('.cancel-item-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent default button action
+            const orderId = this.getAttribute('data-order-id');
+            const itemIndex = this.getAttribute('data-item-index');
+            showCancelItemModal(orderId, itemIndex);
+        });
+    });
+
     // Close modal on outside click
     document.getElementById('orderDetailsModal').addEventListener('click', function(e) {
         if (e.target === this) {

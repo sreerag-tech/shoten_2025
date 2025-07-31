@@ -50,6 +50,16 @@ const addToCart = async (req, res) => {
     
     // Check stock availability
     if (product.quantity < qty) {
+      // Check if product is completely out of stock
+      if (product.quantity <= 0) {
+        // Remove item from cart if completely out of stock
+        await Cart.deleteOne({ _id: existingCartItem._id });
+        return res.json({ 
+          success: true,
+          message: 'Product removed from cart as it is out of stock',
+          shouldRemove: true
+        });
+      }
       return res.json({ 
         success: false, 
         message: `Only ${product.quantity} items available in stock` 

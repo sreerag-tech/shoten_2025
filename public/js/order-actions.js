@@ -32,7 +32,28 @@ function showCancelOrderModal(orderId) {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            cancelOrder(orderId, result.value.reason);
+            cancelOrder(orderId, result.value.reason).catch(error => {
+                // If server returns error about items already cancelled, show appropriate message
+                if (error.message && error.message.includes('cancelled')) {
+                    Swal.fire({
+                        title: '⚠️ Warning',
+                        text: 'Some items in this order have already been cancelled. Please refresh the page and try again.',
+                        icon: 'warning',
+                        confirmButtonColor: '#00ffff',
+                        background: '#1f2937',
+                        color: '#ffffff'
+                    });
+                } else {
+                    Swal.fire({
+                        title: '❌ Error',
+                        text: error.message || 'Failed to cancel order',
+                        icon: 'error',
+                        confirmButtonColor: '#00ffff',
+                        background: '#1f2937',
+                        color: '#ffffff'
+                    });
+                }
+            });
         }
     });
 }
@@ -69,7 +90,28 @@ function showCancelItemModal(orderId, itemIndex) {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            cancelOrderItem(orderId, itemIndex, result.value.reason);
+            cancelOrderItem(orderId, itemIndex, result.value.reason).catch(error => {
+                // If server returns error about item already cancelled, show appropriate message
+                if (error.message && error.message.includes('cancelled')) {
+                    Swal.fire({
+                        title: '⚠️ Warning',
+                        text: 'This item has already been cancelled. Please refresh the page and try again.',
+                        icon: 'warning',
+                        confirmButtonColor: '#00ffff',
+                        background: '#1f2937',
+                        color: '#ffffff'
+                    });
+                } else {
+                    Swal.fire({
+                        title: '❌ Error',
+                        text: error.message || 'Failed to cancel item',
+                        icon: 'error',
+                        confirmButtonColor: '#00ffff',
+                        background: '#1f2937',
+                        color: '#ffffff'
+                    });
+                }
+            });
         }
     });
 }

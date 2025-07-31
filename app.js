@@ -1,13 +1,21 @@
 const express = require('express');
 const app = express();
 const path = require("path");
-const passport=require("./config/passport");
+const passport = require("./config/passport");
 require('dotenv').config();
 const session = require("express-session");
 const db = require("./config/db");
 const userRouter = require("./routes/userRouter");
-const adminRouter = require('./routes/adminRouter')
+const adminRouter = require('./routes/adminRouter');
+const cron = require('node-cron');
+const mongoose = require('mongoose');
+const Offer = require('./models/offerSchema');
+const Coupon = require('./models/couponSchema');
+
 db();
+
+// Install node-cron if not already installed
+// npm install node-cron
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -24,29 +32,24 @@ app.use(session({
     }
 }));
 
-
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Session timeout middleware
 app.use((req, res, next) => {
   if (req.session && req.session.user) {
-    // Check if session has lastActivity timestamp
     if (req.session.lastActivity) {
       const currentTime = Date.now();
       const sessionTimeout = 72 * 60 * 60 * 1000; // 72 hours in milliseconds
 
-      // If session has timed out
       if (currentTime - req.session.lastActivity > sessionTimeout) {
         req.session.destroy((err) => {
           if (err) {
             console.error('Error destroying expired session:', err);
           }
-          // Only redirect if it's a page request, not an API call
           if (!req.xhr && (!req.headers.accept || req.headers.accept.indexOf('json') === -1)) {
             return res.redirect('/login?expired=true');
           }
-          // For API calls, send JSON response
           if (req.xhr || req.headers.accept.indexOf('json') > -1) {
             return res.status(401).json({
               success: false,
@@ -58,10 +61,8 @@ app.use((req, res, next) => {
         return;
       }
 
-      // Update lastActivity timestamp
       req.session.lastActivity = currentTime;
     } else {
-      // Initialize lastActivity if not present
       req.session.lastActivity = Date.now();
     }
   }
@@ -118,20 +119,17 @@ app.use((req, res, next) => {
     const error = new Error(`Page not found: ${req.originalUrl}`);
     error.status = 404;
 
-    // Check if the request is for admin routes
     if (req.originalUrl.startsWith('/admin')) {
-        // Render admin 404 page
         res.status(404).render(path.join(__dirname, 'views/admin/404'), {
             title: 'Page Not Found - Admin Panel',
             url: req.originalUrl,
-            layout: false // Don't use any layout for 404 page
+            layout: false
         });
     } else {
-        // Render user 404 page
         res.status(404).render(path.join(__dirname, 'views/user/404'), {
             title: 'Page Not Found - Shoten',
             url: req.originalUrl,
-            layout: false // Don't use any layout for 404 page
+            layout: false
         });
     }
 });
@@ -140,15 +138,12 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);
 
-    // Set default error status
     const status = err.status || err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
 
-    // Log error details
     console.error(`Error ${status}: ${message}`);
     console.error('Stack:', err.stack);
 
-    // Check if the request is for admin routes
     if (req.originalUrl.startsWith('/admin')) {
         res.status(status).render(path.join(__dirname, 'views/admin/admin-error'), {
             title: `Error ${status} - Admin Panel`,
@@ -168,10 +163,54 @@ app.use((err, req, res, next) => {
     }
 });
 
+// Cron job setup
+const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+
+const updateOffers = async () => {
+  try {
+    const now = new Date(currentDate);
+    const activeOffers = await Offer.updateMany(
+      { startDate: { $lte: now }, endDate: { $gte: now }, isActive: false, isDeleted: false },
+      { $set: { isActive: true } }
+    );
+    const expiredOffers = await Offer.updateMany(
+      { endDate: { $lt: now }, isActive: true, isDeleted: false },
+      { $set: { isActive: false } }
+    );
+    console.log(`Updated ${activeOffers.modifiedCount} offers to active, ${expiredOffers.modifiedCount} to inactive at ${currentDate}`);
+  } catch (error) {
+    console.error('Error updating offers:', error);
+  }
+};
+
+const updateCoupons = async () => {
+  try {
+    const now = new Date(currentDate);
+    const activeCoupons = await Coupon.updateMany(
+      { startOn: { $lte: now }, expireOn: { $gte: now }, isListed: false, isDeleted: false },
+      { $set: { isListed: true } }
+    );
+    const expiredCoupons = await Coupon.updateMany(
+      { expireOn: { $lt: now }, isListed: true, isDeleted: false },
+      { $set: { isListed: false } }
+    );
+    console.log(`Updated ${activeCoupons.modifiedCount} coupons to active, ${expiredCoupons.modifiedCount} to inactive at ${currentDate}`);
+  } catch (error) {
+    console.error('Error updating coupons:', error);
+  }
+};
+
+// Schedule the jobs to run every 5 minutes
+cron.schedule('*/5 * * * *', () => {
+  console.log('Running cron jobs at', currentDate);
+  updateOffers();
+  updateCoupons();
+}, {
+  scheduled: true,
+  timezone: 'Asia/Kolkata'
+});
+
 const PORT = process.env.PORT || 4200;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
-
-// module.exports = app;

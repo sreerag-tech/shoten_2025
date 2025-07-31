@@ -1,5 +1,55 @@
 // Cart Actions JavaScript (Update, Remove, Clear)
 
+// Function to remove out-of-stock item
+async function removeOutOfStockItem(cartId) {
+    const cartItem = document.querySelector(`[data-cart-id="${cartId}"]`);
+    
+    try {
+        const response = await fetch('/cart/remove', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ cartItemId: cartId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Remove item from DOM with animation
+            cartItem.style.transition = 'all 0.3s ease';
+            cartItem.style.opacity = '0';
+            cartItem.style.transform = 'translateX(-100%)';
+            
+            setTimeout(() => {
+                cartItem.remove();
+                updateCartTotals();
+                checkEmptyCart();
+                updateHeaderCartCount();
+            }, 300);
+            
+            showToast('success', data.message);
+        } else {
+            showToast('error', data.message);
+        }
+    } catch (error) {
+        console.error('Error removing out of stock item:', error);
+        showToast('error', 'Failed to remove item. Please try again.');
+    }
+}
+
+// Add event listener for remove out-of-stock button
+document.addEventListener('DOMContentLoaded', () => {
+    const removeButtons = document.querySelectorAll('.remove-out-of-stock-btn');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const cartId = e.target.dataset.cartId;
+            removeOutOfStockItem(cartId);
+        });
+    });
+});
+
 function updateCartQuantity(cartId, action) {
     // Show loading on the specific item
     const cartItem = document.querySelector(`[data-cart-id="${cartId}"]`);

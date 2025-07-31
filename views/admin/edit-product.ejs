@@ -62,6 +62,9 @@
         opacity: 0.5;
         transition: opacity 0.3s ease;
     }
+    .form-control.error {
+        border-color: red;
+    }
 </style>
 
 <section class="content-main">
@@ -97,7 +100,7 @@
                             <div class="col-lg-6">
                                 <div class="mb-4">
                                     <label class="form-label">Sale Price</label>
-                                    <input placeholder="₹" name="salePrice" type="text" class="form-control border" value="<%= product.salePrice %>">
+                                    <input placeholder="₹" name="salePrice" type="text" class="form-control border" id="salePrice" value="<%= product.salePrice %>">
                                     <div id="salePrice-error" class="error-message"></div>
                                     <small class="text-muted">Use offers to provide discounts instead of regular price</small>
                                 </div>
@@ -105,7 +108,7 @@
                             <div class="col-lg-6">
                                 <div class="mb-4">
                                     <label class="form-label">Quantity</label>
-                                    <input placeholder="0" name="quantity" type="text" class="form-control border" value="<%= product.quantity %>">
+                                    <input placeholder="0" name="quantity" type="text" class="form-control border" id="quantity" value="<%= product.quantity %>">
                                     <div id="quantity-error" class="error-message"></div>
                                 </div>
                             </div>
@@ -115,13 +118,12 @@
                                 <div class="row gx-2">
                                     <div class="col-sm-6 mb-3">
                                         <label class="form-label">Category</label>
-                                        <select class="form-select border" style="width: 150px;" name="category">
+                                        <select class="form-select border" style="width: 150px;" name="category" id="category">
                                             <% categories.forEach(cat => { %>
-                                              <option value="<%= cat.name %>" 
-    <%= (product.category && cat.name === product.category.name) ? 'selected' : '' %>>
-    <%= cat.name %>
-</option>
-
+                                                <option value="<%= cat.name %>" 
+                                                        <%= (product.category && cat.name === product.category.name) ? 'selected' : '' %>>
+                                                    <%= cat.name %>
+                                                </option>
                                             <% }) %>
                                         </select>
                                         <div id="category-error" class="error-message"></div>
@@ -300,26 +302,61 @@
 
     function validateForm() {
         let isValid = true;
-        const productName = document.getElementById('product_name').value;
-        const description = document.getElementById('descriptionid').value;
-        const brand = document.getElementById('brand').value;
-        const quantity = document.querySelector('input[name="quantity"]').value;
+        const productName = document.getElementById('product_name').value.trim();
+        const description = document.getElementById('descriptionid').value.trim();
+        const salePrice = document.getElementById('salePrice').value.trim();
+        const quantity = document.getElementById('quantity').value.trim();
+        const category = document.getElementById('category').value;
 
-        if (!productName.trim()) {
+        // Clear previous error messages
+        clearErrors();
+
+        // Validate Product Name
+        if (!productName) {
             displayErrorMessage('productName-error', 'Product name is required');
-            isValid = false;
-        }
-        if (!description.trim()) {
-            displayErrorMessage('description-error', 'Description is required');
-            isValid = false;
-        }
-        if (!brand.trim()) {
-            displayErrorMessage('brand-error', 'Brand is required');
+            document.getElementById('product_name').classList.add('error');
             isValid = false;
         }
 
-        if (!quantity || parseInt(quantity) < 0) {
-            displayErrorMessage('quantity-error', 'Please enter a valid quantity');
+        // Validate Description
+        if (!description) {
+            displayErrorMessage('description-error', 'Description is required');
+            document.getElementById('descriptionid').classList.add('error');
+            isValid = false;
+        }
+
+        // Validate Sale Price
+        if (!salePrice) {
+            displayErrorMessage('salePrice-error', 'Sale price is required');
+            document.getElementById('salePrice').classList.add('error');
+            isValid = false;
+        } else {
+            const priceValue = parseFloat(salePrice);
+            if (isNaN(priceValue) || priceValue <= 0) {
+                displayErrorMessage('salePrice-error', 'Sale price must be a positive number');
+                document.getElementById('salePrice').classList.add('error');
+                isValid = false;
+            }
+        }
+
+        // Validate Quantity
+        if (!quantity) {
+            displayErrorMessage('quantity-error', 'Quantity is required');
+            document.getElementById('quantity').classList.add('error');
+            isValid = false;
+        } else {
+            const qtyValue = parseInt(quantity);
+            if (isNaN(qtyValue) || qtyValue < 0) {
+                displayErrorMessage('quantity-error', 'Quantity must be a non-negative number');
+                document.getElementById('quantity').classList.add('error');
+                isValid = false;
+            }
+        }
+
+        // Validate Category
+        if (!category) {
+            displayErrorMessage('category-error', 'Please select a category');
+            document.getElementById('category').classList.add('error');
             isValid = false;
         }
 
@@ -329,6 +366,17 @@
     function displayErrorMessage(elementId, message) {
         const errorElement = document.getElementById(elementId);
         if (errorElement) errorElement.textContent = message;
+    }
+
+    function clearErrors() {
+        const errorElements = document.getElementsByClassName('error-message');
+        const inputs = document.getElementsByClassName('form-control');
+        for (let element of errorElements) {
+            element.textContent = '';
+        }
+        for (let input of inputs) {
+            input.classList.remove('error');
+        }
     }
 
     // Function to remove existing images
@@ -359,6 +407,13 @@
             }, 300);
         }
     }
+
+    // Add input event listeners for real-time validation
+    document.getElementById('product_name').addEventListener('input', clearErrors);
+    document.getElementById('descriptionid').addEventListener('input', clearErrors);
+    document.getElementById('salePrice').addEventListener('input', clearErrors);
+    document.getElementById('quantity').addEventListener('input', clearErrors);
+    document.getElementById('category').addEventListener('change', clearErrors);
 </script>
 
 <%- include("./partials/footer", { activePage: 'products' }) %>
