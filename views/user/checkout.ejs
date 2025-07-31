@@ -744,9 +744,41 @@
 
     #applyCouponBtn {
         transition: all 0.3s ease;
-        min-width: 80px;
+        min-width: 70px;
     }
+/* Coupon input and button container */
+.coupon-input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between input and button */
+    width: 100%; /* Ensure it takes full width */
+}
 
+/* Coupon input */
+#couponCode {
+    flex-grow: 1; /* Let input expand to fill space */
+    padding: 8px;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    background: #1f2937;
+    color: #fff;
+}
+
+/* Apply button */
+#applyCouponBtn {
+    padding: 8px 16px; /* Consistent padding */
+    background-color: #00ffff;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap; /* Prevent text wrapping */
+    min-width: 70px; /* Minimum width to avoid shrinking */
+}
+
+#applyCouponBtn:hover {
+    background-color: #0088ff;
+}
     #applyCouponBtn:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);

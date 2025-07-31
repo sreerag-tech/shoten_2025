@@ -160,45 +160,67 @@
             <div class="lg:col-span-1 space-y-6">
                 
                 <!-- Order Summary -->
-                <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
-                    <h2 class="text-xl font-bold text-white mb-4">💰 Order Summary</h2>
-                    
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Subtotal:</span>
-                            <span class="text-white">₹<%= order.subtotal.toLocaleString() %></span>
-                        </div>
+               <!-- Order Summary -->
+<div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
+    <h2 class="text-xl font-bold text-white mb-4">💰 Order Summary</h2>
+    
+    <div class="space-y-3 text-sm">
+        <div class="flex justify-between">
+            <span class="text-gray-400">Subtotal:</span>
+            <span class="text-white">₹<%= order.subtotal.toLocaleString() %></span>
+        </div>
 
-                        <% if (order.shippingCharge > 0) { %>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Shipping:</span>
-                                <span class="text-white">₹<%= order.shippingCharge.toLocaleString() %></span>
-                            </div>
-                        <% } %>
-                        <% if (order.discount > 0) { %>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Coupon Discount:</span>
-                                <span class="text-green-400">-₹<%= order.discount.toLocaleString() %></span>
-                            </div>
-                        <% } %>
-                        <% if (order.couponApplied && order.couponCode) { %>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Coupon (<%= order.couponCode %>):</span>
-                                <span class="text-green-400">Applied</span>
-                            </div>
-                        <% } %>
-                        <hr class="border-gray-700">
-                        <div class="flex justify-between text-lg font-bold">
-                            <span class="text-white">Total:</span>
-                            <%
-                                // Calculate correct total: subtotal + shipping - discount
-                                const correctTotal = (order.subtotal || order.totalPrice) + (order.shippingCharge || 0) - (order.discount || 0);
-                            %>
-                            <span class="text-[#00ffff]">₹<%= correctTotal.toLocaleString() %></span>
-                        </div>
-                    </div>
-                </div>
+        <% if (order.shippingCharge > 0) { %>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Delivery Fee:</span>
+                <span class="text-white">₹<%= order.shippingCharge.toLocaleString() %></span>
+            </div>
+        <% } else { %>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Delivery Fee:</span>
+                <span class="text-green-400">FREE</span>
+            </div>
+        <% } %>
+        <% if (order.discount > 0 && order.couponApplied && order.couponCode) { %>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Coupon Discount (<%= order.couponCode %>):</span>
+                <span class="text-green-400">-₹<%= order.discount.toLocaleString() %></span>
+            </div>
+        <% } %>
 
+        <!-- Dynamically calculate cancelled amount with coupon adjustment -->
+        <% 
+            const cancelledItems = order.orderedItems.filter(item => item.status === 'Cancelled');
+            const cancellableItems = order.orderedItems.filter(item => ['Pending', 'Processing', 'Shipped'].includes(item.status));
+            const cancellableTotal = cancellableItems.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
+            const totalOrderAmount = (order.subtotal || order.totalPrice) + (order.shippingCharge || 0);
+            const discountRatio = order.discount ? order.discount / totalOrderAmount : 0;
+            const cancelledAmount = cancelledItems.reduce((sum, item) => {
+                const itemTotal = item.finalPrice * item.quantity;
+                const itemDiscount = cancellableTotal > 0 ? (itemTotal / cancellableTotal) * (order.discount || 0) : 0;
+                return sum + Math.max(0, itemTotal - itemDiscount);
+            }, 0);
+        %>
+        <% if (cancelledAmount > 0) { %>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Cancelled Amount:</span>
+                <span class="text-red-400">-₹<%= cancelledAmount.toLocaleString() %></span>
+            </div>
+        <% } %>
+
+        <hr class="border-gray-700">
+        <div class="flex justify-between text-lg font-bold">
+            <span class="text-white">Total:</span>
+            <%
+                const correctTotal = (order.subtotal || order.totalPrice) + 
+                                    (order.shippingCharge || 0) - 
+                                    (order.discount || 0) - 
+                                    (cancelledAmount || 0);
+            %>
+            <span class="text-[#00ffff]">₹<%= Math.max(0, correctTotal).toLocaleString() %></span>
+        </div>
+    </div>
+</div>
                 <!-- Payment Information -->
                 <div class="bg-gray-800 rounded-2xl p-6 shadow-xl">
                     <h2 class="text-xl font-bold text-white mb-4">💳 Payment Information</h2>
